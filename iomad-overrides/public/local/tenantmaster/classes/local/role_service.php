@@ -106,12 +106,14 @@ final class role_service {
                 );
             }
         }
-        foreach ([
-            'local/tenantmaster:sync',
-            'local/tenantmaster:import',
-            'local/tenantmaster:resolvedrift',
-            'local/tenantmaster:destructive',
-        ] as $capability) {
+        foreach (
+            [
+                'local/tenantmaster:sync',
+                'local/tenantmaster:import',
+                'local/tenantmaster:resolvedrift',
+                'local/tenantmaster:destructive',
+            ] as $capability
+        ) {
             if (get_capability_info($capability)) {
                 assign_capability(
                     $capability,

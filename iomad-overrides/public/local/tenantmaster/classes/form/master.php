@@ -22,6 +22,7 @@ final class master extends \moodleform {
      */
     protected function definition(): void {
         $mform = $this->_form;
+        $editing = !empty($this->_customdata['editing']);
         $mform->addElement('hidden', 'id', 0);
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'tenantid');
@@ -38,6 +39,9 @@ final class master extends \moodleform {
         $mform->addElement('text', 'code', get_string('code', 'local_tenantmaster'), ['size' => 30]);
         $mform->setType('code', PARAM_TEXT);
         $mform->addRule('code', null, 'required');
+        if ($editing) {
+            $mform->freeze(['mastertype', 'externalid', 'code']);
+        }
         $mform->addElement('text', 'name', get_string('name'), ['size' => 50]);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required');

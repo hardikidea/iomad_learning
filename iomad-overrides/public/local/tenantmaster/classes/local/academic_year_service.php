@@ -31,6 +31,8 @@ final class academic_year_service {
     public function save(object $data): object {
         global $DB;
 
+        $tenantid = (int)$data->tenantid;
+        $DB->get_record('local_tenantmaster_tenant', ['id' => $tenantid], '*', MUST_EXIST);
         if (
             !catalog::valid_external_key((string)$data->externalid)
                 || !catalog::valid_external_key((string)$data->code)
@@ -40,14 +42,35 @@ final class academic_year_service {
         if ((int)$data->startdate >= (int)$data->enddate) {
             throw new \invalid_parameter_exception('Academic-year end date must follow its start date.');
         }
+        if (!in_array((string)$data->status, ['active', 'archived'], true)) {
+            throw new \invalid_parameter_exception('Invalid academic-year status.');
+        }
+        if (!empty($data->iscurrent) && $data->status !== 'active') {
+            throw new \invalid_parameter_exception('The current academic year must be active.');
+        }
+        $current = null;
+        if (!empty($data->id)) {
+            $current = $DB->get_record('local_tenantmaster_acadyear', [
+                'id' => (int)$data->id,
+                'tenantid' => $tenantid,
+            ], '*', MUST_EXIST);
+            if (
+                $current->externalid !== (string)$data->externalid
+                    || $current->code !== (string)$data->code
+            ) {
+                throw new \invalid_parameter_exception(
+                    'Academic-year external ID and code cannot change after creation.'
+                );
+            }
+        }
         $now = time();
         $transaction = $DB->start_delegated_transaction();
         if (!empty($data->iscurrent)) {
-            $DB->set_field('local_tenantmaster_acadyear', 'iscurrent', 0, ['tenantid' => $data->tenantid]);
+            $DB->set_field('local_tenantmaster_acadyear', 'iscurrent', 0, ['tenantid' => $tenantid]);
         }
         $data->payloadjson = $data->payloadjson ?? '{}';
         $data->timemodified = $now;
-        if (!empty($data->id)) {
+        if ($current) {
             $DB->update_record('local_tenantmaster_acadyear', $data);
             $id = (int)$data->id;
         } else {
@@ -55,17 +78,28 @@ final class academic_year_service {
             $id = (int)$DB->insert_record('local_tenantmaster_acadyear', $data);
         }
         if (!empty($data->iscurrent)) {
-            $DB->set_field('local_tenantmaster_tenant', 'activeyearid', $id, ['id' => $data->tenantid]);
+            $DB->set_field('local_tenantmaster_tenant', 'activeyearid', $id, ['id' => $tenantid]);
+        } else {
+            $DB->set_field_select(
+                'local_tenantmaster_tenant',
+                'activeyearid',
+                0,
+                'id = :tenantid AND activeyearid = :yearid',
+                ['tenantid' => $tenantid, 'yearid' => $id],
+            );
         }
         $transaction->allow_commit();
         (new queue_service())->mark_dirty(
-            (int)$data->tenantid,
+            $tenantid,
             'categories',
             'local_tenantmaster_acadyear',
             $id,
             'academic_year_saved',
         );
-        return $DB->get_record('local_tenantmaster_acadyear', ['id' => $id], '*', MUST_EXIST);
+        return $DB->get_record('local_tenantmaster_acadyear', [
+            'id' => $id,
+            'tenantid' => $tenantid,
+        ], '*', MUST_EXIST);
     }
 
     /**

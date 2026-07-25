@@ -20,6 +20,7 @@ final class department extends \moodleform {
      */
     protected function definition(): void {
         $mform = $this->_form;
+        $editing = !empty($this->_customdata['editing']);
         $mform->addElement('hidden', 'id', 0);
         $mform->setType('id', PARAM_INT);
         $mform->addElement('text', 'name', get_string('departmentname', 'local_tenantmaster'), ['size' => 50]);
@@ -28,6 +29,9 @@ final class department extends \moodleform {
         $mform->addElement('text', 'shortname', get_string('shortname'), ['size' => 30]);
         $mform->setType('shortname', PARAM_ALPHANUMEXT);
         $mform->addRule('shortname', null, 'required');
+        if ($editing) {
+            $mform->freeze('shortname');
+        }
         $mform->addElement(
             'select',
             'parentid',

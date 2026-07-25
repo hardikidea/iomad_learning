@@ -44,6 +44,7 @@ $section = optional_param('section', 'dashboard', PARAM_ALPHA);
 $companyid = optional_param('companyid', 0, PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHANUMEXT);
 $editid = optional_param('editid', 0, PARAM_INT);
+$yeareditid = optional_param('yeareditid', 0, PARAM_INT);
 $typefilter = optional_param('type', '', PARAM_ALPHANUMEXT);
 $access = access::resolve($companyid);
 $companyid = $access->companyid();
@@ -203,7 +204,10 @@ if ($tenant && $section === 'organisation') {
     foreach ($departments as $native) {
         $parentoptions[(int)$native->id] = format_string($native->name);
     }
-    $departmentform = new department($pageurl, ['parents' => $parentoptions]);
+    $departmentform = new department($pageurl, [
+        'parents' => $parentoptions,
+        'editing' => $editid > 0,
+    ]);
     if ($data = $departmentform->get_data()) {
         require_sesskey();
         $access->require('local/tenantmaster:manageorganisation');
@@ -222,7 +226,7 @@ $masterrepository = new master_repository();
 $masterform = null;
 $academicyearform = null;
 if ($tenant && $section === 'academic') {
-    $academicyearform = new academic_year($pageurl);
+    $academicyearform = new academic_year($pageurl, ['editing' => $yeareditid > 0]);
     if ($data = $academicyearform->get_data()) {
         require_sesskey();
         $access->require('local/tenantmaster:manageacademic');
@@ -235,10 +239,26 @@ if ($tenant && $section === 'academic') {
             'startdate' => $data->yearstartdate,
             'enddate' => $data->yearenddate,
             'iscurrent' => $data->yeariscurrent,
-            'status' => 'active',
+            'status' => $data->yearstatus,
             'payloadjson' => '{}',
         ]);
         redirect($pageurl, get_string('academicyearsaved', 'local_tenantmaster'));
+    }
+    if ($yeareditid > 0) {
+        $editingyear = $DB->get_record('local_tenantmaster_acadyear', [
+            'id' => $yeareditid,
+            'tenantid' => $tenant->id,
+        ], '*', MUST_EXIST);
+        $academicyearform->set_data((object)[
+            'yearid' => $editingyear->id,
+            'yearexternalid' => $editingyear->externalid,
+            'yearcode' => $editingyear->code,
+            'yearname' => $editingyear->name,
+            'yearstartdate' => $editingyear->startdate,
+            'yearenddate' => $editingyear->enddate,
+            'yeariscurrent' => $editingyear->iscurrent,
+            'yearstatus' => $editingyear->status,
+        ]);
     }
     $parentoptions = [0 => get_string('none')];
     foreach ($masterrepository->list((int)$tenant->id) as $parent) {
@@ -247,7 +267,10 @@ if ($tenant && $section === 'academic') {
                 . ' [' . s($parent->mastertype) . ']';
         }
     }
-    $masterform = new master($pageurl, ['parents' => $parentoptions]);
+    $masterform = new master($pageurl, [
+        'parents' => $parentoptions,
+        'editing' => $editid > 0,
+    ]);
     if ($data = $masterform->get_data()) {
         require_sesskey();
         $access->require('local/tenantmaster:manageacademic');
@@ -881,6 +904,7 @@ function tenantmaster_academic_year_table(object $tenant): string {
         get_string('enddate'),
         get_string('currentacademicyear', 'local_tenantmaster'),
         get_string('status'),
+        get_string('actions'),
     ];
     foreach ($records as $record) {
         $table->data[] = [
@@ -890,6 +914,14 @@ function tenantmaster_academic_year_table(object $tenant): string {
             userdate($record->enddate, get_string('strftimedatefullshort')),
             $record->iscurrent ? get_string('yes') : get_string('no'),
             s($record->status),
+            html_writer::link(
+                new moodle_url('/local/tenantmaster/index.php', [
+                    'section' => 'academic',
+                    'companyid' => $tenant->companyid,
+                    'yeareditid' => $record->id,
+                ]),
+                get_string('edit'),
+            ),
         ];
     }
     return html_writer::table($table);

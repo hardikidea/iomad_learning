@@ -5,7 +5,8 @@
 | Test | Evidence |
 |---|---|
 | Repository gate | Shell syntax, Compose, compatibility, docs, XMLDB, override mirror, PHP syntax and sanitized packs pass |
-| Project PHPUnit | 50 project test files pass with warnings and notices treated as failures on PHP 8.3/PostgreSQL 16 |
+| Project PHPUnit | Project test files run with warnings and notices treated as failures on PHP 8.3/PostgreSQL 16 |
+| Tenant Master PHPUnit | 9 test files, 24 tests and 97 assertions pass |
 | JSON and redaction helpers | Strict parsing and deterministic hashing |
 | Default adoption | School/university catalogues, hierarchy, idempotency, active year |
 | Native projection | Academic-year parent, categories, courses, company assignment |
@@ -43,7 +44,8 @@ Native projection read-back recorded 105 synchronized mappings for the school
 and 78 for the university, with zero non-synchronized mappings. Each tenant
 has all seven active business-role mappings.
 
-The 15 Tenant Master pages returned HTTP 200 in an authenticated browser.
+All 14 Tenant Master sections were checked for both demo tenants: 28
+authenticated desktop routes and 14 mobile routes returned HTTP 200.
 Anonymous access redirected to login. Desktop and 390-by-844 mobile checks had
 no horizontal overflow, missing language strings, duplicate DOM IDs, unlabeled
 controls, console errors, or page errors. A tracked pinned-source correction
@@ -64,13 +66,13 @@ translated RTL language pack and human language review.
 | Tenant smoke test | Default URL and every configured tenant hostname passed after upgrade and restore |
 | Recovery restore | Matching PostgreSQL, dataroot and immutable source state restored from the verified pre-drill set |
 | Ecosystem validation | 94/94 live checks passed with Floci connected, zero warnings and zero failures |
-| Final recovery set | `backups/20260725-175334`, manifest SHA-256 `9890169cac6c39640a391fc046c5088389e1542bd7c830fa65a4cafb7eee147c` |
+| Final recovery set | `backups/20260725-185646`, manifest SHA-256 `dbf4071874a02926f6cbfe502e79691713bc68fd6629006e880ac9ef63a47a2a` |
 | Retention | Timestamp recognition regression-tested; superseded drill sets removed only after final-set verification |
 
-The final web image ID is
-`sha256:1071a3224c05b79f839e9aed3d7b9f0672bdea2c8be498ce8de0ff7c47ac4b1c`;
+The immutable web image ID is
+`sha256:30882f97e36fef2f1baabda8a013fe110c2f4f77b2edb366b8d2babae5a172d9`;
 the cron image ID is
-`sha256:766fdcc1824031df91bb1a79fa5650d687fb5a70568bea772c9b9cf9986ca9a0`.
+`sha256:a816b496ec6969e2b4dc82c1c8ccb517c6bd2e03a21301d0a91a922371f55ae0`.
 Both images label the exact pinned IOMAD commit.
 
 ## Acceptance Checklist

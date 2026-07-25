@@ -7,7 +7,7 @@
 - Moodle/IOMAD: 5.1.5 build 20260608
 - PHP: 8.2-8.4
 - PostgreSQL: 15 or newer
-- Plugin release: 1.0.4, schema version `2026072503`
+- Plugin release: 1.0.7, schema version `2026072507`
 
 ## Native API Map
 
@@ -64,6 +64,8 @@ $HOME/.composer/vendor/bin/phpcs \
   --standard=phpcs.xml.dist \
   iomad-overrides/public/local/tenantmaster
 ./scripts/test-phpunit.sh \
+  public/local/tenantmaster/tests/crud_integration_test.php \
+  public/local/tenantmaster/tests/lifecycle_test.php \
   public/local/tenantmaster/tests/default_service_test.php \
   public/local/tenantmaster/tests/projection_test.php \
   public/local/tenantmaster/tests/isolation_test.php \

@@ -49,6 +49,9 @@ final class drift_service {
     public function detect_mapping(object $mapping): int {
         global $DB;
 
+        if ($mapping->status === 'ignored') {
+            return 0;
+        }
         $current = $this->adapter->read_mapping($mapping);
         $base = json::decode_object((string)$mapping->managedjson);
         $missing = $current === null;
@@ -115,6 +118,8 @@ final class drift_service {
         }
         if ($open > 0) {
             $DB->set_field('local_tenantmaster_mapping', 'status', 'drifted', ['id' => $mapping->id]);
+        } else {
+            $DB->set_field('local_tenantmaster_mapping', 'status', 'synced', ['id' => $mapping->id]);
         }
         return $open;
     }
@@ -145,6 +150,7 @@ final class drift_service {
             MUST_EXIST,
         );
         if ($resolution === 'restore_managed') {
+            $queued = false;
             if ($mapping->component === 'mod_iomadcertificate/certificate') {
                 $courseid = (int)$DB->get_field(
                     'iomadcertificate',
@@ -160,6 +166,7 @@ final class drift_service {
                     'restore_managed_drift',
                     true,
                 );
+                $queued = true;
             } else if ((int)$mapping->masterid > 0 || $mapping->component === 'local_iomad/company') {
                 $entitytable = $mapping->masterid > 0
                     ? 'local_tenantmaster_master'
@@ -168,8 +175,12 @@ final class drift_service {
                 $module = $mapping->component === 'core/course' ? 'courses'
                     : ($mapping->component === 'core_course/category' ? 'categories' : 'tenant');
                 $this->queue->mark_dirty($tenantid, $module, $entitytable, $entityid, 'restore_managed_drift');
+                $queued = true;
             } else {
                 $this->restore_direct_mapping($mapping);
+            }
+            if ($queued) {
+                $DB->set_field('local_tenantmaster_mapping', 'status', 'pending', ['id' => $mapping->id]);
             }
         } else if ($resolution === 'import_native') {
             // Native authority is accepted as the new baseline. Academic source
@@ -183,6 +194,18 @@ final class drift_service {
             $mapping->nativehash = json::hash($current);
             $mapping->desiredhash = json::hash($current);
             $mapping->status = 'synced';
+            $mapping->lastsynced = time();
+            $mapping->timemodified = time();
+            $DB->update_record('local_tenantmaster_mapping', $mapping);
+        } else {
+            $current = $this->adapter->read_mapping($mapping);
+            if ($current === null) {
+                throw new \moodle_exception('missingnativerecord', 'local_tenantmaster');
+            }
+            $mapping->managedjson = json::encode($current);
+            $mapping->nativehash = json::hash($current);
+            $mapping->status = 'ignored';
+            $mapping->lasterror = null;
             $mapping->lastsynced = time();
             $mapping->timemodified = time();
             $DB->update_record('local_tenantmaster_mapping', $mapping);

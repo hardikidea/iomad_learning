@@ -96,6 +96,8 @@ test_targets=(
     public/local/tenantmaster/tests/native_user_test.php
     public/local/tenantmaster/tests/role_service_test.php
     public/local/tenantmaster/tests/import_service_test.php
+    public/local/tenantmaster/tests/crud_integration_test.php
+    public/local/tenantmaster/tests/lifecycle_test.php
     public/mod/tenantform/tests/template_validator_test.php
     public/mod/tenantform/tests/submission_service_test.php
     public/mod/tenantform/tests/entry_repository_test.php

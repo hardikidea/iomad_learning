@@ -48,6 +48,7 @@ final class queue_service {
         if ($record) {
             $record->reason = $reason;
             $record->state = 'dirty';
+            $record->attempts = 0;
             $record->availabletime = $now;
             $record->locktoken = null;
             $record->lasterror = null;

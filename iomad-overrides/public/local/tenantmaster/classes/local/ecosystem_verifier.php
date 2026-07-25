@@ -181,7 +181,10 @@ final class ecosystem_verifier {
             '\mod_scorm\task\cron_task',
         ];
         foreach ($classes as $classname) {
-            $this->check('tasks', 'scheduled_' . ltrim(str_replace('\\', '_', $classname), '_'), 'platform',
+            $this->check(
+                'tasks',
+                'scheduled_' . ltrim(str_replace('\\', '_', $classname), '_'),
+                'platform',
                 static function () use ($classname): array {
                     $task = \core\task\manager::get_scheduled_task($classname);
                     if (!$task) {

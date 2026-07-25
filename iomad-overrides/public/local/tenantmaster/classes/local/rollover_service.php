@@ -107,53 +107,82 @@ final class rollover_service {
         ], '*', MUST_EXIST);
         $items = $DB->get_records('local_tenantmaster_rollitem', ['rolloverid' => $rolloverid], 'id');
         $repository = new master_repository();
+        $service = new master_service();
+        $sourceitems = [];
+        $targets = [];
+        $remaining = [];
         foreach ($items as $item) {
-            if ($item->status === 'completed') {
-                continue;
-            }
-            try {
-                $source = $repository->get((int)$tenant->id, (int)$item->sourceid);
-                $targetexternalid = $source->externalid . ':' . $rollover->toyearid;
-                $existing = $DB->get_record('local_tenantmaster_master', [
-                    'tenantid' => $tenant->id,
-                    'mastertype' => $source->mastertype,
-                    'externalid' => $targetexternalid,
-                ]);
-                if ($existing) {
-                    $target = $existing;
-                } else {
-                    $target = clone $source;
-                    unset($target->id);
-                    $target->acadyearid = $rollover->toyearid;
-                    $target->externalid = $targetexternalid;
-                    $target->code = substr($source->code . '_' . $rollover->toyearid, 0, 100);
-                    $target = $repository->save($target);
-                }
-                $item->targetid = $target->id;
-                $item->status = 'completed';
-                $item->message = null;
-                $item->timemodified = time();
-                $DB->update_record('local_tenantmaster_rollitem', $item);
-                (new queue_service())->mark_dirty(
-                    (int)$tenant->id,
-                    in_array($source->mastertype, ['subject', 'course_template'], true) ? 'courses' : 'categories',
-                    'local_tenantmaster_master',
-                    (int)$target->id,
-                    'academic_rollover',
-                );
-            } catch (\Throwable $exception) {
-                $item->status = 'failed';
-                $item->message = substr($exception->getMessage(), 0, 2000);
-                $item->timemodified = time();
-                $DB->update_record('local_tenantmaster_rollitem', $item);
+            $sourceitems[(int)$item->sourceid] = $item;
+            if ($item->status === 'completed' && (int)$item->targetid > 0) {
+                $targets[(int)$item->sourceid] = (int)$item->targetid;
+            } else {
+                $remaining[(int)$item->id] = $item;
             }
         }
-        $remaining = $DB->count_records_select(
+
+        do {
+            $progress = false;
+            foreach ($remaining as $itemid => $item) {
+                $source = $repository->get((int)$tenant->id, (int)$item->sourceid);
+                $targetparentid = (int)$source->parentid;
+                if (isset($sourceitems[$targetparentid])) {
+                    if (!isset($targets[$targetparentid])) {
+                        continue;
+                    }
+                    $targetparentid = $targets[$targetparentid];
+                }
+
+                try {
+                    $targetexternalid = $source->externalid . ':' . $rollover->toyearid;
+                    $existing = $DB->get_record('local_tenantmaster_master', [
+                        'tenantid' => $tenant->id,
+                        'mastertype' => $source->mastertype,
+                        'externalid' => $targetexternalid,
+                    ]);
+                    $target = $service->save((object)[
+                        'id' => (int)($existing->id ?? 0),
+                        'tenantid' => (int)$tenant->id,
+                        'acadyearid' => (int)$rollover->toyearid,
+                        'parentid' => $targetparentid,
+                        'mastertype' => (string)$source->mastertype,
+                        'externalid' => $targetexternalid,
+                        'code' => substr($source->code . '_' . $rollover->toyearid, 0, 100),
+                        'name' => (string)$source->name,
+                        'description' => (string)($source->description ?? ''),
+                        'payloadjson' => (string)$source->payloadjson,
+                        'active' => (int)$source->active,
+                        'sortorder' => (int)$source->sortorder,
+                    ]);
+                    $targets[(int)$source->id] = (int)$target->id;
+                    $item->targetid = $target->id;
+                    $item->status = 'completed';
+                    $item->message = null;
+                    $item->timemodified = time();
+                    $DB->update_record('local_tenantmaster_rollitem', $item);
+                    unset($remaining[$itemid]);
+                    $progress = true;
+                } catch (\Throwable $exception) {
+                    $item->status = 'failed';
+                    $item->message = substr($exception->getMessage(), 0, 2000);
+                    $item->timemodified = time();
+                    $DB->update_record('local_tenantmaster_rollitem', $item);
+                    unset($remaining[$itemid]);
+                }
+            }
+        } while ($remaining && $progress);
+
+        foreach ($remaining as $item) {
+            $item->status = 'failed';
+            $item->message = 'A source parent could not be projected into the target academic year.';
+            $item->timemodified = time();
+            $DB->update_record('local_tenantmaster_rollitem', $item);
+        }
+        $remainingcount = $DB->count_records_select(
             'local_tenantmaster_rollitem',
             'rolloverid = :rolloverid AND status <> :status',
             ['rolloverid' => $rolloverid, 'status' => 'completed'],
         );
-        $rollover->status = $remaining ? 'completed_with_errors' : 'completed';
+        $rollover->status = $remainingcount ? 'completed_with_errors' : 'completed';
         $rollover->backupref = $backupref;
         $rollover->approvedby = (int)($USER->id ?? 0);
         $rollover->timeapproved = time();

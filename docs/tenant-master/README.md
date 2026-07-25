@@ -91,6 +91,7 @@ settings, dirty work remains visible and is not discarded.
 - [Ecosystem verification](ecosystem-verification.md)
 - [Developer API map](developer.md)
 - [Testing and acceptance](testing-acceptance.md)
+- [CRUD and integration validation](crud-validation.md)
 
 Platform installation, cron, upgrade, backup, and restore still use the normal
 repository automation documented outside this section. That infrastructure

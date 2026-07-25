@@ -32,6 +32,10 @@ final class master_service {
      * @return object
      */
     public function save(object $data): object {
+        global $DB;
+
+        $tenantid = (int)$data->tenantid;
+        $DB->get_record('local_tenantmaster_tenant', ['id' => $tenantid], '*', MUST_EXIST);
         if (!array_key_exists((string)$data->mastertype, catalog::MASTER_TYPES)) {
             throw new \invalid_parameter_exception('Invalid academic master type.');
         }
@@ -41,7 +45,32 @@ final class master_service {
         ) {
             throw new \invalid_parameter_exception('Invalid stable code or external ID.');
         }
-        $data->payloadjson = $data->payloadjson ?: '{}';
+        if (!empty($data->id)) {
+            $current = $this->repository->get($tenantid, (int)$data->id);
+            if (
+                $current->mastertype !== (string)$data->mastertype
+                    || $current->externalid !== (string)$data->externalid
+                    || $current->code !== (string)$data->code
+            ) {
+                throw new \invalid_parameter_exception(
+                    'Master type, external ID and code cannot change after creation.'
+                );
+            }
+        }
+        if (
+            !empty($data->acadyearid)
+                && !$DB->record_exists('local_tenantmaster_acadyear', [
+                    'id' => (int)$data->acadyearid,
+                    'tenantid' => $tenantid,
+                ])
+        ) {
+            throw new \invalid_parameter_exception('Academic year belongs to another tenant.');
+        }
+        $this->require_valid_parent($tenantid, (int)($data->id ?? 0), (int)($data->parentid ?? 0));
+        $data->payloadjson = $data->payloadjson ?? '{}';
+        if ($data->payloadjson === '') {
+            $data->payloadjson = '{}';
+        }
         json::decode_object($data->payloadjson);
         $record = $this->repository->save($data);
 
@@ -65,6 +94,28 @@ final class master_service {
             ['entitytable' => 'local_tenantmaster_master', 'entityid' => (int)$record->id],
         );
         return $record;
+    }
+
+    /**
+     * Ensure a parent is tenant-owned and cannot introduce a hierarchy cycle.
+     *
+     * @param int $tenantid Tenant.
+     * @param int $recordid Record being saved.
+     * @param int $parentid Requested parent.
+     */
+    private function require_valid_parent(int $tenantid, int $recordid, int $parentid): void {
+        if ($parentid <= 0) {
+            return;
+        }
+        $visited = [];
+        while ($parentid > 0) {
+            if ($parentid === $recordid || isset($visited[$parentid])) {
+                throw new \invalid_parameter_exception('Academic master hierarchy cannot contain a cycle.');
+            }
+            $visited[$parentid] = true;
+            $parent = $this->repository->get($tenantid, $parentid);
+            $parentid = (int)$parent->parentid;
+        }
     }
 
     /**

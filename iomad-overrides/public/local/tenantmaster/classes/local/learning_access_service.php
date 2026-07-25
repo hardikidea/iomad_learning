@@ -157,7 +157,7 @@ final class learning_access_service {
         int $roleid,
         int $groupid = 0,
     ): void {
-        global $DB;
+        global $CFG, $DB;
 
         $this->require_company_user($tenant, $userid);
         $this->require_company_course($tenant, $courseid);
@@ -165,6 +165,12 @@ final class learning_access_service {
             throw new \invalid_parameter_exception('The selected group belongs to another course.');
         }
         company_user::enrol($userid, [$courseid], (int)$tenant->companyid, $roleid, $groupid);
+        if ($groupid > 0) {
+            require_once($CFG->dirroot . '/group/lib.php');
+            if (!$DB->record_exists('groups_members', ['groupid' => $groupid, 'userid' => $userid])) {
+                groups_add_member($groupid, $userid);
+            }
+        }
         (new audit_service())->record(
             (int)$tenant->id,
             'access.user.enrolled',

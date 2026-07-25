@@ -41,6 +41,19 @@ final class organisation_service {
     public function save(object $tenant, object $data): object {
         global $DB;
 
+        $departmentid = (int)($data->id ?? 0);
+        $current = null;
+        if ($departmentid > 0) {
+            $current = $DB->get_record('local_iomad_company_departments', [
+                'id' => $departmentid,
+                'companyid' => (int)$tenant->companyid,
+            ], '*', MUST_EXIST);
+            if ($current->shortname !== (string)$data->shortname) {
+                throw new \invalid_parameter_exception(
+                    'Department shortname cannot change after creation.'
+                );
+            }
+        }
         $parentid = (int)($data->parentid ?? 0);
         if (
             $parentid > 0 && !$DB->record_exists('local_iomad_company_departments', [
@@ -53,16 +66,17 @@ final class organisation_service {
         if (!catalog::valid_external_key((string)$data->shortname)) {
             throw new \invalid_parameter_exception('Invalid department shortname.');
         }
+        $this->require_acyclic_parent((int)$tenant->companyid, $departmentid, $parentid);
         company::create_department(
-            (int)($data->id ?? 0),
+            $departmentid,
             (int)$tenant->companyid,
             (string)$data->name,
             (string)$data->shortname,
             $parentid,
         );
-        $department = (int)($data->id ?? 0) > 0
+        $department = $departmentid > 0
             ? $DB->get_record('local_iomad_company_departments', [
-                'id' => $data->id,
+                'id' => $departmentid,
                 'companyid' => $tenant->companyid,
             ], '*', MUST_EXIST)
             : $DB->get_record('local_iomad_company_departments', [
@@ -100,5 +114,29 @@ final class organisation_service {
             ],
         );
         return $department;
+    }
+
+    /**
+     * Reject department parent cycles before calling the native IOMAD API.
+     *
+     * @param int $companyid Native company.
+     * @param int $departmentid Department being edited.
+     * @param int $parentid Requested parent.
+     */
+    private function require_acyclic_parent(int $companyid, int $departmentid, int $parentid): void {
+        global $DB;
+
+        $visited = [];
+        while ($parentid > 0) {
+            if ($parentid === $departmentid || isset($visited[$parentid])) {
+                throw new \invalid_parameter_exception('Department hierarchy cannot contain a cycle.');
+            }
+            $visited[$parentid] = true;
+            $parent = $DB->get_record('local_iomad_company_departments', [
+                'id' => $parentid,
+                'companyid' => $companyid,
+            ], '*', MUST_EXIST);
+            $parentid = (int)$parent->parentid;
+        }
     }
 }

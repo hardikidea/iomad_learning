@@ -174,5 +174,8 @@ function xmldb_local_tenantmaster_upgrade(int $oldversion): bool {
     if ($oldversion < 2026072506) {
         upgrade_plugin_savepoint(true, 2026072506, 'local', 'tenantmaster');
     }
+    if ($oldversion < 2026072507) {
+        upgrade_plugin_savepoint(true, 2026072507, 'local', 'tenantmaster');
+    }
     return true;
 }
