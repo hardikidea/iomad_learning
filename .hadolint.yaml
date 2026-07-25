@@ -1,0 +1,7 @@
+failure-threshold: warning
+ignored:
+  # FROM uses versioned ARG defaults so versions.env can drive reviewed upgrades.
+  - DL3006
+  # Debian package versions are intentionally not pinned so rebuilds receive
+  # current security patches from the selected php:8.3-fpm-bookworm base image.
+  - DL3008

@@ -1,0 +1,26 @@
+{{!
+    @template block_gamification_telemetry/telemetry_block
+}}
+<div id="{{rootid}}" class="gamification-telemetry" data-points="{{points}}">
+    <div class="gamification-telemetry__summary">
+        <strong class="gamification-telemetry__points">{{points}}</strong>
+        <span>{{#str}}points, block_gamification_telemetry{{/str}}</span>
+        {{#haslevel}}<span class="gamification-telemetry__level">{{levelname}}</span>{{/haslevel}}
+    </div>
+    <div class="progress" role="progressbar" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100"
+         {{#hasnextlevel}}aria-label="{{#str}}progressnext, block_gamification_telemetry, {{nextlevelname}}{{/str}}"{{/hasnextlevel}}>
+        <div class="progress-bar" style="width: {{percentage}}%"></div>
+    </div>
+    {{#hasnextlevel}}
+    <small>{{points}} / {{nextpoints}} &middot; {{nextlevelname}}</small>
+    {{/hasnextlevel}}
+    {{#hasbadges}}
+    <ul class="gamification-telemetry__badges" aria-label="{{#str}}recentbadges, block_gamification_telemetry{{/str}}">
+        {{#badges}}<li title="{{name}}">{{name}}</li>{{/badges}}
+    </ul>
+    {{/hasbadges}}
+    <a class="btn btn-link btn-sm px-0" href="{{dashboardurl}}">
+        {{#str}}openachievements, block_gamification_telemetry{{/str}}
+    </a>
+    <div class="gamification-telemetry__effect" aria-hidden="true"></div>
+</div>

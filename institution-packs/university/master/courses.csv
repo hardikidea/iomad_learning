@@ -1,0 +1,3 @@
+course_shortname,fullname,category_idnumber,company_shortname,department_shortname,template_shortname,format,visible,summary
+NBU-PROG101-2026,Programming Fundamentals 2026,NBU_PROG101,NBU_ENGINEERING,NBU_CSE,NBU_TEMPLATE_SEMESTER,topics,1,Sanitized programming fundamentals course.
+NBU-DS101-2026,Data Structures 2026,NBU_DS101,NBU_ENGINEERING,NBU_CSE,NBU_TEMPLATE_SEMESTER,iomadvideo,1,Sanitized demo video-first data structures course.

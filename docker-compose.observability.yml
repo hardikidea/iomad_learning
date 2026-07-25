@@ -1,0 +1,129 @@
+services:
+  iomad:
+    environment:
+      IOMAD_MONITOR_METRICS_TOKEN_FILE: /run/secrets/monitor_metrics_token
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    secrets:
+      - monitor_metrics_token
+
+  otel-collector:
+    image: ${OTEL_COLLECTOR_IMAGE:-otel/opentelemetry-collector-contrib:0.153.0}
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    profiles: ["observability"]
+    volumes:
+      - ./docker/observability/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:${OTEL_GRPC_PORT:-14317}:4317"
+      - "127.0.0.1:${OTEL_HTTP_PORT:-14318}:4318"
+      - "127.0.0.1:${OTEL_METRICS_PORT:-19464}:9464"
+    depends_on:
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+    restart: unless-stopped
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v3.12.0}
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --web.enable-lifecycle
+    profiles: ["observability"]
+    volumes:
+      - ./docker/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    secrets:
+      - monitor_metrics_token
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-19090}:9090"
+    depends_on:
+      iomad:
+        condition: service_started
+      alertmanager:
+        condition: service_started
+      blackbox-exporter:
+        condition: service_started
+    restart: unless-stopped
+
+  blackbox-exporter:
+    image: ${BLACKBOX_EXPORTER_IMAGE:-prom/blackbox-exporter:v0.28.0}
+    command: ["--config.file=/etc/blackbox/config.yml"]
+    profiles: ["observability"]
+    volumes:
+      - ./docker/observability/blackbox.yml:/etc/blackbox/config.yml:ro
+    restart: unless-stopped
+
+  alertmanager:
+    image: ${ALERTMANAGER_IMAGE:-prom/alertmanager:v0.32.1}
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    profiles: ["observability"]
+    volumes:
+      - ./docker/observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-19093}:9093"
+    restart: unless-stopped
+
+  loki:
+    image: ${LOKI_IMAGE:-grafana/loki:3.7.2}
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    profiles: ["observability"]
+    volumes:
+      - ./docker/observability/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "127.0.0.1:${LOKI_PORT:-13100}:3100"
+    restart: unless-stopped
+
+  tempo:
+    image: ${TEMPO_IMAGE:-grafana/tempo:2.10.5}
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    profiles: ["observability"]
+    volumes:
+      - ./docker/observability/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "127.0.0.1:${TEMPO_PORT:-13200}:3200"
+    restart: unless-stopped
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:13.1.0}
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    secrets:
+      - grafana_admin_password
+    volumes:
+      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-13000}:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+    restart: unless-stopped
+
+secrets:
+  monitor_metrics_token:
+    file: ./.runtime-secrets/monitor_metrics_token
+  grafana_admin_password:
+    file: ./.runtime-secrets/grafana_admin_password
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  loki_data:
+  tempo_data:
+  grafana_data:

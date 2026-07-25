@@ -1,0 +1,20 @@
+name: Playwright E2E If Present
+description: Run the Playwright suite from e2e/ when the project contains one.
+
+runs:
+  using: composite
+  steps:
+    - name: Run Playwright suite when present
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if [ ! -f e2e/package.json ]; then
+          echo "No e2e/package.json found. Add a Playwright suite under e2e/ to enable browser tests."
+          exit 0
+        fi
+
+        cd e2e
+        npm ci
+        npx playwright install --with-deps chromium
+        npm test

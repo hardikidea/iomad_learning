@@ -1,0 +1,6 @@
+user_external_id,username,firstname,lastname,email,company_shortname,department_shortname,role_key,password
+UNI_REG_001,nbu.registrar,Registrar,Demo,nbu.registrar@example.local,NBU_UNIV,NBU_REGISTRY,principal_registrar,DemoOnly2026!
+UNI_DEAN_001,nbu.dean,Dean,Engineering,nbu.dean@example.local,NBU_ENGINEERING,NBU_CSE,hod_dean,DemoOnly2026!
+UNI_IT_001,nbu.it,IT,Coordinator,nbu.it@example.local,NBU_UNIV,NBU_REGISTRY,it_coordinator,DemoOnly2026!
+UNI_FAC_001,nbu.faculty,Faculty,One,nbu.faculty@example.local,NBU_ENGINEERING,NBU_CSE,teacher_faculty,DemoOnly2026!
+UNI_STU_001,nbu.student,Student,Engineering,nbu.student@example.local,NBU_ENGINEERING,NBU_CSE,student_learner,DemoOnly2026!

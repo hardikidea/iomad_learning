@@ -1,0 +1,4 @@
+user_external_id,course_shortname,role_shortname,company_shortname,group_idnumber
+SCH_TEACHER_001,GV-STD1-MATH-2026,editingteacher,GV_SCHOOL,GV-STD1-A
+SCH_STUDENT_001,GV-STD1-MATH-2026,student,GV_SCHOOL,GV-STD1-A
+SCH_HOD_001,GV-STD11-PHY-2026,editingteacher,GV_SCHOOL,GV-STD11-SCI-A

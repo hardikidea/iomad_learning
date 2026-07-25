@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/iomad/institution-pack-v1.schema.json",
+  "title": "IOMAD Institution Pack Manifest",
+  "type": "object",
+  "required": ["schema_version", "pack_id", "pack_type", "files"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "pack_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+    "pack_type": { "enum": ["school", "university", "training"] },
+    "description": { "type": "string" },
+    "files": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+[.]csv$" }
+    }
+  }
+}

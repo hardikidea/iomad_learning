@@ -1,0 +1,4 @@
+company_shortname,department_shortname,name,parent_department_shortname
+NBU_UNIV,NBU_REGISTRY,Registry,
+NBU_ENGINEERING,NBU_CSE,Computer Science and Engineering,
+NBU_ENGINEERING,NBU_ECE,Electronics and Communication,

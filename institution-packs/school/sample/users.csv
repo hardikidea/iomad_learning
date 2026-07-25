@@ -1,0 +1,7 @@
+user_external_id,username,firstname,lastname,email,company_shortname,department_shortname,role_key,password
+SCH_PRINCIPAL_001,gv.principal,Principal,Demo,gv.principal@example.local,GV_SCHOOL,GV_ADMIN,principal_registrar,DemoOnly2026!
+SCH_IT_001,gv.it,IT,Coordinator,gv.it@example.local,GV_SCHOOL,GV_ADMIN,it_coordinator,DemoOnly2026!
+SCH_HOD_001,gv.hod,HOD,Science,gv.hod@example.local,GV_SCHOOL,GV_SCIENCE,hod_dean,DemoOnly2026!
+SCH_TEACHER_001,gv.teacher,Teacher,Math,gv.teacher@example.local,GV_SCHOOL,GV_PRIMARY,teacher_faculty,DemoOnly2026!
+SCH_STUDENT_001,gv.student,Student,One,gv.student@example.local,GV_SCHOOL,GV_PRIMARY,student_learner,DemoOnly2026!
+SCH_PARENT_001,gv.parent,Parent,One,gv.parent@example.local,GV_SCHOOL,GV_PRIMARY,parent_guardian,DemoOnly2026!

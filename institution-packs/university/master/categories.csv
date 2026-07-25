@@ -1,0 +1,7 @@
+category_idnumber,name,parent_idnumber,company_shortname,category_type
+NBU_AY_2026,Academic Year 2026-27,,NBU_UNIV,academic_year
+NBU_ENG,Faculty of Engineering,NBU_AY_2026,NBU_ENGINEERING,faculty
+NBU_BTECH_CSE,B.Tech Computer Science,NBU_ENG,NBU_ENGINEERING,programme
+NBU_BTECH_CSE_SEM1,Semester 1,NBU_BTECH_CSE,NBU_ENGINEERING,semester
+NBU_PROG101,Programming Fundamentals,NBU_BTECH_CSE_SEM1,NBU_ENGINEERING,course
+NBU_DS101,Data Structures,NBU_BTECH_CSE_SEM1,NBU_ENGINEERING,course

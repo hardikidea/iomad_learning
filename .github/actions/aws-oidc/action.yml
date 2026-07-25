@@ -1,0 +1,26 @@
+name: Configure AWS OIDC
+description: Assume an environment-specific AWS role through GitHub OIDC.
+
+inputs:
+  environment:
+    description: "Deployment environment: dev, stage, or prod."
+    required: true
+  aws_account_id:
+    description: AWS account ID.
+    required: true
+  aws_region:
+    description: AWS region.
+    required: true
+  project_name:
+    description: Project role prefix.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.project_name }}-${{ inputs.environment }}-github-actions
+        role-session-name: ${{ inputs.project_name }}-${{ inputs.environment }}-${{ github.run_id }}
+        aws-region: ${{ inputs.aws_region }}

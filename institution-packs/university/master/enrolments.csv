@@ -1,0 +1,5 @@
+user_external_id,course_shortname,role_shortname,company_shortname,group_idnumber
+UNI_FAC_001,NBU-PROG101-2026,editingteacher,NBU_ENGINEERING,NBU-CSE-A
+UNI_STU_001,NBU-PROG101-2026,student,NBU_ENGINEERING,NBU-CSE-A
+UNI_FAC_001,NBU-DS101-2026,editingteacher,NBU_ENGINEERING,NBU-DS-A
+UNI_STU_001,NBU-DS101-2026,student,NBU_ENGINEERING,NBU-DS-A

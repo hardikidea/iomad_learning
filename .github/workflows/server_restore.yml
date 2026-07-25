@@ -1,0 +1,373 @@
+name: Server Recovery Validation And Image Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Environment to restore or roll back"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - stage
+          - prod
+      previous_task_definition_arn:
+        description: "Optional previous ECS task definition ARN for app rollback"
+        required: false
+        default: ""
+        type: string
+      rds_snapshot_identifier:
+        description: "RDS snapshot id to validate; requires matching EFS point"
+        required: false
+        default: ""
+        type: string
+      efs_recovery_point_arn:
+        description: "EFS recovery point ARN to validate; requires matching RDS snapshot"
+        required: false
+        default: ""
+        type: string
+      backup_vault_name:
+        description: "AWS Backup vault for recovery point validation"
+        required: false
+        default: ""
+        type: string
+      recovery_set_id:
+        description: "Recovery-set ID recorded by Server Backup when data points are supplied"
+        required: false
+        default: ""
+        type: string
+      pause_cron:
+        description: "Pause IOMAD cron while the restore workflow runs"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      confirm_restore:
+        description: "Type RESTORE dev, RESTORE stage, or RESTORE prod"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: server-restore-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+env:
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+  PROJECT_NAME: iomad-learning
+  TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+  PAUSE_CRON: ${{ inputs.pause_cron }}
+
+jobs:
+  restore:
+    name: Restore ${{ inputs.target_environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Confirm Restore Intent
+        env:
+          CONFIRM_RESTORE: ${{ inputs.confirm_restore }}
+          EFS_RECOVERY_POINT_ARN: ${{ inputs.efs_recovery_point_arn }}
+          PREVIOUS_TASK_DEFINITION_ARN: ${{ inputs.previous_task_definition_arn }}
+          RDS_SNAPSHOT_IDENTIFIER: ${{ inputs.rds_snapshot_identifier }}
+          RECOVERY_SET_ID: ${{ inputs.recovery_set_id }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${AWS_ACCOUNT_ID}" ]; then
+            echo "Repository variable AWS_ACCOUNT_ID is required." >&2
+            exit 1
+          fi
+
+          EXPECTED="RESTORE ${TARGET_ENVIRONMENT}"
+          if [ "${CONFIRM_RESTORE}" != "${EXPECTED}" ]; then
+            echo "Confirmation must exactly match: ${EXPECTED}" >&2
+            exit 1
+          fi
+
+          if [ -z "${PREVIOUS_TASK_DEFINITION_ARN}" ] &&
+             [ -z "${RDS_SNAPSHOT_IDENTIFIER}" ] &&
+             [ -z "${EFS_RECOVERY_POINT_ARN}" ]; then
+            echo "Supply an immutable ECS task definition or a complete RDS/EFS recovery set." >&2
+            exit 1
+          fi
+
+          if { [ -n "${RDS_SNAPSHOT_IDENTIFIER}" ] && [ -z "${EFS_RECOVERY_POINT_ARN}" ]; } ||
+             { [ -z "${RDS_SNAPSHOT_IDENTIFIER}" ] && [ -n "${EFS_RECOVERY_POINT_ARN}" ]; }; then
+            echo "RDS and EFS restore points must be supplied together." >&2
+            exit 1
+          fi
+
+          if [ -n "${RDS_SNAPSHOT_IDENTIFIER}" ] && [ -z "${RECOVERY_SET_ID}" ]; then
+            echo "recovery_set_id is required when validating data restore points." >&2
+            exit 1
+          fi
+
+      - name: Configure AWS OIDC
+        uses: ./.github/actions/aws-oidc
+        with:
+          environment: ${{ inputs.target_environment }}
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Resolve Environment
+        run: |
+          set -euo pipefail
+
+          ENV_DIR="terraform/envs/${TARGET_ENVIRONMENT}"
+          terraform -chdir="${ENV_DIR}" init \
+            -backend-config="bucket=${PROJECT_NAME}-${AWS_ACCOUNT_ID}-${AWS_REGION}-tfstate" \
+            -backend-config="dynamodb_table=${PROJECT_NAME}-terraform-locks" \
+            -backend-config="key=${PROJECT_NAME}/${TARGET_ENVIRONMENT}.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true"
+
+          CLUSTER="$(
+            terraform -chdir="${ENV_DIR}" output -raw ecs_cluster_name 2>/dev/null ||
+              echo "${PROJECT_NAME}-${TARGET_ENVIRONMENT}-cluster"
+          )"
+          SERVICE="$(
+            terraform -chdir="${ENV_DIR}" output -raw ecs_service_name 2>/dev/null ||
+              echo "${PROJECT_NAME}-${TARGET_ENVIRONMENT}-service"
+          )"
+          CRON_SERVICE="$(
+            terraform -chdir="${ENV_DIR}" output -raw ecs_cron_service_name 2>/dev/null ||
+              echo "${PROJECT_NAME}-${TARGET_ENVIRONMENT}-cron"
+          )"
+          IOMAD_WWWROOT="$(terraform -chdir="${ENV_DIR}" output -raw iomad_wwwroot 2>/dev/null || true)"
+
+          {
+            echo "CLUSTER=${CLUSTER}"
+            echo "SERVICE=${SERVICE}"
+            echo "CRON_SERVICE=${CRON_SERVICE}"
+            echo "IOMAD_WWWROOT=${IOMAD_WWWROOT}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Validate Restore Points
+        env:
+          BACKUP_VAULT_NAME_INPUT: ${{ inputs.backup_vault_name }}
+          BACKUP_VAULT_NAME_VAR: ${{ vars.BACKUP_VAULT_NAME }}
+          EFS_RECOVERY_POINT_ARN: ${{ inputs.efs_recovery_point_arn }}
+          RDS_SNAPSHOT_IDENTIFIER: ${{ inputs.rds_snapshot_identifier }}
+          RECOVERY_SET_ID: ${{ inputs.recovery_set_id }}
+        run: |
+          set -euo pipefail
+
+          BACKUP_VAULT_NAME="${BACKUP_VAULT_NAME_INPUT:-${BACKUP_VAULT_NAME_VAR:-}}"
+          echo "BACKUP_VAULT_NAME=${BACKUP_VAULT_NAME}" >> "${GITHUB_ENV}"
+
+          if [ -n "${RDS_SNAPSHOT_IDENTIFIER}" ]; then
+            RDS_SNAPSHOT_ARN="$(
+              aws rds describe-db-snapshots \
+                --db-snapshot-identifier "${RDS_SNAPSHOT_IDENTIFIER}" \
+                --query 'DBSnapshots[0].DBSnapshotArn' \
+                --output text
+            )"
+            RDS_STATUS="$(
+              aws rds describe-db-snapshots \
+                --db-snapshot-identifier "${RDS_SNAPSHOT_IDENTIFIER}" \
+                --query 'DBSnapshots[0].Status' \
+                --output text
+            )"
+            RDS_RECOVERY_SET="$(
+              aws rds list-tags-for-resource \
+                --resource-name "${RDS_SNAPSHOT_ARN}" \
+                --query "TagList[?Key=='RecoverySet'].Value | [0]" \
+                --output text
+            )"
+
+            if [ "${RDS_STATUS}" != "available" ]; then
+              echo "RDS snapshot is not available: ${RDS_STATUS}" >&2
+              exit 1
+            fi
+
+            if [ "${RDS_RECOVERY_SET}" != "${RECOVERY_SET_ID}" ]; then
+              echo "RDS snapshot belongs to ${RDS_RECOVERY_SET}, not ${RECOVERY_SET_ID}." >&2
+              exit 1
+            fi
+
+            aws rds describe-db-snapshots \
+              --db-snapshot-identifier "${RDS_SNAPSHOT_IDENTIFIER}" \
+              --query 'DBSnapshots[0].{Status:Status,Created:SnapshotCreateTime,Arn:DBSnapshotArn}'
+          fi
+
+          if [ -n "${EFS_RECOVERY_POINT_ARN}" ]; then
+            if [ -z "${BACKUP_VAULT_NAME}" ]; then
+              echo "backup_vault_name or BACKUP_VAULT_NAME is required." >&2
+              exit 1
+            fi
+
+            EFS_STATUS="$(
+              aws backup describe-recovery-point \
+                --backup-vault-name "${BACKUP_VAULT_NAME}" \
+                --recovery-point-arn "${EFS_RECOVERY_POINT_ARN}" \
+                --query Status \
+                --output text
+            )"
+            EFS_RECOVERY_SET="$(
+              aws backup list-tags \
+                --resource-arn "${EFS_RECOVERY_POINT_ARN}" \
+                --query 'Tags.RecoverySet' \
+                --output text
+            )"
+
+            if [ "${EFS_STATUS}" != "COMPLETED" ]; then
+              echo "EFS recovery point is not complete: ${EFS_STATUS}" >&2
+              exit 1
+            fi
+
+            if [ "${EFS_RECOVERY_SET}" != "${RECOVERY_SET_ID}" ]; then
+              echo "EFS recovery point belongs to ${EFS_RECOVERY_SET}, not ${RECOVERY_SET_ID}." >&2
+              exit 1
+            fi
+
+            echo "Validated recovery set ${RECOVERY_SET_ID}."
+          fi
+
+      - name: Pause Cron
+        id: pause_cron
+        if: inputs.pause_cron == 'true'
+        run: |
+          set -euo pipefail
+
+          aws ecs update-service \
+            --cluster "${CLUSTER}" \
+            --service "${CRON_SERVICE}" \
+            --desired-count 0
+
+      - name: Enable Maintenance Mode
+        run: |
+          set -euo pipefail
+
+          TASK_ARN="$(
+            aws ecs list-tasks \
+              --cluster "${CLUSTER}" \
+              --service-name "${SERVICE}" \
+              --desired-status RUNNING \
+              --query 'taskArns[0]' \
+              --output text
+          )"
+
+          if [ -z "${TASK_ARN}" ] || [ "${TASK_ARN}" = "None" ]; then
+            echo "No running IOMAD task found for maintenance mode." >&2
+            exit 1
+          fi
+
+          aws ecs execute-command \
+            --cluster "${CLUSTER}" \
+            --task "${TASK_ARN}" \
+            --container iomad \
+            --interactive \
+            --command 'php admin/cli/maintenance.php --enable'
+
+      - name: Roll Back ECS Task Definition
+        env:
+          PREVIOUS_TASK_DEFINITION_ARN: ${{ inputs.previous_task_definition_arn }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PREVIOUS_TASK_DEFINITION_ARN}" ]; then
+            echo "No previous_task_definition_arn supplied; skipping ECS rollback."
+            exit 0
+          fi
+
+          aws ecs update-service \
+            --cluster "${CLUSTER}" \
+            --service "${SERVICE}" \
+            --task-definition "${PREVIOUS_TASK_DEFINITION_ARN}"
+
+          aws ecs wait services-stable \
+            --cluster "${CLUSTER}" \
+            --services "${SERVICE}"
+
+      - name: Purge Caches And Disable Maintenance Mode
+        run: |
+          set -euo pipefail
+
+          TASK_ARN="$(
+            aws ecs list-tasks \
+              --cluster "${CLUSTER}" \
+              --service-name "${SERVICE}" \
+              --desired-status RUNNING \
+              --query 'taskArns[0]' \
+              --output text
+          )"
+
+          if [ -z "${TASK_ARN}" ] || [ "${TASK_ARN}" = "None" ]; then
+            echo "No running IOMAD task found for post-recovery commands." >&2
+            exit 1
+          fi
+
+          aws ecs execute-command \
+            --cluster "${CLUSTER}" \
+            --task "${TASK_ARN}" \
+            --container iomad \
+            --interactive \
+            --command 'php admin/cli/purge_caches.php'
+
+          aws ecs execute-command \
+            --cluster "${CLUSTER}" \
+            --task "${TASK_ARN}" \
+            --container iomad \
+            --interactive \
+            --command 'php admin/cli/maintenance.php --disable'
+
+      - name: Smoke Test Recovered Image
+        run: |
+          set -euo pipefail
+
+          curl -fsS --retry 6 --retry-delay 10 --max-time 30 \
+            "${IOMAD_WWWROOT%/}/login/index.php" >/tmp/iomad-recovery-login.html
+
+      - name: Restart Cron
+        if: success() && steps.pause_cron.outcome == 'success'
+        run: |
+          set -euo pipefail
+
+          aws ecs update-service \
+            --cluster "${CLUSTER}" \
+            --service "${CRON_SERVICE}" \
+            --desired-count 1
+
+      - name: Write Restore Summary
+        if: always()
+        env:
+          EFS_RECOVERY_POINT_ARN: ${{ inputs.efs_recovery_point_arn }}
+          PREVIOUS_TASK_DEFINITION_ARN: ${{ inputs.previous_task_definition_arn }}
+          RDS_SNAPSHOT_IDENTIFIER: ${{ inputs.rds_snapshot_identifier }}
+          RECOVERY_SET_ID: ${{ inputs.recovery_set_id }}
+        run: |
+          {
+            echo "## Server Restore"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Environment | ${TARGET_ENVIRONMENT} |"
+            echo "| Recovery set | ${RECOVERY_SET_ID:-not supplied} |"
+            echo "| IOMAD URL | ${IOMAD_WWWROOT:-unknown} |"
+            echo "| ECS cluster | ${CLUSTER:-unknown} |"
+            echo "| ECS service | ${SERVICE:-unknown} |"
+            echo "| Previous task definition | ${PREVIOUS_TASK_DEFINITION_ARN:-not supplied} |"
+            echo "| RDS snapshot validated | ${RDS_SNAPSHOT_IDENTIFIER:-not supplied} |"
+            echo "| EFS recovery point validated | ${EFS_RECOVERY_POINT_ARN:-not supplied} |"
+            echo ""
+            echo "This workflow validates RDS/EFS recovery points and can roll back"
+            echo "the immutable ECS image. It does not replace live RDS or EFS."
+            echo "Complete stateful restore and cutover through docs/backup-restore.md."
+          } >> "${GITHUB_STEP_SUMMARY}"

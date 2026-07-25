@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<ruleset name="IOMADLearning">
+    <description>Moodle PHP coding rules for project-owned IOMAD components.</description>
+
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="8"/>
+    <arg name="colors"/>
+    <arg name="warning-severity" value="0"/>
+
+    <file>iomad-overrides/public/local/institutionpack</file>
+    <file>iomad-overrides/public/local/iomadpagebuilder</file>
+    <file>iomad-overrides/public/local/aicoursecreator</file>
+    <file>iomad-overrides/public/local/tenantanalytics</file>
+    <file>iomad-overrides/public/local/rapidgrader</file>
+    <file>iomad-overrides/public/local/iomadcommerce</file>
+    <file>iomad-overrides/public/local/iomadconnect</file>
+    <file>iomad-overrides/public/local/global_events</file>
+    <file>iomad-overrides/public/local/iomad_h5p_bridge</file>
+    <file>iomad-overrides/public/local/iomad_scorm_gen</file>
+    <file>iomad-overrides/public/admin/tool/iomadmonitor</file>
+    <file>iomad-overrides/public/mod/tenantform</file>
+    <file>iomad-overrides/public/blocks/iomadpagebuilder</file>
+    <file>iomad-overrides/public/blocks/iomaddashboard</file>
+    <file>iomad-overrides/public/blocks/gamification_telemetry</file>
+    <file>iomad-overrides/public/blocks/tenantform</file>
+    <file>iomad-overrides/public/course/format/iomadvideo</file>
+    <file>iomad-overrides/public/theme/iomad_learning</file>
+
+    <rule ref="moodle">
+        <!-- Existing plugin files are being migrated to full Moodle docblocks incrementally. -->
+        <exclude name="moodle.Commenting.FileExpectedTags"/>
+        <exclude name="moodle.Commenting.MissingDocblock"/>
+        <exclude name="moodle.Commenting.Package"/>
+        <exclude name="moodle.Commenting.VariableComment"/>
+        <exclude name="moodle.Files.BoilerplateComment"/>
+    </rule>
+</ruleset>

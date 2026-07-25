@@ -1,0 +1,9 @@
+name: Documentation Quality Gate
+description: Validate local project documentation links.
+
+runs:
+  using: composite
+  steps:
+    - name: Validate local Markdown links
+      shell: bash
+      run: ./scripts/validate-docs.sh

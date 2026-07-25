@@ -1,0 +1,10 @@
+category_idnumber,name,parent_idnumber,company_shortname,category_type
+GV_AY_2026,Academic Year 2026-27,,GV_SCHOOL,academic_year
+GV_CBSE,CBSE,GV_AY_2026,GV_SCHOOL,board
+GV_EN,English Medium,GV_CBSE,GV_SCHOOL,medium
+GV_STD_01,Standard 1,GV_EN,GV_SCHOOL,standard
+GV_STD_11,Standard 11,GV_EN,GV_SCHOOL,standard
+GV_STREAM_SCI,Science Stream,GV_STD_11,GV_SCHOOL,stream
+GV_STD1_MATH,Mathematics,GV_STD_01,GV_SCHOOL,subject
+GV_STD1_EVS,Environmental Studies,GV_STD_01,GV_SCHOOL,subject
+GV_STD11_PHY,Physics,GV_STREAM_SCI,GV_SCHOOL,subject

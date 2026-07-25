@@ -1,0 +1,65 @@
+{{!
+    @template block_iomaddashboard/widget
+
+    Generic dashboard list with optional private to-do controls.
+}}
+<div class="iomaddashboard-widget" data-widget="{{widget}}">
+    {{#hasrows}}
+    <ul class="iomaddashboard-list">
+        {{#rows}}
+        <li class="{{#completed}}is-complete{{/completed}}">
+            <div class="iomaddashboard-row">
+                {{#url}}<a href="{{url}}">{{primary}}</a>{{/url}}
+                {{^url}}<strong>{{primary}}</strong>{{/url}}
+                {{#secondary}}<small>{{secondary}}</small>{{/secondary}}
+                {{#hasprogress}}
+                <div class="progress" role="progressbar" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar" style="width: {{percentage}}%"></div>
+                </div>
+                {{/hasprogress}}
+            </div>
+            {{#todoid}}
+            <div class="iomaddashboard-todo-actions">
+                <form method="post" action="{{todourl}}">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="returnurl" value="{{returnurl}}">
+                    <input type="hidden" name="id" value="{{todoid}}">
+                    <input type="hidden" name="action" value="{{#completed}}reopen{{/completed}}{{^completed}}complete{{/completed}}">
+                    <button class="btn btn-link btn-sm" type="submit">
+                        {{#completed}}{{#str}}reopentask, block_iomaddashboard{{/str}}{{/completed}}
+                        {{^completed}}{{#str}}markcomplete, core_completion{{/str}}{{/completed}}
+                    </button>
+                </form>
+                <form method="post" action="{{todourl}}">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="returnurl" value="{{returnurl}}">
+                    <input type="hidden" name="id" value="{{todoid}}">
+                    <input type="hidden" name="action" value="delete">
+                    <button class="btn btn-link btn-sm text-danger" type="submit">{{#str}}deletetask, block_iomaddashboard{{/str}}</button>
+                </form>
+            </div>
+            {{/todoid}}
+        </li>
+        {{/rows}}
+    </ul>
+    {{/hasrows}}
+    {{^hasrows}}
+    <p class="text-muted">{{empty}}</p>
+    {{/hasrows}}
+
+    {{#actions}}
+    <a class="btn btn-secondary btn-sm" href="{{url}}">{{label}}</a>
+    {{/actions}}
+
+    {{#todoform}}
+    <form class="iomaddashboard-add-task" method="post" action="{{todourl}}">
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <input type="hidden" name="returnurl" value="{{returnurl}}">
+        <input type="hidden" name="action" value="add">
+        <label class="visually-hidden" for="iomaddashboard-task-{{uniqid}}">{{#str}}addtask, block_iomaddashboard{{/str}}</label>
+        <input id="iomaddashboard-task-{{uniqid}}" class="form-control" name="tasktext" type="text"
+               maxlength="255" required placeholder="{{#str}}taskplaceholder, block_iomaddashboard{{/str}}">
+        <button class="btn btn-primary" type="submit">{{#str}}addtask, block_iomaddashboard{{/str}}</button>
+    </form>
+    {{/todoform}}
+</div>

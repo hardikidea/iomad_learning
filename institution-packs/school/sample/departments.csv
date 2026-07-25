@@ -1,0 +1,5 @@
+company_shortname,department_shortname,name,parent_department_shortname
+GV_SCHOOL,GV_ADMIN,Administration,
+GV_SCHOOL,GV_PRIMARY,Primary School,
+GV_SCHOOL,GV_SCIENCE,Science Department,GV_PRIMARY
+GV_SCHOOL,GV_SENIOR,Senior Secondary,

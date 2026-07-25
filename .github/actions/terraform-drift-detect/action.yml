@@ -1,0 +1,94 @@
+name: Terraform Drift Detect
+description: Run a refresh-only Terraform plan and fail when remote AWS resources drift from state.
+
+inputs:
+  environment:
+    description: "Deployment environment: dev, stage, or prod."
+    required: true
+  aws_account_id:
+    description: AWS account ID.
+    required: true
+  aws_region:
+    description: AWS region.
+    required: true
+  project_name:
+    description: Project name and backend prefix.
+    required: true
+  fail_on_drift:
+    description: "Fail the action when Terraform detects drift."
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS OIDC
+      uses: ./.github/actions/aws-oidc
+      with:
+        environment: ${{ inputs.environment }}
+        aws_account_id: ${{ inputs.aws_account_id }}
+        aws_region: ${{ inputs.aws_region }}
+        project_name: ${{ inputs.project_name }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Detect drift
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        cd "terraform/envs/${{ inputs.environment }}"
+
+        terraform init \
+          -backend-config="bucket=${{ inputs.project_name }}-${{ inputs.aws_account_id }}-${{ inputs.aws_region }}-tfstate" \
+          -backend-config="dynamodb_table=${{ inputs.project_name }}-terraform-locks" \
+          -backend-config="key=${{ inputs.project_name }}/${{ inputs.environment }}.tfstate" \
+          -backend-config="region=${{ inputs.aws_region }}" \
+          -backend-config="encrypt=true"
+
+        terraform validate
+
+        set +e
+        terraform plan -refresh-only -detailed-exitcode -input=false -no-color -out=tfplan > drift-plan.txt
+        exit_code="$?"
+        set -e
+
+        {
+          echo "### Terraform drift: ${{ inputs.environment }}"
+          echo ""
+          case "${exit_code}" in
+            0)
+              echo "No drift detected."
+              ;;
+            2)
+              echo "Drift detected. Review the refresh-only plan below."
+              echo ""
+              echo "<details><summary>Show drift plan</summary>"
+              echo ""
+              echo '```'
+              terraform show -no-color tfplan
+              echo '```'
+              echo "</details>"
+              ;;
+            *)
+              echo "Terraform drift detection failed with exit code ${exit_code}."
+              echo ""
+              echo '```'
+              cat drift-plan.txt
+              echo '```'
+              ;;
+          esac
+        } >> "${GITHUB_STEP_SUMMARY}"
+
+        if [ "${exit_code}" = "0" ]; then
+          exit 0
+        fi
+
+        if [ "${exit_code}" = "2" ] && [ "${{ inputs.fail_on_drift }}" != "true" ]; then
+          exit 0
+        fi
+
+        exit "${exit_code}"

@@ -1,0 +1,7 @@
+aws_region        = "us-west-2"
+project_name      = "iomad-learning"
+github_repository = "your-github-org/your-repository"
+
+# Optional overrides.
+# state_bucket_name  = "iomad-learning-123456789012-us-west-2-tfstate"
+# lock_table_name    = "iomad-learning-terraform-locks"

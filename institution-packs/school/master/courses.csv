@@ -1,0 +1,3 @@
+course_shortname,fullname,category_idnumber,company_shortname,department_shortname,template_shortname,format,visible,summary
+GV-STD1-MATH-2026,Standard 1 Mathematics 2026,GV_STD1_MATH,GV_SCHOOL,GV_PRIMARY,GV_TEMPLATE_PRIMARY,topics,1,Sanitized demo mathematics course.
+GV-STD11-PHY-2026,Standard 11 Physics 2026,GV_STD11_PHY,GV_SCHOOL,GV_SENIOR,GV_TEMPLATE_SENIOR,iomadvideo,1,Sanitized demo video-first physics course.

@@ -1,0 +1,40 @@
+<?php
+// This file is part of IOMAD - http://www.iomad.org/
+
+$string['pluginname'] = 'Institution page builder';
+$string['managepages'] = 'Page builder';
+$string['newpage'] = 'New page';
+$string['editpage'] = 'Edit page';
+$string['name'] = 'Page name';
+$string['slug'] = 'Stable slug';
+$string['description'] = 'Description';
+$string['target'] = 'Placement target';
+$string['targetid'] = 'Target identifier';
+$string['template'] = 'Starter template';
+$string['definition'] = 'Page definition';
+$string['addcomponent'] = 'Add component';
+$string['component'] = 'Component';
+$string['published'] = 'Published';
+$string['draft'] = 'Draft';
+$string['publish'] = 'Publish';
+$string['preview'] = 'Preview';
+$string['export'] = 'Export';
+$string['revision'] = 'Revision';
+$string['status'] = 'Status';
+$string['actions'] = 'Actions';
+$string['frontpage'] = 'Site front page';
+$string['dashboard'] = 'User dashboard';
+$string['custompage'] = 'IOMAD custom page';
+$string['course'] = 'Course page';
+$string['pagecreated'] = 'Page created.';
+$string['pageupdated'] = 'Page updated.';
+$string['pagepublished'] = 'Page published.';
+$string['invaliddefinition'] = 'The page definition is invalid: {$a}';
+$string['pagebuilder:manage'] = 'Manage company page definitions';
+$string['pagebuilder:publish'] = 'Publish company page definitions';
+$string['pagebuilder:view'] = 'View company page definitions';
+$string['iomadpagebuilder:manage'] = 'Manage company page definitions';
+$string['iomadpagebuilder:publish'] = 'Publish company page definitions';
+$string['iomadpagebuilder:view'] = 'View company page definitions';
+$string['privacy:metadata:page'] = 'Stores the user who created or last modified a page definition.';
+$string['privacy:metadata:revision'] = 'Stores the user who created an immutable page revision.';

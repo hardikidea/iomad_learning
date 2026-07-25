@@ -1,0 +1,29 @@
+schema_version: 1
+pack_id: school_demo
+pack_type: school
+description: Sanitized IOMAD school demo pack.
+files:
+  institutions: institutions.csv
+  companies: companies.csv
+  domains: domains.csv
+  departments: departments.csv
+  academic_years: academic_years.csv
+  boards: boards.csv
+  mediums: mediums.csv
+  programmes: programmes.csv
+  grades: grades.csv
+  semesters: semesters.csv
+  streams: streams.csv
+  subjects: subjects.csv
+  categories: categories.csv
+  course_templates: course_templates.csv
+  courses: courses.csv
+  users: users.csv
+  roles: roles.csv
+  cohorts: cohorts.csv
+  groups: groups.csv
+  enrolments: enrolments.csv
+  parent_links: parent_links.csv
+  policies: policies.csv
+  licenses: licenses.csv
+  branding: branding.csv

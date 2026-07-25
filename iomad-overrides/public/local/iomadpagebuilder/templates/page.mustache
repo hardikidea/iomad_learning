@@ -1,0 +1,31 @@
+<div class="iopb-page iopb-width-{{width}} iopb-density-{{density}}"
+     data-page-uuid="{{uuid}}" data-page-revision="{{revision}}">
+    {{#sections}}
+        <section id="{{id}}" class="{{classes}}" aria-labelledby="{{id}}-title">
+            <div class="iopb-component-inner">
+                <h2 id="{{id}}-title">{{title}}</h2>
+                {{#hasbody}}<div class="iopb-body">{{{body}}}</div>{{/hasbody}}
+                {{#hasmedia}}
+                    <div class="iopb-media">
+                        <img src="{{mediaurl}}" alt="" loading="lazy">
+                    </div>
+                {{/hasmedia}}
+                {{#hasitems}}
+                    <div class="iopb-items">
+                        {{#items}}
+                            <article class="iopb-item">
+                                <h3>{{title}}</h3>
+                                <p>{{text}}</p>
+                                {{#url}}<a href="{{url}}">{{#value}}{{value}}{{/value}}{{^value}}{{title}}{{/value}}</a>{{/url}}
+                                {{^url}}{{#value}}<strong>{{value}}</strong>{{/value}}{{/url}}
+                            </article>
+                        {{/items}}
+                    </div>
+                {{/hasitems}}
+                {{#hasprimary}}<a class="btn btn-primary" href="{{primaryurl}}">{{primarylabel}}</a>{{/hasprimary}}
+                {{#hassecondary}}<a class="btn btn-outline-secondary" href="{{secondaryurl}}">{{secondarylabel}}</a>{{/hassecondary}}
+            </div>
+        </section>
+    {{/sections}}
+</div>
+

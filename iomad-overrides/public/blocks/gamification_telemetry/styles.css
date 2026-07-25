@@ -1,0 +1,89 @@
+.gamification-telemetry {
+    min-height: 9rem;
+    position: relative;
+}
+
+.gamification-telemetry__summary {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem .5rem;
+    margin-bottom: .75rem;
+}
+
+.gamification-telemetry__points {
+    color: #146c43;
+    font-size: 1.75rem;
+    letter-spacing: 0;
+    line-height: 1;
+}
+
+.gamification-telemetry__level {
+    border-inline-start: 1px solid #98a2b3;
+    color: #344054;
+    padding-inline-start: .5rem;
+}
+
+.gamification-telemetry .progress {
+    height: .75rem;
+    margin-bottom: .4rem;
+}
+
+.gamification-telemetry .progress-bar {
+    background-color: #146c43;
+}
+
+.gamification-telemetry__badges {
+    display: grid;
+    gap: .4rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    list-style: none;
+    margin: .75rem 0 .25rem;
+    padding: 0;
+}
+
+.gamification-telemetry__badges li {
+    border-block-start: .2rem solid #f4b400;
+    font-size: .75rem;
+    min-width: 0;
+    overflow: hidden;
+    padding-block-start: .25rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gamification-telemetry__effect {
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+}
+
+.gamification-telemetry__spark {
+    animation: gamification-spark 650ms ease-out forwards;
+    background: #f4b400;
+    height: .35rem;
+    left: var(--spark-x);
+    position: absolute;
+    top: 35%;
+    transform: rotate(var(--spark-r));
+    width: .35rem;
+}
+
+@keyframes gamification-spark {
+    from {
+        opacity: 1;
+        translate: 0 0;
+    }
+    to {
+        opacity: 0;
+        translate: var(--spark-dx) var(--spark-dy);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gamification-telemetry__spark {
+        animation: none;
+        display: none;
+    }
+}

@@ -1,0 +1,10 @@
+vulnerabilities:
+  - id: CVE-2026-4800
+    paths:
+      - "iomad/public/h5p/h5plib/v128/joubel/editor/ckeditor5/package-lock.json"
+      - "var/www/iomad/public/h5p/h5plib/v128/joubel/editor/ckeditor5/package-lock.json"
+    statement: >-
+      The pinned official IOMAD checkout vendors this CKEditor build lockfile,
+      but does not install its node_modules in the runtime image. Track the
+      upstream lockfile update instead of modifying the ignored checkout.
+    expired_at: 2026-10-31

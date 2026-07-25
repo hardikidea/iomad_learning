@@ -1,0 +1,37 @@
+name: Change Eligibility
+description: Decide whether the delivery pipeline should run for this ref.
+
+outputs:
+  should_run:
+    description: "true when the ref is a PR, main, manual run, or has an open PR."
+    value: ${{ steps.detect.outputs.should_run }}
+
+runs:
+  using: composite
+  steps:
+    - name: Detect eligible ref
+      id: detect
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+      run: |
+        set -euo pipefail
+
+        if [ "${{ github.event_name }}" = "pull_request" ] ||
+           [ "${{ github.event_name }}" = "workflow_dispatch" ] ||
+           [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "should_run=true" >> "${GITHUB_OUTPUT}"
+          exit 0
+        fi
+
+        if gh pr list \
+          --repo "${{ github.repository }}" \
+          --head "${BRANCH_NAME}" \
+          --state open \
+          --json number \
+          --jq 'length > 0' | grep -q true; then
+          echo "should_run=true" >> "${GITHUB_OUTPUT}"
+        else
+          echo "should_run=false" >> "${GITHUB_OUTPUT}"
+        fi

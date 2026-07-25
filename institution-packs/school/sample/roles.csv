@@ -1,0 +1,8 @@
+role_key,role_shortname,context,capabilities
+principal_registrar,companymanager,company,block/iomad_company_admin:company_view_all
+trustee_management,companyreporter,company,block/iomad_company_admin:view_company_reports
+it_coordinator,institutionitcoordinator,company,block/iomad_company_admin:company_user_update|block/iomad_company_admin:company_user_upload
+teacher_faculty,editingteacher,course,moodle/course:update
+student_learner,student,course,moodle/course:view
+parent_guardian,parentguardian,user,moodle/user:viewdetails
+hod_dean,companydepartmentmanager,company,block/iomad_company_admin:view_department

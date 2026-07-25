@@ -1,0 +1,758 @@
+name: IOMAD Delivery Pipeline
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      publish_image:
+        description: "Build and publish the production image to GHCR"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      apply_infrastructure:
+        description: "Apply Terraform after planning"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      target_environment:
+        description: "Environment to apply when apply_infrastructure is true"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - stage
+          - prod
+          - all
+      run_extended_tests:
+        description: "Run the optional Behat infrastructure placeholder"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+  packages: write
+  checks: write
+
+env:
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+  PROJECT_NAME: iomad-learning
+  GHCR_IMAGE_NAME: ${{ vars.GHCR_IMAGE_NAME || 'ghcr.io/hardikidea/iomadlearning' }}
+  IOMAD_REF: IOMAD_501_STABLE
+  IOMAD_COMMIT: 55b3128b8058d27f6cc4320850ca709ed5a792a9
+  PREVIOUS_IOMAD_COMMIT: ff1e70a3169a02ab97ed0e35ca43c0d04ddb2d58
+  TRIVY_VERSION: v0.71.2
+  RENOVATE_CLI_VERSION: 43.243.0
+  MOODLE_CS_VERSION: 3.7.0
+
+jobs:
+  change_eligibility:
+    name: Change Eligibility Gate
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Evaluate ref eligibility
+        id: gate
+        uses: ./.github/actions/change-eligibility
+
+  source_integrity:
+    name: IOMAD Source Integrity
+    runs-on: ubuntu-latest
+    needs: change_eligibility
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate IOMAD source integrity
+        uses: ./.github/actions/iomad-source-integrity
+        with:
+          iomad_commit: ${{ env.IOMAD_COMMIT }}
+
+  static_quality:
+    name: Static Quality Gate
+    runs-on: ubuntu-latest
+    needs: change_eligibility
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run static quality checks
+        uses: ./.github/actions/static-quality-gate
+        with:
+          renovate_cli_version: ${{ env.RENOVATE_CLI_VERSION }}
+          moodle_cs_version: ${{ env.MOODLE_CS_VERSION }}
+
+  documentation_quality:
+    name: Documentation Quality Gate
+    runs-on: ubuntu-latest
+    needs: change_eligibility
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate documentation
+        uses: ./.github/actions/documentation-quality-gate
+
+  supply_chain_security:
+    name: Supply Chain Security Gate
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, source_integrity, static_quality]
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run dependency and IaC security checks
+        uses: ./.github/actions/supply-chain-security
+        with:
+          trivy_version: ${{ env.TRIVY_VERSION }}
+
+  application_image_ci:
+    name: Application Image Build And Scan
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, source_integrity, static_quality, supply_chain_security]
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create ENV file
+        run: cp .env.example .env
+
+      - name: Bootstrap IOMAD source
+        run: ./scripts/bootstrap-iomad.sh
+
+      - name: Build local Docker image
+        run: docker compose build
+
+      - name: Build and scan production image
+        uses: ./.github/actions/iomad-image-build
+        with:
+          image_name: iomad-learning-production:${{ github.sha }}
+          iomad_ref: ${{ env.IOMAD_REF }}
+          iomad_commit: ${{ env.IOMAD_COMMIT }}
+          scan_image: "true"
+          trivy_version: ${{ env.TRIVY_VERSION }}
+
+  worker_image_ci:
+    name: Worker Image Build
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, source_integrity, static_quality, supply_chain_security]
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build cron-compatible worker image
+        uses: ./.github/actions/iomad-image-build
+        with:
+          image_name: iomad-learning-worker:${{ github.sha }}
+          iomad_ref: ${{ env.IOMAD_REF }}
+          iomad_commit: ${{ env.IOMAD_COMMIT }}
+
+  local_integration_smoke:
+    name: Clean Install And Demo Import Test
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, application_image_ci, worker_image_ci]
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run local IOMAD smoke test
+        uses: ./.github/actions/local-iomad-smoke
+
+  previous_version_upgrade:
+    name: Previous-Version Upgrade Test
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, local_integration_smoke]
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create ENV file
+        run: cp .env.example .env
+
+      - name: Bootstrap IOMAD source
+        run: ./scripts/bootstrap-iomad.sh
+
+      - name: Upgrade previous reviewed commit to pinned release
+        run: ./scripts/test-upgrade-from-previous.sh --yes
+
+      - name: Dump local logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop local services
+        if: always()
+        run: docker compose down -v
+
+  local_recovery_drill:
+    name: Local Backup And Restore Drill
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, local_integration_smoke]
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create ENV file
+        run: cp .env.example .env
+
+      - name: Bootstrap IOMAD source
+        run: ./scripts/bootstrap-iomad.sh
+
+      - name: Install local IOMAD
+        run: ./scripts/install-site.sh
+
+      - name: Exercise matching database and dataroot recovery
+        run: ./scripts/test-backup-restore.sh --yes
+
+      - name: Dump local logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop local services
+        if: always()
+        run: docker compose down -v
+
+  release_metadata:
+    name: Release Image Metadata
+    runs-on: ubuntu-latest
+    needs: change_eligibility
+    if: needs.change_eligibility.outputs.should_run == 'true'
+    outputs:
+      image: ${{ steps.metadata.outputs.image }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Compute release image metadata
+        id: metadata
+        uses: ./.github/actions/release-image-metadata
+        with:
+          image_repository: ${{ env.GHCR_IMAGE_NAME }}
+
+  publish_release_candidate:
+    name: Publish Release Candidate Image
+    runs-on: ubuntu-latest
+    needs:
+      - change_eligibility
+      - release_metadata
+      - local_integration_smoke
+      - previous_version_upgrade
+      - local_recovery_drill
+      - phpunit_integration_tests
+    if: |
+      needs.change_eligibility.outputs.should_run == 'true' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+      (github.event_name != 'workflow_dispatch' || inputs.publish_image == 'true')
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build and push GHCR image
+        uses: ./.github/actions/ghcr-build-push
+        with:
+          image_repository: ${{ env.GHCR_IMAGE_NAME }}
+          iomad_ref: ${{ env.IOMAD_REF }}
+          iomad_commit: ${{ env.IOMAD_COMMIT }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  plan_dev_infrastructure:
+    name: "[Dev] Infrastructure Plan"
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, release_metadata, source_integrity, static_quality, documentation_quality, supply_chain_security]
+    if: vars.AWS_ACCOUNT_ID != '' && needs.change_eligibility.outputs.should_run == 'true'
+    environment: dev
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Terraform plan dev
+        uses: ./.github/actions/terraform-run
+        with:
+          environment: dev
+          command: plan
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          container_repository_url: ${{ env.GHCR_IMAGE_NAME }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  plan_stage_infrastructure:
+    name: "[Stage] Infrastructure Plan"
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, release_metadata, source_integrity, static_quality, documentation_quality, supply_chain_security]
+    if: vars.AWS_ACCOUNT_ID != '' && needs.change_eligibility.outputs.should_run == 'true'
+    environment: stage
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Terraform plan stage
+        uses: ./.github/actions/terraform-run
+        with:
+          environment: stage
+          command: plan
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          container_repository_url: ${{ env.GHCR_IMAGE_NAME }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  plan_prod_infrastructure:
+    name: "[Prod] Infrastructure Plan"
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, release_metadata, source_integrity, static_quality, documentation_quality, supply_chain_security]
+    if: vars.AWS_ACCOUNT_ID != '' && needs.change_eligibility.outputs.should_run == 'true'
+    environment: prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Terraform plan prod
+        uses: ./.github/actions/terraform-run
+        with:
+          environment: prod
+          command: plan
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          container_repository_url: ${{ env.GHCR_IMAGE_NAME }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  apply_dev_infrastructure:
+    name: "[Dev] Infrastructure Apply"
+    runs-on: ubuntu-latest
+    needs: [release_metadata, plan_dev_infrastructure, publish_release_candidate]
+    if: |
+      vars.AWS_ACCOUNT_ID != '' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' &&
+         inputs.apply_infrastructure == 'true' &&
+         (inputs.target_environment == 'dev' || inputs.target_environment == 'all')))
+    environment: dev
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Terraform apply dev
+        uses: ./.github/actions/terraform-run
+        with:
+          environment: dev
+          command: apply
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          container_repository_url: ${{ env.GHCR_IMAGE_NAME }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  stabilize_dev_web:
+    name: "[Dev] Web Service Stabilization"
+    runs-on: ubuntu-latest
+    needs: apply_dev_infrastructure
+    if: needs.apply_dev_infrastructure.result == 'success'
+    environment: dev
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for IOMAD web service
+        uses: ./.github/actions/ecs-service-wait
+        with:
+          environment: dev
+          service_kind: web
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  stabilize_dev_worker:
+    name: "[Dev] Worker Service Stabilization"
+    runs-on: ubuntu-latest
+    needs: apply_dev_infrastructure
+    if: needs.apply_dev_infrastructure.result == 'success'
+    environment: dev
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for IOMAD cron service
+        uses: ./.github/actions/ecs-service-wait
+        with:
+          environment: dev
+          service_kind: cron
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  apply_stage_infrastructure:
+    name: "[Stage] Infrastructure Apply"
+    runs-on: ubuntu-latest
+    needs: [release_metadata, plan_stage_infrastructure, publish_release_candidate]
+    if: |
+      vars.AWS_ACCOUNT_ID != '' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' &&
+         inputs.apply_infrastructure == 'true' &&
+         (inputs.target_environment == 'stage' || inputs.target_environment == 'all')))
+    environment: stage
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Terraform apply stage
+        uses: ./.github/actions/terraform-run
+        with:
+          environment: stage
+          command: apply
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          container_repository_url: ${{ env.GHCR_IMAGE_NAME }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  stabilize_stage_web:
+    name: "[Stage] Web Service Stabilization"
+    runs-on: ubuntu-latest
+    needs: apply_stage_infrastructure
+    if: needs.apply_stage_infrastructure.result == 'success'
+    environment: stage
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for IOMAD web service
+        uses: ./.github/actions/ecs-service-wait
+        with:
+          environment: stage
+          service_kind: web
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  stabilize_stage_worker:
+    name: "[Stage] Worker Service Stabilization"
+    runs-on: ubuntu-latest
+    needs: apply_stage_infrastructure
+    if: needs.apply_stage_infrastructure.result == 'success'
+    environment: stage
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for IOMAD cron service
+        uses: ./.github/actions/ecs-service-wait
+        with:
+          environment: stage
+          service_kind: cron
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  provision_behat_environment:
+    name: "[Extended] Provision Behat Environment"
+    runs-on: ubuntu-latest
+    needs: publish_release_candidate
+    if: github.event_name == 'workflow_dispatch' && inputs.run_extended_tests == 'true' && needs.publish_release_candidate.result == 'success'
+    outputs:
+      workspace: ${{ steps.workspace.outputs.workspace }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare Behat workspace
+        id: workspace
+        uses: ./.github/actions/integration-test-workspace
+        with:
+          suite_name: behat
+
+  provision_phpunit_environment:
+    name: "[Required] Provision PHPUnit Environment"
+    runs-on: ubuntu-latest
+    needs: [change_eligibility, local_integration_smoke]
+    if: needs.change_eligibility.outputs.should_run == 'true' && needs.local_integration_smoke.result == 'success'
+    outputs:
+      workspace: ${{ steps.workspace.outputs.workspace }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare PHPUnit workspace
+        id: workspace
+        uses: ./.github/actions/integration-test-workspace
+        with:
+          suite_name: phpunit
+
+  behat_acceptance_tests:
+    name: "[Extended] Behat Acceptance Tests"
+    runs-on: ubuntu-latest
+    needs: provision_behat_environment
+    if: needs.provision_behat_environment.result == 'success'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Publish Behat placeholder report
+        uses: ./.github/actions/junit-placeholder
+        with:
+          suite_name: behat
+          testcase_name: infrastructure_not_configured
+          skipped_message: Behat infrastructure is not configured in this repository yet.
+          artifact_name: behat-test-results-${{ github.run_number }}
+          output_dir: test-results/behat
+
+  phpunit_integration_tests:
+    name: "[Required] Tenant-Isolation PHPUnit Tests"
+    runs-on: ubuntu-latest
+    needs: provision_phpunit_environment
+    if: needs.provision_phpunit_environment.result == 'success'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create ENV file
+        run: cp .env.example .env
+
+      - name: Bootstrap IOMAD source
+        run: ./scripts/bootstrap-iomad.sh
+
+      - name: Build and install local IOMAD
+        run: |
+          docker compose build
+          ./scripts/install-site.sh
+
+      - name: Run institution-pack PHPUnit tests
+        env:
+          PHPUNIT_JUNIT_PATH: /var/www/iomad/phpunit-junit.xml
+        run: ./scripts/test-phpunit.sh
+
+      - name: Collect PHPUnit report
+        run: |
+          mkdir -p test-results/phpunit
+          cp iomad/phpunit-junit.xml test-results/phpunit/junit.xml
+
+      - name: Upload PHPUnit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-test-results-${{ github.run_number }}
+          path: test-results/phpunit
+          if-no-files-found: error
+
+      - name: Dump local logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop local services
+        if: always()
+        run: docker compose down -v
+
+  publish_behat_report:
+    name: "[Extended] Publish Behat Report"
+    runs-on: ubuntu-latest
+    needs: behat_acceptance_tests
+    if: github.event_name == 'workflow_dispatch' && inputs.run_extended_tests == 'true' && needs.behat_acceptance_tests.result == 'success'
+    steps:
+      - name: Download Behat report
+        uses: actions/download-artifact@v4
+        with:
+          name: behat-test-results-${{ github.run_number }}
+          path: test-results/behat
+
+      - name: Summarize Behat report
+        run: |
+          {
+            echo "### Behat report"
+            echo ""
+            echo "Uploaded artifact: behat-test-results-${GITHUB_RUN_NUMBER}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  publish_phpunit_report:
+    name: "[Required] Publish PHPUnit Report"
+    runs-on: ubuntu-latest
+    needs: phpunit_integration_tests
+    if: needs.phpunit_integration_tests.result == 'success'
+    steps:
+      - name: Download PHPUnit report
+        uses: actions/download-artifact@v4
+        with:
+          name: phpunit-test-results-${{ github.run_number }}
+          path: test-results/phpunit
+
+      - name: Summarize PHPUnit report
+        run: |
+          {
+            echo "### PHPUnit report"
+            echo ""
+            echo "Uploaded artifact: phpunit-test-results-${GITHUB_RUN_NUMBER}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  teardown_behat_environment:
+    name: "[Extended] Teardown Behat Environment"
+    runs-on: ubuntu-latest
+    needs: [provision_behat_environment, behat_acceptance_tests]
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.run_extended_tests == 'true'
+    steps:
+      - name: Teardown Behat metadata
+        run: echo "Teardown complete for ${{ needs.provision_behat_environment.outputs.workspace }}."
+
+  teardown_phpunit_environment:
+    name: "[Required] Teardown PHPUnit Environment"
+    runs-on: ubuntu-latest
+    needs: [provision_phpunit_environment, phpunit_integration_tests]
+    if: always()
+    steps:
+      - name: Teardown PHPUnit metadata
+        run: echo "Teardown complete for ${{ needs.provision_phpunit_environment.outputs.workspace }}."
+
+  stage_smoke_validation:
+    name: "[Stage] Smoke Validation"
+    runs-on: ubuntu-latest
+    needs: [stabilize_stage_web, stabilize_stage_worker]
+    if: needs.stabilize_stage_web.result == 'success' && needs.stabilize_stage_worker.result == 'success'
+    environment: stage
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Smoke-test stage IOMAD
+        uses: ./.github/actions/remote-iomad-smoke
+        with:
+          environment: stage
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  stage_browser_validation:
+    name: "[Stage] Browser Validation"
+    runs-on: ubuntu-latest
+    needs: stage_smoke_validation
+    if: needs.stage_smoke_validation.result == 'success'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run browser E2E suite when present
+        uses: ./.github/actions/playwright-e2e-if-present
+
+  production_change_approval:
+    name: "[Prod] Change Approval"
+    runs-on: ubuntu-latest
+    needs: [plan_prod_infrastructure, stage_smoke_validation, stage_browser_validation]
+    if: |
+      always() &&
+      vars.AWS_ACCOUNT_ID != '' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' &&
+         inputs.apply_infrastructure == 'true' &&
+         (inputs.target_environment == 'prod' || inputs.target_environment == 'all'))) &&
+      needs.plan_prod_infrastructure.result == 'success' &&
+      (needs.stage_smoke_validation.result == 'success' || needs.stage_smoke_validation.result == 'skipped') &&
+      (needs.stage_browser_validation.result == 'success' || needs.stage_browser_validation.result == 'skipped')
+    environment: prod-approval
+    steps:
+      - name: Approval completed
+        run: echo "Production approval gate completed."
+
+  apply_prod_infrastructure:
+    name: "[Prod] Infrastructure Apply"
+    runs-on: ubuntu-latest
+    needs: [release_metadata, production_change_approval, publish_release_candidate]
+    if: needs.production_change_approval.result == 'success'
+    environment: prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Terraform apply prod
+        uses: ./.github/actions/terraform-run
+        with:
+          environment: prod
+          command: apply
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          container_repository_url: ${{ env.GHCR_IMAGE_NAME }}
+          image_tag: ${{ needs.release_metadata.outputs.tag }}
+
+  stabilize_prod_web:
+    name: "[Prod] Web Service Stabilization"
+    runs-on: ubuntu-latest
+    needs: apply_prod_infrastructure
+    if: needs.apply_prod_infrastructure.result == 'success'
+    environment: prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for IOMAD web service
+        uses: ./.github/actions/ecs-service-wait
+        with:
+          environment: prod
+          service_kind: web
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  stabilize_prod_worker:
+    name: "[Prod] Worker Service Stabilization"
+    runs-on: ubuntu-latest
+    needs: apply_prod_infrastructure
+    if: needs.apply_prod_infrastructure.result == 'success'
+    environment: prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Wait for IOMAD cron service
+        uses: ./.github/actions/ecs-service-wait
+        with:
+          environment: prod
+          service_kind: cron
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+  production_smoke_validation:
+    name: "[Prod] Smoke Validation"
+    runs-on: ubuntu-latest
+    needs: [stabilize_prod_web, stabilize_prod_worker]
+    if: needs.stabilize_prod_web.result == 'success' && needs.stabilize_prod_worker.result == 'success'
+    environment: prod
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Smoke-test production IOMAD
+        uses: ./.github/actions/remote-iomad-smoke
+        with:
+          environment: prod
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}

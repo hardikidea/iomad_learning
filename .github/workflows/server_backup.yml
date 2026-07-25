@@ -1,0 +1,252 @@
+name: Server Backup
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Environment to back up"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - stage
+          - prod
+      backup_vault_name:
+        description: "AWS Backup vault name; falls back to BACKUP_VAULT_NAME variable"
+        required: false
+        default: ""
+        type: string
+      backup_role_arn:
+        description: "AWS Backup IAM role ARN; falls back to BACKUP_ROLE_ARN variable"
+        required: false
+        default: ""
+        type: string
+      wait_for_completion:
+        description: "Wait until RDS snapshot and EFS backup complete"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: server-backup-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+env:
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+  PROJECT_NAME: iomad-learning
+  TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+  WAIT_FOR_COMPLETION: ${{ inputs.wait_for_completion }}
+
+jobs:
+  backup:
+    name: Backup ${{ inputs.target_environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate Inputs
+        env:
+          BACKUP_ROLE_ARN_INPUT: ${{ inputs.backup_role_arn }}
+          BACKUP_ROLE_ARN_VAR: ${{ vars.BACKUP_ROLE_ARN }}
+          BACKUP_VAULT_NAME_INPUT: ${{ inputs.backup_vault_name }}
+          BACKUP_VAULT_NAME_VAR: ${{ vars.BACKUP_VAULT_NAME }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${AWS_ACCOUNT_ID}" ]; then
+            echo "Repository variable AWS_ACCOUNT_ID is required." >&2
+            exit 1
+          fi
+
+          BACKUP_VAULT_NAME="${BACKUP_VAULT_NAME_INPUT:-${BACKUP_VAULT_NAME_VAR:-}}"
+          BACKUP_ROLE_ARN="${BACKUP_ROLE_ARN_INPUT:-${BACKUP_ROLE_ARN_VAR:-}}"
+
+          if [ -z "${BACKUP_VAULT_NAME}" ]; then
+            echo "Set BACKUP_VAULT_NAME as an input or repository variable." >&2
+            exit 1
+          fi
+
+          if [ -z "${BACKUP_ROLE_ARN}" ]; then
+            echo "Set BACKUP_ROLE_ARN as an input or repository variable." >&2
+            exit 1
+          fi
+
+          {
+            echo "BACKUP_VAULT_NAME=${BACKUP_VAULT_NAME}"
+            echo "BACKUP_ROLE_ARN=${BACKUP_ROLE_ARN}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Configure AWS OIDC
+        uses: ./.github/actions/aws-oidc
+        with:
+          environment: ${{ inputs.target_environment }}
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Load Terraform Outputs
+        run: |
+          set -euo pipefail
+
+          ENV_DIR="terraform/envs/${TARGET_ENVIRONMENT}"
+          terraform -chdir="${ENV_DIR}" init \
+            -backend-config="bucket=${PROJECT_NAME}-${AWS_ACCOUNT_ID}-${AWS_REGION}-tfstate" \
+            -backend-config="dynamodb_table=${PROJECT_NAME}-terraform-locks" \
+            -backend-config="key=${PROJECT_NAME}/${TARGET_ENVIRONMENT}.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true"
+
+          EFS_ID="$(terraform -chdir="${ENV_DIR}" output -raw efs_file_system_id 2>/dev/null || true)"
+          if [ -z "${EFS_ID}" ]; then
+            EFS_ID="$(
+              aws efs describe-file-systems \
+                --query "FileSystems[?Tags[?Key=='Name' && Value=='${PROJECT_NAME}-${TARGET_ENVIRONMENT}-iomaddata']].FileSystemId | [0]" \
+                --output text
+            )"
+          fi
+
+          if [ -z "${EFS_ID}" ] || [ "${EFS_ID}" = "None" ]; then
+            echo "Could not resolve EFS file system for ${TARGET_ENVIRONMENT}." >&2
+            exit 1
+          fi
+
+          IOMAD_WWWROOT="$(terraform -chdir="${ENV_DIR}" output -raw iomad_wwwroot 2>/dev/null || true)"
+          CLUSTER="$(terraform -chdir="${ENV_DIR}" output -raw ecs_cluster_name)"
+          SERVICE="$(terraform -chdir="${ENV_DIR}" output -raw ecs_service_name)"
+          TASK_DEFINITION="$(
+            aws ecs describe-services \
+              --cluster "${CLUSTER}" \
+              --services "${SERVICE}" \
+              --query 'services[0].taskDefinition' \
+              --output text
+          )"
+          ACTIVE_IMAGE="$(
+            aws ecs describe-task-definition \
+              --task-definition "${TASK_DEFINITION}" \
+              --query "taskDefinition.containerDefinitions[?name=='iomad'].image | [0]" \
+              --output text
+          )"
+          STAMP="$(date -u +%Y%m%d-%H%M%S)"
+          RECOVERY_SET_ID="${PROJECT_NAME}-${TARGET_ENVIRONMENT}-${STAMP}"
+          DB_INSTANCE="${PROJECT_NAME}-${TARGET_ENVIRONMENT}-postgres"
+          DB_SNAPSHOT="${PROJECT_NAME}-${TARGET_ENVIRONMENT}-manual-${STAMP}"
+          EFS_ARN="arn:aws:elasticfilesystem:${AWS_REGION}:${AWS_ACCOUNT_ID}:file-system/${EFS_ID}"
+
+          {
+            echo "ACTIVE_IMAGE=${ACTIVE_IMAGE}"
+            echo "CLUSTER=${CLUSTER}"
+            echo "DB_INSTANCE=${DB_INSTANCE}"
+            echo "DB_SNAPSHOT=${DB_SNAPSHOT}"
+            echo "EFS_ARN=${EFS_ARN}"
+            echo "EFS_ID=${EFS_ID}"
+            echo "IOMAD_WWWROOT=${IOMAD_WWWROOT}"
+            echo "RECOVERY_SET_ID=${RECOVERY_SET_ID}"
+            echo "SERVICE=${SERVICE}"
+            echo "STAMP=${STAMP}"
+            echo "TASK_DEFINITION=${TASK_DEFINITION}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Create RDS Snapshot
+        run: |
+          set -euo pipefail
+
+          aws rds create-db-snapshot \
+            --db-instance-identifier "${DB_INSTANCE}" \
+            --db-snapshot-identifier "${DB_SNAPSHOT}" \
+            --tags \
+              "Key=RecoverySet,Value=${RECOVERY_SET_ID}" \
+              "Key=GitSha,Value=${GITHUB_SHA}" \
+              "Key=TaskDefinition,Value=${TASK_DEFINITION}"
+
+          if [ "${WAIT_FOR_COMPLETION}" = "true" ]; then
+            aws rds wait db-snapshot-available \
+              --db-snapshot-identifier "${DB_SNAPSHOT}"
+          fi
+
+      - name: Create EFS Recovery Point
+        run: |
+          set -euo pipefail
+
+          EFS_BACKUP_JOB_ID="$(
+            aws backup start-backup-job \
+              --backup-vault-name "${BACKUP_VAULT_NAME}" \
+              --resource-arn "${EFS_ARN}" \
+              --iam-role-arn "${BACKUP_ROLE_ARN}" \
+              --idempotency-token "${PROJECT_NAME}-${TARGET_ENVIRONMENT}-${STAMP}" \
+              --recovery-point-tags \
+                "RecoverySet=${RECOVERY_SET_ID},GitSha=${GITHUB_SHA},TaskDefinition=${TASK_DEFINITION}" \
+              --query BackupJobId \
+              --output text
+          )"
+
+          echo "EFS_BACKUP_JOB_ID=${EFS_BACKUP_JOB_ID}" >> "${GITHUB_ENV}"
+
+          if [ "${WAIT_FOR_COMPLETION}" != "true" ]; then
+            exit 0
+          fi
+
+          while true; do
+            STATUS="$(
+              aws backup describe-backup-job \
+                --backup-job-id "${EFS_BACKUP_JOB_ID}" \
+                --query State \
+                --output text
+            )"
+            echo "EFS backup status: ${STATUS}"
+
+            case "${STATUS}" in
+              COMPLETED)
+                EFS_RECOVERY_POINT_ARN="$(
+                  aws backup describe-backup-job \
+                    --backup-job-id "${EFS_BACKUP_JOB_ID}" \
+                    --query RecoveryPointArn \
+                    --output text
+                )"
+                echo "EFS_RECOVERY_POINT_ARN=${EFS_RECOVERY_POINT_ARN}" >> "${GITHUB_ENV}"
+                break
+                ;;
+              ABORTED|FAILED|EXPIRED)
+                exit 1
+                ;;
+            esac
+
+            sleep 30
+          done
+
+      - name: Write Backup Summary
+        if: always()
+        run: |
+          {
+            echo "## Server Backup"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Environment | ${TARGET_ENVIRONMENT} |"
+            echo "| Recovery set | ${RECOVERY_SET_ID:-not-created} |"
+            echo "| IOMAD URL | ${IOMAD_WWWROOT:-unknown} |"
+            echo "| ECS task definition | ${TASK_DEFINITION:-unknown} |"
+            echo "| Active image | ${ACTIVE_IMAGE:-unknown} |"
+            echo "| RDS instance | ${DB_INSTANCE:-not-created} |"
+            echo "| RDS snapshot | ${DB_SNAPSHOT:-not-created} |"
+            echo "| EFS file system | ${EFS_ID:-unknown} |"
+            echo "| EFS backup vault | ${BACKUP_VAULT_NAME:-unknown} |"
+            echo "| EFS backup job | ${EFS_BACKUP_JOB_ID:-not-created} |"
+            echo "| EFS recovery point | ${EFS_RECOVERY_POINT_ARN:-not-created} |"
+            echo "| Git SHA | ${GITHUB_SHA} |"
+          } >> "${GITHUB_STEP_SUMMARY}"

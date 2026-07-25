@@ -1,0 +1,57 @@
+site_name: IOMAD Learning Engineering
+site_description: Production engineering and operations documentation for the pinned IOMAD platform.
+docs_dir: docs
+site_dir: .build/docs-site
+strict: true
+
+theme:
+  name: readthedocs
+
+markdown_extensions:
+  - admonition
+  - fenced_code
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Setup: setup.md
+      - Local test data: 02-getting-started/local-test-data.md
+      - Local Floci cloud: local-cloud-floci.md
+  - Architecture:
+      - Overview: architecture.md
+      - Component boundaries: 03-architecture/component-boundaries.md
+      - AWS: aws-architecture.md
+  - IOMAD domains:
+      - Tenant onboarding: tenant-onboarding.md
+      - Data packs: data-packs.md
+      - Global events and gamification: 05-iomad-domains/gamification-and-global-events.md
+      - Interactive content: 05-iomad-domains/interactive-content.md
+      - Notifications and integrations: 05-iomad-domains/notifications-and-integrations.md
+  - Operations:
+      - Health and observability: 11-operations/health-and-observability.md
+      - Service catalogue: 11-operations/service-catalogue.md
+      - Endpoint catalogue: 11-operations/endpoint-catalogue.md
+      - Exception catalogue: 11-operations/exception-catalogue.md
+      - Telemetry dictionary: 11-operations/telemetry-data-dictionary.md
+      - SLOs, alerts, and dashboards: 11-operations/slo-alert-dashboard-catalogue.md
+      - Failure matrix: 11-operations/failure-mode-matrix.md
+      - Runbooks: 12-runbooks/index.md
+      - Backup and restore: backup-restore.md
+      - Upgrade: upgrade.md
+      - Rollback: rollback.md
+  - Security: security.md
+  - Delivery: ci-cd.md
+  - Governance:
+      - Ownership and change control: 14-governance/ownership-and-change-control.md
+      - Architecture decisions: adr/README.md
+  - Audits:
+      - Existing documentation: audits/existing-documentation-audit.md
+      - Migration map: audits/documentation-migration-map.md
+      - Master prompt compliance: audits/master-prompt-compliance.md
+      - Conflict report: audits/prompt-conflict-report.md
+      - Documentation debt: audits/documentation-debt.md
+      - Validation report: audits/documentation-validation-report.md
+

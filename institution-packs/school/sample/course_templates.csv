@@ -1,0 +1,3 @@
+template_shortname,fullname,category_idnumber,format,summary
+GV_TEMPLATE_PRIMARY,Primary blended course template,GV_STD_01,topics,Primary school course shell
+GV_TEMPLATE_SENIOR,Senior secondary course template,GV_STREAM_SCI,topics,Senior secondary course shell

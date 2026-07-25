@@ -1,0 +1,13 @@
+image_tag = "55b3128b8058d27f6cc4320850ca709ed5a792a9"
+# container_repository_url = "ghcr.io/hardikidea/iomadlearning"
+# container_registry_credentials_secret_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:iomad-learning/stage/ghcr-xxxxxx"
+
+# Optional capacity and alert tuning.
+# autoscaling_min_capacity = 2
+# autoscaling_max_capacity = 6
+# alarm_sns_topic_arns     = ["arn:aws:sns:us-west-2:123456789012:iomad-learning-stage-alerts"]
+
+# Set these when DNS and ACM are ready.
+# route53_zone_id     = "Z1234567890ABC"
+# route53_record_name = "iomad-stage.example.com"
+# certificate_arn     = "arn:aws:acm:us-west-2:123456789012:certificate/..."

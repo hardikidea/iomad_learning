@@ -1,0 +1,3 @@
+institution_id,company_shortname,name,parent_company_shortname,city,country,theme,hostname
+SCH_DEMO,GV_GROUP,Green Valley Education Trust,,Ahmedabad,IN,iomad_learning,trust.localhost
+SCH_DEMO,GV_SCHOOL,Green Valley Demo School,GV_GROUP,Ahmedabad,IN,iomad_learning,school.localhost
