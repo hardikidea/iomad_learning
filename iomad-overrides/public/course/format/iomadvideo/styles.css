@@ -1,0 +1,216 @@
+.iomadvideo-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    gap: 1rem;
+    margin-block-end: 1.5rem;
+    background: #101418;
+    color: #f7f8f8;
+    border: 1px solid #313b42;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.iomadvideo-players {
+    min-width: 0;
+}
+
+.iomadvideo-player[hidden] {
+    display: none;
+}
+
+.iomadvideo-frame {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    overflow: hidden;
+}
+
+.iomadvideo-frame .resourcecontent,
+.iomadvideo-frame iframe,
+.iomadvideo-frame video {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none;
+    border: 0;
+}
+
+.iomadvideo-nowplaying {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 5rem;
+    padding: 0.875rem 1rem;
+}
+
+.iomadvideo-nowplaying h3 {
+    margin: 0.2rem 0 0;
+    font-size: 1.1rem;
+    letter-spacing: 0;
+}
+
+.iomadvideo-kicker {
+    color: #9fcbc0;
+    font-size: 0.8rem;
+}
+
+.iomadvideo-playlist {
+    min-width: 0;
+    border-inline-start: 1px solid #313b42;
+}
+
+.iomadvideo-playlist summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.iomadvideo-playlist ol {
+    max-height: 34rem;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.iomadvideo-playlist-item {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 4.5rem;
+    padding: 0.75rem 1rem;
+    color: inherit;
+    text-align: start;
+    background: transparent;
+    border: 0;
+    border-block-start: 1px solid #313b42;
+}
+
+.iomadvideo-playlist-item:hover,
+.iomadvideo-playlist-item:focus-visible {
+    background: #253139;
+}
+
+.iomadvideo-playlist-item.is-active {
+    color: #101418;
+    background: #a9dfd1;
+}
+
+.iomadvideo-playlist-item strong,
+.iomadvideo-playlist-item small {
+    display: block;
+}
+
+.iomadvideo-playlist-item strong {
+    overflow-wrap: anywhere;
+}
+
+.iomadvideo-playlist-item small {
+    margin-block-start: 0.2rem;
+    color: inherit;
+    opacity: 0.78;
+}
+
+.iomadvideo-position {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-variant-numeric: tabular-nums;
+}
+
+.iomadvideo-layout-classroom .iomadvideo-stage,
+.iomadvideo-layout-minimal .iomadvideo-stage {
+    color: #1d252a;
+    background: #fff;
+    border-color: #c9d0d4;
+}
+
+.iomadvideo-layout-classroom .iomadvideo-playlist,
+.iomadvideo-layout-classroom .iomadvideo-playlist-item,
+.iomadvideo-layout-minimal .iomadvideo-playlist,
+.iomadvideo-layout-minimal .iomadvideo-playlist-item {
+    border-color: #dce1e4;
+}
+
+.iomadvideo-layout-split .iomadvideo-stage {
+    grid-template-columns: minmax(18rem, 42%) minmax(0, 1fr);
+}
+
+.iomadvideo-layout-split .iomadvideo-players {
+    order: 2;
+}
+
+.iomadvideo-layout-split .iomadvideo-playlist {
+    border-inline-start: 0;
+    border-inline-end: 1px solid #313b42;
+}
+
+.iomadvideo-layout-theatre .iomadvideo-stage {
+    grid-template-columns: 1fr;
+}
+
+.iomadvideo-layout-theatre .iomadvideo-playlist {
+    border-inline-start: 0;
+    border-block-start: 1px solid #313b42;
+}
+
+.iomadvideo-layout-theatre .iomadvideo-playlist ol {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    max-height: none;
+}
+
+.iomadvideo-layout-compact .iomadvideo-stage {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+}
+
+.iomadvideo-layout-compact .iomadvideo-nowplaying {
+    min-height: 4rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.iomadvideo-layout-minimal .iomadvideo-playlist summary {
+    padding-block: 0.65rem;
+}
+
+.iomadvideo-focus .secondary-navigation,
+.iomadvideo-focus ~ .drawer-toggles {
+    display: none;
+}
+
+[dir="rtl"] .iomadvideo-playlist-item {
+    text-align: start;
+}
+
+@media (max-width: 767.98px) {
+    .iomadvideo-stage,
+    .iomadvideo-layout-split .iomadvideo-stage,
+    .iomadvideo-layout-compact .iomadvideo-stage {
+        grid-template-columns: 1fr;
+    }
+
+    .iomadvideo-layout-split .iomadvideo-players {
+        order: 0;
+    }
+
+    .iomadvideo-playlist,
+    .iomadvideo-layout-split .iomadvideo-playlist {
+        border-inline: 0;
+        border-block-start: 1px solid #313b42;
+    }
+
+    .iomadvideo-nowplaying {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

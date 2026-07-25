@@ -1,0 +1,42 @@
+name: GHCR Build And Push
+description: Build the production IOMAD image and push it to GitHub Container Registry.
+
+inputs:
+  image_repository:
+    description: Full GHCR image repository, for example ghcr.io/hardikidea/iomadlearning.
+    required: true
+  iomad_commit:
+    description: IOMAD Git commit to bake into the image.
+    required: true
+  iomad_ref:
+    description: Reviewed IOMAD ref used to fetch the pinned commit.
+    required: true
+  image_tag:
+    description: Image tag to publish.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push production image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/iomad/Dockerfile
+        push: true
+        build-args: |
+          INCLUDE_IOMAD_SOURCE=true
+          IOMAD_REF=${{ inputs.iomad_ref }}
+          IOMAD_COMMIT=${{ inputs.iomad_commit }}
+        tags: |
+          ${{ inputs.image_repository }}:${{ inputs.image_tag }}

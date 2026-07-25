@@ -1,0 +1,14 @@
+template_shortname,fullname,category_idnumber,format,summary
+GV_TEMPLATE_STD01,Standard 1 course template,GV_STD_01,topics,Sanitized template metadata for Standard 1.
+GV_TEMPLATE_STD02,Standard 2 course template,GV_STD_02,topics,Sanitized template metadata for Standard 2.
+GV_TEMPLATE_STD03,Standard 3 course template,GV_STD_03,topics,Sanitized template metadata for Standard 3.
+GV_TEMPLATE_STD04,Standard 4 course template,GV_STD_04,topics,Sanitized template metadata for Standard 4.
+GV_TEMPLATE_STD05,Standard 5 course template,GV_STD_05,topics,Sanitized template metadata for Standard 5.
+GV_TEMPLATE_STD06,Standard 6 course template,GV_STD_06,topics,Sanitized template metadata for Standard 6.
+GV_TEMPLATE_STD07,Standard 7 course template,GV_STD_07,topics,Sanitized template metadata for Standard 7.
+GV_TEMPLATE_STD08,Standard 8 course template,GV_STD_08,topics,Sanitized template metadata for Standard 8.
+GV_TEMPLATE_STD09,Standard 9 course template,GV_STD_09,topics,Sanitized template metadata for Standard 9.
+GV_TEMPLATE_STD10,Standard 10 course template,GV_STD_10,topics,Sanitized template metadata for Standard 10.
+GV_TEMPLATE_STD11,Standard 11 course template,GV_STD_11,topics,Sanitized template metadata for Standard 11.
+GV_TEMPLATE_STD12,Standard 12 course template,GV_STD_12,topics,Sanitized template metadata for Standard 12.
+GV_TEMPLATE_ORIENTATION,School orientation template,GV_ORIENTATION,topics,Sanitized all-learner orientation template metadata.

@@ -1,0 +1,58 @@
+name: Infrastructure Drift Detection
+
+on:
+  schedule:
+    - cron: "10 2 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Environment to check"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - dev
+          - stage
+          - prod
+      fail_on_drift:
+        description: "Fail the workflow when drift is detected"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+  PROJECT_NAME: iomad-learning
+
+jobs:
+  terraform_drift_detection:
+    name: "[${{ matrix.environment }}] Terraform Drift Detection"
+    runs-on: ubuntu-latest
+    if: vars.AWS_ACCOUNT_ID != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, stage, prod]
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Detect Terraform drift
+        if: >-
+          github.event_name != 'workflow_dispatch' ||
+          github.event.inputs.target_environment == 'all' ||
+          github.event.inputs.target_environment == matrix.environment
+        uses: ./.github/actions/terraform-drift-detect
+        with:
+          environment: ${{ matrix.environment }}
+          aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+          aws_region: ${{ env.AWS_REGION }}
+          project_name: ${{ env.PROJECT_NAME }}
+          fail_on_drift: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.fail_on_drift == 'true' }}

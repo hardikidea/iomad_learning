@@ -1,0 +1,45 @@
+name: JUnit Placeholder
+description: Publish a skipped JUnit report for a future integration test suite.
+
+inputs:
+  suite_name:
+    description: JUnit suite name.
+    required: true
+  testcase_name:
+    description: JUnit testcase name.
+    required: true
+  skipped_message:
+    description: Message recorded in the skipped testcase.
+    required: true
+  artifact_name:
+    description: Artifact name to upload.
+    required: true
+  output_dir:
+    description: Directory where the report is written.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create skipped JUnit report
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "${{ inputs.output_dir }}"
+        cat > "${{ inputs.output_dir }}/junit.xml" <<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <testsuites>
+          <testsuite name="${{ inputs.suite_name }}" tests="1" skipped="1">
+            <testcase classname="${{ inputs.suite_name }}" name="${{ inputs.testcase_name }}">
+              <skipped message="${{ inputs.skipped_message }}" />
+            </testcase>
+          </testsuite>
+        </testsuites>
+        XML
+
+    - name: Upload JUnit artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.output_dir }}
+        if-no-files-found: error

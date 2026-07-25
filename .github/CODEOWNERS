@@ -1,0 +1,12 @@
+# Replace this repository-local owner with real protected GitHub teams before production.
+* @hardikidea
+
+/iomad-overrides/ @hardikidea
+/institution-packs/ @hardikidea
+/terraform/ @hardikidea
+/.github/workflows/ @hardikidea
+/scripts/backup* @hardikidea
+/scripts/restore* @hardikidea
+/docs/11-operations/ @hardikidea
+/docs/12-runbooks/ @hardikidea
+/docs/13-security/ @hardikidea

@@ -1,0 +1,2 @@
+institution_id,company_shortname,name,parent_company_shortname,city,country,theme,hostname
+SCH_DEMO,GV_SCHOOL,Demo School,,Ahmedabad,IN,iomad_learning,school.localhost

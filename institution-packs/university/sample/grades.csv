@@ -1,0 +1,5 @@
+institution_id,grade_shortname,name
+UNI_DEMO,UG,Undergraduate
+UNI_DEMO,PG,Postgraduate
+UNI_DEMO,PHD,Doctoral
+UNI_DEMO,CERT,Certificate

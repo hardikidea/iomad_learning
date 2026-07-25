@@ -1,0 +1,10 @@
+template_shortname,fullname,category_idnumber,format,summary
+NBU_TEMPLATE_BTECH_CSE,B.Tech Computer Science semester template,NBU_BTECH_CSE_SEM1,topics,Sanitized template metadata for B.Tech Computer Science.
+NBU_TEMPLATE_BTECH_ECE,B.Tech Electronics semester template,NBU_BTECH_ECE_SEM1,topics,Sanitized template metadata for B.Tech Electronics.
+NBU_TEMPLATE_BBA,Bachelor of Business Administration semester template,NBU_BBA_SEM1,topics,Sanitized template metadata for Bachelor of Business Administration.
+NBU_TEMPLATE_MBA,Master of Business Administration semester template,NBU_MBA_SEM1,topics,Sanitized template metadata for Master of Business Administration.
+NBU_TEMPLATE_BSC_DS,B.Sc Data Science semester template,NBU_BSC_DS_SEM1,topics,Sanitized template metadata for B.Sc Data Science.
+NBU_TEMPLATE_MSC_DS,M.Sc Data Science semester template,NBU_MSC_DS_SEM1,topics,Sanitized template metadata for M.Sc Data Science.
+NBU_TEMPLATE_BA_ENG,B.A. English semester template,NBU_BA_ENG_SEM1,topics,Sanitized template metadata for B.A. English.
+NBU_TEMPLATE_MA_ENG,M.A. English semester template,NBU_MA_ENG_SEM1,topics,Sanitized template metadata for M.A. English.
+NBU_TEMPLATE_ORIENTATION,University orientation template,NBU_ORIENTATION,topics,Sanitized all-learner orientation template metadata.

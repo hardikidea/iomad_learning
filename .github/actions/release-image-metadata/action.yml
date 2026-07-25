@@ -1,0 +1,35 @@
+name: Release Image Metadata
+description: Compute immutable container image tag and reference for the current workflow run.
+
+inputs:
+  image_repository:
+    description: Container image repository without tag.
+    required: true
+
+outputs:
+  image:
+    description: Fully qualified image reference.
+    value: ${{ steps.metadata.outputs.image }}
+  tag:
+    description: Image tag.
+    value: ${{ steps.metadata.outputs.tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute image metadata
+      id: metadata
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        tag="${GITHUB_SHA}"
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          tag="pr-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:12}"
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          tag="manual-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:12}"
+        fi
+
+        echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+        echo "image=${{ inputs.image_repository }}:${tag}" >> "${GITHUB_OUTPUT}"
+        echo "Image: ${{ inputs.image_repository }}:${tag}" >> "${GITHUB_STEP_SUMMARY}"

@@ -1,0 +1,9 @@
+.local-tenantanalytics-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.local-tenantanalytics-summary {
+    color: var(--bs-secondary-color);
+}

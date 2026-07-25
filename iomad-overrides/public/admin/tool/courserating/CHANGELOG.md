@@ -1,0 +1,70 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+## [4.5.1] - 2026-04-17
+### Fixed
+- Web service missing validate_context() call - detected by https://mdlshield.com
+- Prevent hooks from being executed during upgrade (missing `global $CFG`)
+- Removed fallbacks to APIs from old versions of Moodle that are no longer supported by this plugin
+- Validate that rating value is within allowed limits in API and form
+
+## [4.5.0] - 2026032800
+### Changed
+- Minimum supported Moodle version raised to 4.5
+- Replaced deprecated modal_factory
+- Other changes to support Moodle 5.2
+
+## [4.1.0] - 2025110600
+### Added
+- Ability to completely disable text reviews or make them visible to teachers only #9
+
+### Changed
+- Raised minimum supported Moodle version to 4.1, remove legacy code
+
+## [1.9] - 2025110400
+### Fixed
+- Call to undefined function tool_courserating\external_format_text #20, #22
+
+## [1.8] - 2025100700
+### Added
+- Support for Moodle 5.0 and 5.1
+
+## [1.7] - 2024100500
+### Added
+- Support for Moodle 4.5
+
+## [1.6] - 2024052100
+### Added
+- Support for Moodle 4.4
+### Fixed
+- Coding style fixes
+- Failing core unittests, #12
+
+## [1.5] - 2023112400
+### Added
+- Display course ratings details to non-logged in users instead of redirecting to login page
+- Add testing on Moodle 4.3
+
+## [1.4] - 2023072800
+### Added
+- Compatibility with Moodle 4.1 and 4.2
+
+## [1.3] - 2022111300
+### Added
+- Course report with all individual ratings and reviews
+- For Moodle 4.0 - data source for the report builder for all courses ratings and reviews
+
+### Changed
+- Hide "Course rating" field from the course edit form
+
+## [1.2] - 2022070800
+### Changed
+- Prevent JS from loading in 'embedded' page layout (fixes bug when used with filter_embedquestion plugin).
+
+## [1.1] - 2022070500
+### Added
+- New setting **tool_courserating/parentcss** allows to specify custom position of the
+  course rating on the course page (useful for custom site themes).
+
+## [1.0] - 2022061900
+First release

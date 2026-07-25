@@ -1,0 +1,93 @@
+name: Terraform Run
+description: Initialize Terraform with the project S3 backend and run plan or apply.
+
+inputs:
+  environment:
+    description: "Deployment environment: dev, stage, or prod."
+    required: true
+  command:
+    description: "Terraform command to run: plan or apply."
+    required: true
+  aws_account_id:
+    description: AWS account ID.
+    required: true
+  aws_region:
+    description: AWS region.
+    required: true
+  project_name:
+    description: Project name and backend prefix.
+    required: true
+  image_tag:
+    description: Container image tag to deploy.
+    required: true
+  container_repository_url:
+    description: Container image repository URL without tag.
+    required: true
+  cron_desired_count:
+    description: Desired count for the IOMAD cron ECS service.
+    required: false
+    default: "1"
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS OIDC
+      uses: ./.github/actions/aws-oidc
+      with:
+        environment: ${{ inputs.environment }}
+        aws_account_id: ${{ inputs.aws_account_id }}
+        aws_region: ${{ inputs.aws_region }}
+        project_name: ${{ inputs.project_name }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform ${{ inputs.command }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        cd "terraform/envs/${{ inputs.environment }}"
+
+        terraform init \
+          -backend-config="bucket=${{ inputs.project_name }}-${{ inputs.aws_account_id }}-${{ inputs.aws_region }}-tfstate" \
+          -backend-config="dynamodb_table=${{ inputs.project_name }}-terraform-locks" \
+          -backend-config="key=${{ inputs.project_name }}/${{ inputs.environment }}.tfstate" \
+          -backend-config="region=${{ inputs.aws_region }}" \
+          -backend-config="encrypt=true"
+
+        terraform validate
+
+        if [ "${{ inputs.command }}" = "plan" ]; then
+          terraform plan \
+            -input=false \
+            -no-color \
+            -out=tfplan \
+            -var "container_repository_url=${{ inputs.container_repository_url }}" \
+            -var "image_tag=${{ inputs.image_tag }}" \
+            -var "cron_desired_count=${{ inputs.cron_desired_count }}"
+
+          {
+            echo "### Terraform plan: ${{ inputs.environment }}"
+            echo ""
+            echo "<details><summary>Show plan</summary>"
+            echo ""
+            echo '```'
+            terraform show -no-color tfplan
+            echo '```'
+            echo "</details>"
+          } >> "${GITHUB_STEP_SUMMARY}"
+        elif [ "${{ inputs.command }}" = "apply" ]; then
+          terraform apply \
+            -input=false \
+            -auto-approve \
+            -no-color \
+            -var "container_repository_url=${{ inputs.container_repository_url }}" \
+            -var "image_tag=${{ inputs.image_tag }}" \
+            -var "cron_desired_count=${{ inputs.cron_desired_count }}"
+        else
+          echo "Unsupported Terraform command: ${{ inputs.command }}"
+          exit 1
+        fi

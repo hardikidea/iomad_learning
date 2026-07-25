@@ -1,0 +1,11 @@
+company_shortname,department_shortname,name,parent_department_shortname
+NBU_ENGINEERING,NBU_REGISTRY,Registry and Admissions,
+NBU_ENGINEERING,NBU_CSE,Computer Science and Engineering,
+NBU_ENGINEERING,NBU_ECE,Electronics and Communication,
+NBU_ENGINEERING,NBU_BUSINESS,Business and Management,
+NBU_ENGINEERING,NBU_SCIENCE,Science and Data,
+NBU_ENGINEERING,NBU_ARTS,Arts and Humanities,
+NBU_ENGINEERING,NBU_RESEARCH,Research and Innovation,
+NBU_ENGINEERING,NBU_LIBRARY,Library Services,
+NBU_ENGINEERING,NBU_STUDENT,Student Services,
+NBU_ENGINEERING,NBU_IT,Information Technology,

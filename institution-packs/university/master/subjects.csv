@@ -1,0 +1,13 @@
+institution_id,subject_shortname,name
+UNI_DEMO,PROG101,Programming Fundamentals
+UNI_DEMO,DS101,Data Structures
+UNI_DEMO,DB101,Database Systems
+UNI_DEMO,WEB101,Web Engineering
+UNI_DEMO,EC101,Circuit Fundamentals
+UNI_DEMO,BUS101,Management Foundations
+UNI_DEMO,ACC101,Accounting
+UNI_DEMO,STAT101,Statistics
+UNI_DEMO,ML101,Machine Learning
+UNI_DEMO,LIT101,Literature
+UNI_DEMO,COM101,Communication
+UNI_DEMO,RES101,Research Methods

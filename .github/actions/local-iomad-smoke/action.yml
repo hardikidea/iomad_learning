@@ -1,0 +1,46 @@
+name: Local IOMAD Clean Install Test
+description: Clean-install IOMAD, import both sanitized demo packs, and verify every configured tenant hostname.
+
+runs:
+  using: composite
+  steps:
+    - name: Create ENV file
+      shell: bash
+      run: cp .env.example .env
+
+    - name: Bootstrap IOMAD source
+      shell: bash
+      run: ./scripts/bootstrap-iomad.sh
+
+    - name: Clean-install IOMAD and import demo packs
+      shell: bash
+      run: ./scripts/test-clean-install.sh --yes
+
+    - name: Check service status
+      shell: bash
+      run: docker compose ps
+
+    - name: Check IOMAD home page
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -fsS --max-time 30 "http://localhost:${IOMAD_HTTP_PORT}/" >/tmp/iomad-home.html
+        grep -q "IOMAD Learning Local" /tmp/iomad-home.html
+
+    - name: Check default and tenant login pages
+      shell: bash
+      run: ./scripts/tenant-smoke-test.sh
+
+    - name: Confirm installed IOMAD release
+      shell: bash
+      run: docker compose exec -T iomad php admin/cli/cfg.php --name=release
+
+    - name: Dump logs on failure
+      if: failure()
+      shell: bash
+      run: docker compose logs --no-color
+
+    - name: Stop services
+      if: always()
+      shell: bash
+      run: docker compose down -v

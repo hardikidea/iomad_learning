@@ -1,0 +1,49 @@
+name: Remote IOMAD Smoke Test
+description: Resolve a Terraform environment URL and smoke-test IOMAD home and login pages.
+
+inputs:
+  environment:
+    description: "Deployment environment: dev, stage, or prod."
+    required: true
+  aws_account_id:
+    description: AWS account ID.
+    required: true
+  aws_region:
+    description: AWS region.
+    required: true
+  project_name:
+    description: Project name and backend prefix.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS OIDC
+      uses: ./.github/actions/aws-oidc
+      with:
+        environment: ${{ inputs.environment }}
+        aws_account_id: ${{ inputs.aws_account_id }}
+        aws_region: ${{ inputs.aws_region }}
+        project_name: ${{ inputs.project_name }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Check IOMAD pages
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        cd "terraform/envs/${{ inputs.environment }}"
+        terraform init \
+          -backend-config="bucket=${{ inputs.project_name }}-${{ inputs.aws_account_id }}-${{ inputs.aws_region }}-tfstate" \
+          -backend-config="dynamodb_table=${{ inputs.project_name }}-terraform-locks" \
+          -backend-config="key=${{ inputs.project_name }}/${{ inputs.environment }}.tfstate" \
+          -backend-config="region=${{ inputs.aws_region }}" \
+          -backend-config="encrypt=true"
+
+        wwwroot="$(terraform output -raw iomad_wwwroot)"
+        curl -fsS --retry 6 --retry-delay 10 --max-time 30 "${wwwroot%/}/" >/tmp/iomad-remote-home.html
+        curl -fsS --retry 6 --retry-delay 10 --max-time 30 "${wwwroot%/}/login/index.php" >/tmp/iomad-remote-login.html

@@ -1,0 +1,96 @@
+.tenantform {
+    --tenantform-accent: #176b5b;
+    border-top: 4px solid var(--tenantform-accent);
+    max-width: 56rem;
+    padding-top: 1.25rem;
+}
+
+.tenantform__progress {
+    color: var(--bs-secondary-color, #5f6368);
+    font-size: .875rem;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 1rem;
+}
+
+.tenantform__page {
+    min-height: 18rem;
+}
+
+.tenantform__page > h3 {
+    font-size: 1.35rem;
+    margin-bottom: 1.25rem;
+}
+
+.tenantform__field {
+    margin-bottom: 1.25rem;
+}
+
+.tenantform--compact .tenantform__field {
+    margin-bottom: .75rem;
+}
+
+.tenantform__field > label,
+.tenantform__legend {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: .35rem;
+}
+
+.tenantform__fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.tenantform__help {
+    color: var(--bs-secondary-color, #5f6368);
+    font-size: .875rem;
+    margin-bottom: .4rem;
+}
+
+.tenantform__required {
+    color: #b42318;
+    margin-left: .25rem;
+}
+
+.tenantform__error {
+    color: #b42318;
+    font-size: .875rem;
+    margin-top: .35rem;
+}
+
+.tenantform__field--error .form-control {
+    border-color: #b42318;
+}
+
+.tenantform__actions {
+    display: flex;
+    gap: .75rem;
+    justify-content: flex-end;
+    min-height: 2.5rem;
+}
+
+.tenantform__actions .btn-primary {
+    background-color: var(--tenantform-accent);
+    border-color: var(--tenantform-accent);
+}
+
+.tenantform-entry__value {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 575.98px) {
+    .tenantform__page {
+        min-height: 14rem;
+    }
+
+    .tenantform__actions {
+        justify-content: stretch;
+    }
+
+    .tenantform__actions .btn {
+        flex: 1 1 auto;
+    }
+}

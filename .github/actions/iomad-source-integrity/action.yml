@@ -1,0 +1,40 @@
+name: IOMAD Source Integrity
+description: Validate local scripts, Docker Compose, and the configured IOMAD source checkout.
+
+inputs:
+  iomad_commit:
+    description: Pinned IOMAD commit expected in the local checkout.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create ENV file
+      shell: bash
+      run: cp .env.example .env
+
+    - name: Check shell syntax
+      shell: bash
+      run: |
+        set -euo pipefail
+        bash -n scripts/*.sh
+        bash -n docker/iomad/*.sh
+
+    - name: Validate Docker Compose
+      shell: bash
+      run: docker compose config --quiet
+
+    - name: Bootstrap IOMAD source
+      shell: bash
+      run: ./scripts/bootstrap-iomad.sh
+
+    - name: Confirm IOMAD commit
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git -C iomad rev-parse HEAD)" = "${{ inputs.iomad_commit }}"
+        git -C iomad log --oneline -1
+
+    - name: Validate IOMAD operational baseline
+      shell: bash
+      run: ./scripts/validate-iomad-operational-baseline.sh

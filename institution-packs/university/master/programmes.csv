@@ -1,0 +1,9 @@
+institution_id,programme_shortname,name,faculty_shortname
+UNI_DEMO,BTECH_CSE,B.Tech Computer Science,ENG
+UNI_DEMO,BTECH_ECE,B.Tech Electronics,ENG
+UNI_DEMO,BBA,Bachelor of Business Administration,BUS
+UNI_DEMO,MBA,Master of Business Administration,BUS
+UNI_DEMO,BSC_DS,B.Sc Data Science,SCI
+UNI_DEMO,MSC_DS,M.Sc Data Science,SCI
+UNI_DEMO,BA_ENG,B.A. English,ARTS
+UNI_DEMO,MA_ENG,M.A. English,ARTS

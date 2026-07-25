@@ -1,0 +1,82 @@
+# Local secrets and environment.
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.local
+*.secret
+*.pem
+*.key
+*.crt
+.envrc
+.direnv/
+
+# Operating system and editor files.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.bak-*
+*.orig
+*.rej
+
+# Logs, reports, and temporary output.
+*.log
+logs/
+tmp/
+temp/
+.cache/
+coverage/
+reports/
+.runtime-secrets/
+repository-sbom.cdx.json
+__pycache__/
+*.pyc
+.phpunit.result.cache
+.phpunit.cache/
+.eslintcache
+.stylelintcache
+
+# Runtime data and local backups.
+backups/
+iomaddata/
+institution-packs/**/workbooks/
+institution-packs/**/normalized/
+postgres-data/
+redis-data/
+db-data/
+/plugins/
+commercial-integrations/artifacts/
+commercial-integrations/reporting.env
+.~lock.*#
+
+# Terraform local state and generated working directories.
+**/.terraform/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Dependency and build output directories.
+/node_modules/
+/vendor/
+/dist/
+/build/
+research/drona_public_school/build/zip/*.zip
+
+# Upstream IOMAD source is bootstrapped from the official IOMAD ref and pinned commit.
+# Keep the local checkout out of the root project repository.
+iomad/

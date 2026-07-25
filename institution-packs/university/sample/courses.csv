@@ -1,0 +1,34 @@
+course_shortname,fullname,category_idnumber,company_shortname,department_shortname,template_shortname,format,visible,summary
+NBU-PROG101-2026,Programming Fundamentals 2026,NBU_PROG101,NBU_ENGINEERING,NBU_CSE,NBU_TEMPLATE_BTECH_CSE,topics,1,Sanitized demonstration course for Programming Fundamentals 2026.
+NBU-DS101-2026,Data Structures 2026,NBU_DS101,NBU_ENGINEERING,NBU_CSE,NBU_TEMPLATE_BTECH_CSE,iomadvideo,1,Sanitized demonstration course for Data Structures 2026.
+NBU-DB101-2026,Database Systems 2026,NBU_DB101,NBU_ENGINEERING,NBU_CSE,NBU_TEMPLATE_BTECH_CSE,topics,1,Sanitized demonstration course for Database Systems 2026.
+NBU-WEB101-2026,Web Engineering 2026,NBU_WEB101,NBU_ENGINEERING,NBU_CSE,NBU_TEMPLATE_BTECH_CSE,topics,1,Sanitized demonstration course for Web Engineering 2026.
+NBU-EC101-2026,Circuit Fundamentals 2026,NBU_EC101,NBU_ENGINEERING,NBU_ECE,NBU_TEMPLATE_BTECH_ECE,topics,1,Sanitized demonstration course for Circuit Fundamentals 2026.
+NBU-EC102-2026,Digital Systems 2026,NBU_EC102,NBU_ENGINEERING,NBU_ECE,NBU_TEMPLATE_BTECH_ECE,iomadvideo,1,Sanitized demonstration course for Digital Systems 2026.
+NBU-EC103-2026,Signals and Systems 2026,NBU_EC103,NBU_ENGINEERING,NBU_ECE,NBU_TEMPLATE_BTECH_ECE,topics,1,Sanitized demonstration course for Signals and Systems 2026.
+NBU-EC104-2026,Embedded Systems 2026,NBU_EC104,NBU_ENGINEERING,NBU_ECE,NBU_TEMPLATE_BTECH_ECE,topics,1,Sanitized demonstration course for Embedded Systems 2026.
+NBU-BUS101-2026,Management Foundations 2026,NBU_BUS101,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_BBA,topics,1,Sanitized demonstration course for Management Foundations 2026.
+NBU-ACC101-2026,Accounting 2026,NBU_ACC101,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_BBA,iomadvideo,1,Sanitized demonstration course for Accounting 2026.
+NBU-MKT101-2026,Marketing 2026,NBU_MKT101,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_BBA,topics,1,Sanitized demonstration course for Marketing 2026.
+NBU-ECO101-2026,Economics 2026,NBU_ECO101,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_BBA,topics,1,Sanitized demonstration course for Economics 2026.
+NBU-MBA501-2026,Strategic Management 2026,NBU_MBA501,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_MBA,topics,1,Sanitized demonstration course for Strategic Management 2026.
+NBU-MBA502-2026,Corporate Finance 2026,NBU_MBA502,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_MBA,iomadvideo,1,Sanitized demonstration course for Corporate Finance 2026.
+NBU-MBA503-2026,Operations Management 2026,NBU_MBA503,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_MBA,topics,1,Sanitized demonstration course for Operations Management 2026.
+NBU-MBA504-2026,Leadership 2026,NBU_MBA504,NBU_ENGINEERING,NBU_BUSINESS,NBU_TEMPLATE_MBA,topics,1,Sanitized demonstration course for Leadership 2026.
+NBU-STAT101-2026,Statistics 2026,NBU_STAT101,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_BSC_DS,topics,1,Sanitized demonstration course for Statistics 2026.
+NBU-ML101-2026,Machine Learning 2026,NBU_ML101,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_BSC_DS,iomadvideo,1,Sanitized demonstration course for Machine Learning 2026.
+NBU-DV101-2026,Data Visualization 2026,NBU_DV101,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_BSC_DS,topics,1,Sanitized demonstration course for Data Visualization 2026.
+NBU-PY101-2026,Python for Data Science 2026,NBU_PY101,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_BSC_DS,topics,1,Sanitized demonstration course for Python for Data Science 2026.
+NBU-ADS501-2026,Advanced Data Science 2026,NBU_ADS501,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_MSC_DS,topics,1,Sanitized demonstration course for Advanced Data Science 2026.
+NBU-AI501-2026,Applied Artificial Intelligence 2026,NBU_AI501,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_MSC_DS,iomadvideo,1,Sanitized demonstration course for Applied Artificial Intelligence 2026.
+NBU-BD501-2026,Big Data Systems 2026,NBU_BD501,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_MSC_DS,topics,1,Sanitized demonstration course for Big Data Systems 2026.
+NBU-RES501-2026,Research Methods 2026,NBU_RES501,NBU_ENGINEERING,NBU_SCIENCE,NBU_TEMPLATE_MSC_DS,topics,1,Sanitized demonstration course for Research Methods 2026.
+NBU-LIT101-2026,World Literature 2026,NBU_LIT101,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_BA_ENG,topics,1,Sanitized demonstration course for World Literature 2026.
+NBU-COM101-2026,Academic Communication 2026,NBU_COM101,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_BA_ENG,iomadvideo,1,Sanitized demonstration course for Academic Communication 2026.
+NBU-LIN101-2026,Linguistics 2026,NBU_LIN101,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_BA_ENG,topics,1,Sanitized demonstration course for Linguistics 2026.
+NBU-CW101-2026,Creative Writing 2026,NBU_CW101,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_BA_ENG,topics,1,Sanitized demonstration course for Creative Writing 2026.
+NBU-LIT501-2026,Literary Theory 2026,NBU_LIT501,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_MA_ENG,topics,1,Sanitized demonstration course for Literary Theory 2026.
+NBU-CUL501-2026,Cultural Studies 2026,NBU_CUL501,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_MA_ENG,iomadvideo,1,Sanitized demonstration course for Cultural Studies 2026.
+NBU-RES502-2026,Humanities Research 2026,NBU_RES502,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_MA_ENG,topics,1,Sanitized demonstration course for Humanities Research 2026.
+NBU-DIG501-2026,Digital Humanities 2026,NBU_DIG501,NBU_ENGINEERING,NBU_ARTS,NBU_TEMPLATE_MA_ENG,topics,1,Sanitized demonstration course for Digital Humanities 2026.
+NBU-ORIENTATION-2026,University Orientation 2026,NBU_ORIENTATION,NBU_ENGINEERING,NBU_STUDENT,NBU_TEMPLATE_ORIENTATION,topics,1,Sanitized all-learner course used for feature demonstrations.

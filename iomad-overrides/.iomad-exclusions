@@ -1,0 +1,5 @@
+# Paths are relative to the pinned IOMAD repository root.
+# Each exclusion must be reviewed, documented, and exercised by clean-install
+# and previous-version upgrade tests.
+public/auth/iomadsaml2
+public/admin/tool/mfa/factor/sms/db/hooks.php

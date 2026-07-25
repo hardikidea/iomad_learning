@@ -1,0 +1,5 @@
+policy_key,company_shortname,name,audience,revision,summary,content
+NBU_ACADEMIC_INTEGRITY,NBU_ENGINEERING,University Academic Integrity,authenticated,2026.1,Academic integrity expectations.,<p>Sanitized demonstration academic integrity policy.</p>
+NBU_RESEARCH_ETHICS,NBU_ENGINEERING,Research Ethics,authenticated,2026.1,Research ethics expectations.,<p>Sanitized demonstration research ethics policy.</p>
+NBU_PRIVACY,NBU_ENGINEERING,University Privacy Notice,all,2026.1,Privacy and data handling.,<p>Sanitized demonstration privacy notice.</p>
+NBU_ACCEPTABLE_USE,NBU_ENGINEERING,University Acceptable Use,authenticated,2026.1,Acceptable technology use.,<p>Sanitized demonstration acceptable-use policy.</p>

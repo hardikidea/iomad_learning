@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-25",
+  "repository": "iomad_learning",
+  "git_history_available": false,
+  "baseline": {
+    "iomad_ref": "IOMAD_501_STABLE",
+    "iomad_commit": "55b3128b8058d27f6cc4320850ca709ed5a792a9",
+    "documentation_files_validated": 87
+  },
+  "canonical_additions": [
+    "docs/11-operations/service-catalogue.md",
+    "docs/11-operations/endpoint-catalogue.md",
+    "docs/11-operations/exception-catalogue.md",
+    "docs/11-operations/telemetry-data-dictionary.md",
+    "docs/11-operations/slo-alert-dashboard-catalogue.md",
+    "docs/11-operations/failure-mode-matrix.md",
+    "docs/12-runbooks/application-not-ready.md",
+    "docs/12-runbooks/cache-unavailable.md",
+    "docs/12-runbooks/cron-not-running.md",
+    "docs/12-runbooks/database-unavailable.md",
+    "docs/12-runbooks/external-integration-failure.md",
+    "docs/12-runbooks/import-failure.md",
+    "docs/12-runbooks/index.md",
+    "docs/12-runbooks/sso-failure.md",
+    "docs/12-runbooks/tenant-resolution-failure.md",
+    "docs/12-runbooks/licence-failure.md",
+    "docs/12-runbooks/enrolment-failure.md",
+    "docs/12-runbooks/report-failure.md",
+    "docs/12-runbooks/certificate-expiry.md",
+    "docs/12-runbooks/telemetry-failure.md",
+    "docs/12-runbooks/payment-failure.md",
+    "docs/12-runbooks/scheduled-task-failure.md",
+    "docs/12-runbooks/storage-capacity.md",
+    "docs/14-governance/ownership-and-change-control.md",
+    "docs/audits/master-prompt-compliance.md",
+    "docs/audits/prompt-conflict-report.md",
+    "docs/audits/documentation-debt.md",
+    "docs/audits/documentation-validation-report.md",
+    "docs/templates/chapter-template.md",
+    "docs/templates/runbook-template.md",
+    "docs/templates/service-template.md"
+  ],
+  "findings": [
+    {
+      "source": "docs/theme.md",
+      "accuracy": "incorrect",
+      "action": "replace-with-canonical-link",
+      "target": "docs/04-development/theme-and-page-experience.md"
+    },
+    {
+      "source": "docs/deployment-preparation.md",
+      "accuracy": "stale-repository-identity",
+      "action": "split-and-merge",
+      "target": "docs/09-infrastructure/aws-infrastructure.md"
+    },
+    {
+      "source": "docs/site-monitor.md",
+      "accuracy": "incorrect-cli-flag",
+      "action": "merge",
+      "target": "docs/11-operations/health-and-observability.md"
+    },
+    {
+      "source": "docs/compatibility-matrix.md",
+      "accuracy": "stale-plugin-versions",
+      "action": "merge",
+      "target": "docs/15-reference/version-matrix.md"
+    },
+    {
+      "source": "terraform/README.md",
+      "accuracy": "stale-bind-mount-claim",
+      "action": "keep-and-update",
+      "target": "docs/09-infrastructure/aws-infrastructure.md"
+    },
+    {
+      "source": "README.md",
+      "accuracy": "mostly-current",
+      "action": "reduce-to-entry-point",
+      "target": "docs/index.md"
+    },
+    {
+      "source": "docs/backup-restore.md",
+      "accuracy": "current",
+      "action": "merge",
+      "target": "docs/07-data/backup-and-restore.md"
+    },
+    {
+      "source": "docs/rollback.md",
+      "accuracy": "current",
+      "action": "merge",
+      "target": "docs/10-ci-cd/rollback-process.md"
+    },
+    {
+      "source": "docs/upgrade.md",
+      "accuracy": "current",
+      "action": "merge",
+      "target": "docs/10-ci-cd/upgrade-process.md"
+    },
+    {
+      "source": "docs/runbook.md",
+      "accuracy": "current-but-fragmented",
+      "action": "replace-with-canonical-link",
+      "target": "docs/12-runbooks/index.md"
+    },
+    {
+      "source": "docs/incident-runbook.md",
+      "accuracy": "current-but-incomplete",
+      "action": "split-and-merge",
+      "target": "docs/12-runbooks/index.md"
+    },
+    {
+      "source": "docs/architecture.md",
+      "accuracy": "partly-stale",
+      "action": "merge",
+      "target": "docs/03-architecture/architecture-overview.md"
+    },
+    {
+      "source": "docs/feature-capability-matrix.md",
+      "accuracy": "current-before-consolidated-prompts",
+      "action": "keep-and-update",
+      "target": "docs/01-overview/capability-register.md"
+    },
+    {
+      "source": "iomad-overrides/demo-data/indian-school/course-activity-blueprint.md",
+      "accuracy": "retired-stale-brand-paths-and-password-workflow",
+      "action": "removed-after-migration",
+      "target": "docs/02-getting-started/local-test-data.md"
+    },
+    {
+      "source": "docs/acceptance-results-2026-07-25.md",
+      "accuracy": "immutable-evidence",
+      "action": "retain",
+      "target": "docs/acceptance-results-2026-07-25.md"
+    }
+  ]
+}

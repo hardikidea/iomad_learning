@@ -1,0 +1,12 @@
+company_shortname,department_shortname,name,parent_department_shortname
+GV_SCHOOL,GV_ADMIN,Administration,
+GV_SCHOOL,GV_PRIMARY,Primary School,
+GV_SCHOOL,GV_MIDDLE,Middle School,
+GV_SCHOOL,GV_SECONDARY,Secondary School,
+GV_SCHOOL,GV_SENIOR,Senior Secondary School,
+GV_SCHOOL,GV_MATH,Mathematics Department,GV_SECONDARY
+GV_SCHOOL,GV_SCIENCE,Science Department,GV_SECONDARY
+GV_SCHOOL,GV_LANG,Languages Department,GV_SECONDARY
+GV_SCHOOL,GV_SOCIAL,Social Sciences Department,GV_SECONDARY
+GV_SCHOOL,GV_SPORTS,Sports and Activities,
+GV_SCHOOL,GV_SUPPORT,Learner and Parent Support,

@@ -1,0 +1,5 @@
+policy_key,company_shortname,name,audience,revision,summary,content
+GV_ACCEPTABLE_USE,GV_SCHOOL,School Acceptable Use,authenticated,2026.1,Acceptable technology use.,<p>Sanitized demonstration policy for acceptable use.</p>
+GV_SAFEGUARDING,GV_SCHOOL,Learner Safeguarding,authenticated,2026.1,Learner safeguarding expectations.,<p>Sanitized demonstration safeguarding policy.</p>
+GV_PRIVACY,GV_SCHOOL,School Privacy Notice,all,2026.1,Privacy and data handling.,<p>Sanitized demonstration privacy notice.</p>
+GV_ACADEMIC_INTEGRITY,GV_SCHOOL,Academic Integrity,authenticated,2026.1,Academic integrity expectations.,<p>Sanitized demonstration academic integrity policy.</p>

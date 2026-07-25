@@ -1,0 +1,83 @@
+name: ECS Service Wait
+description: Resolve Terraform ECS outputs and wait for a IOMAD ECS service to become stable.
+
+inputs:
+  environment:
+    description: "Deployment environment: dev, stage, or prod."
+    required: true
+  service_kind:
+    description: "Service to wait for: web or cron."
+    required: true
+  aws_account_id:
+    description: AWS account ID.
+    required: true
+  aws_region:
+    description: AWS region.
+    required: true
+  project_name:
+    description: Project name and backend prefix.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS OIDC
+      uses: ./.github/actions/aws-oidc
+      with:
+        environment: ${{ inputs.environment }}
+        aws_account_id: ${{ inputs.aws_account_id }}
+        aws_region: ${{ inputs.aws_region }}
+        project_name: ${{ inputs.project_name }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Resolve ECS service
+      id: service
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        cd "terraform/envs/${{ inputs.environment }}"
+
+        terraform init \
+          -backend-config="bucket=${{ inputs.project_name }}-${{ inputs.aws_account_id }}-${{ inputs.aws_region }}-tfstate" \
+          -backend-config="dynamodb_table=${{ inputs.project_name }}-terraform-locks" \
+          -backend-config="key=${{ inputs.project_name }}/${{ inputs.environment }}.tfstate" \
+          -backend-config="region=${{ inputs.aws_region }}" \
+          -backend-config="encrypt=true"
+
+        cluster="$(terraform output -raw ecs_cluster_name)"
+
+        case "${{ inputs.service_kind }}" in
+          web)
+            service="$(terraform output -raw ecs_service_name)"
+            ;;
+          cron)
+            service="$(terraform output -raw ecs_cron_service_name)"
+            ;;
+          *)
+            echo "Unsupported service_kind: ${{ inputs.service_kind }}"
+            exit 1
+            ;;
+        esac
+
+        echo "cluster=${cluster}" >> "${GITHUB_OUTPUT}"
+        echo "service=${service}" >> "${GITHUB_OUTPUT}"
+
+    - name: Wait for ECS service
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        aws ecs wait services-stable \
+          --cluster "${{ steps.service.outputs.cluster }}" \
+          --services "${{ steps.service.outputs.service }}"
+
+        aws ecs describe-services \
+          --cluster "${{ steps.service.outputs.cluster }}" \
+          --services "${{ steps.service.outputs.service }}" \
+          --query 'services[0].{status:status,running:runningCount,desired:desiredCount,taskDefinition:taskDefinition}' \
+          --output table

@@ -1,0 +1,102 @@
+{{!
+    @template format_iomadvideo/courseformat/content
+
+    Video-first course wrapper with the unmodified core section list.
+}}
+<div id="course-format-{{uniqid}}" class="iomadvideo-course {{#videoplaylist}}{{layoutclass}}{{#focusmode}} iomadvideo-focus{{/focusmode}}{{/videoplaylist}}">
+    <h2 class="accesshide">{{{title}}}</h2>
+    {{{completionhelp}}}
+
+    {{#videoplaylist}}
+    <section class="iomadvideo-stage"
+             data-region="iomadvideo"
+             data-courseid="{{courseid}}"
+             data-autoadvance="{{#autoadvance}}1{{/autoadvance}}{{^autoadvance}}0{{/autoadvance}}">
+        <div class="iomadvideo-players" aria-live="polite">
+            {{#items}}
+            <div id="{{playerid}}"
+                 class="iomadvideo-player{{#active}} is-active{{/active}}"
+                 data-region="player"
+                 data-position="{{position}}"
+                 {{^active}}hidden{{/active}}>
+                <div class="iomadvideo-frame">{{{player}}}</div>
+                <div class="iomadvideo-nowplaying">
+                    <div>
+                        <span class="iomadvideo-kicker">{{section}}</span>
+                        <h3>{{title}}</h3>
+                    </div>
+                    <a class="btn btn-secondary" href="{{activityurl}}">{{#str}}openactivity, format_iomadvideo{{/str}}</a>
+                </div>
+            </div>
+            {{/items}}
+        </div>
+        <details class="iomadvideo-playlist" {{^collapsed}}open{{/collapsed}}>
+            <summary>
+                <span>{{#str}}playlist, format_iomadvideo{{/str}}</span>
+                <span class="badge rounded-pill bg-secondary">{{count}}</span>
+            </summary>
+            <ol>
+                {{#items}}
+                <li>
+                    <button type="button"
+                            class="iomadvideo-playlist-item{{#active}} is-active{{/active}}"
+                            data-action="select-video"
+                            data-player="{{playerid}}"
+                            aria-controls="{{playerid}}"
+                            aria-pressed="{{#active}}true{{/active}}{{^active}}false{{/active}}">
+                        <span class="iomadvideo-position">{{position}}</span>
+                        <span>
+                            <strong>{{title}}</strong>
+                            <small>{{section}}</small>
+                        </span>
+                    </button>
+                </li>
+                {{/items}}
+            </ol>
+        </details>
+    </section>
+    {{/videoplaylist}}
+
+    <ul class="{{format}} section-list" data-for="course_sectionlist">
+        {{#initialsection}}
+            {{$ core_courseformat/local/content/section }}
+                {{> core_courseformat/local/content/section }}
+            {{/ core_courseformat/local/content/section }}
+        {{/initialsection}}
+        {{#sections}}
+            {{$ core_courseformat/local/content/section }}
+                {{> core_courseformat/local/content/section }}
+            {{/ core_courseformat/local/content/section }}
+        {{/sections}}
+    </ul>
+    {{#hasnavigation}}
+    <div class="single-section">
+        {{#sectionnavigation}}
+            {{> core_courseformat/local/content/sectionnavigation }}
+        {{/sectionnavigation}}
+        <ul class="{{format}} section-list">
+            {{#singlesection}}
+                {{> core_courseformat/local/content/section }}
+            {{/singlesection}}
+        </ul>
+        {{#sectionselector}}
+            {{> core_courseformat/local/content/sectionselector }}
+        {{/sectionselector}}
+    </div>
+    {{/hasnavigation}}
+    {{#numsections}}
+        {{^singlesection}}
+            {{> core_courseformat/local/content/addsection}}
+        {{/singlesection}}
+    {{/numsections}}
+    {{#bulkedittools}}
+        {{> core_courseformat/local/content/bulkedittools}}
+    {{/bulkedittools}}
+</div>
+{{#js}}
+require(['core_courseformat/local/content'], function(component) {
+    component.init(
+        '#page', {}, {{sectionreturn}}, {{#pagesectionid}}{{.}}{{/pagesectionid}}{{^pagesectionid}}null{{/pagesectionid}}
+    );
+});
+{{/js}}

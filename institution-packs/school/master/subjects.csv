@@ -1,0 +1,13 @@
+institution_id,subject_shortname,name
+SCH_DEMO,MATH,Mathematics
+SCH_DEMO,ENG,English
+SCH_DEMO,EVS,Environmental Studies
+SCH_DEMO,SCI,Science
+SCH_DEMO,PHY,Physics
+SCH_DEMO,CHEM,Chemistry
+SCH_DEMO,BIO,Biology
+SCH_DEMO,CS,Computer Science
+SCH_DEMO,HIST,History
+SCH_DEMO,GEO,Geography
+SCH_DEMO,PE,Physical Education
+SCH_DEMO,ART,Art and Design

@@ -1,0 +1,2 @@
+institution_id,company_shortname,name,parent_company_shortname,city,country,theme,hostname
+UNI_DEMO,NBU_ENGINEERING,Demo University,,Pune,IN,iomad_learning,university.localhost

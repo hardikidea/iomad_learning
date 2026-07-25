@@ -1,0 +1,38 @@
+course_shortname,fullname,category_idnumber,company_shortname,department_shortname,template_shortname,format,visible,summary
+GV-STD1-MATH-2026,Standard 1 Mathematics 2026,GV_STD1_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD01,topics,1,Sanitized demonstration course for Standard 1 Mathematics.
+GV-STD1-ENG-2026,Standard 1 English 2026,GV_STD1_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD01,topics,1,Sanitized demonstration course for Standard 1 English.
+GV-STD1-EVS-2026,Standard 1 Environmental Studies 2026,GV_STD1_EVS,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD01,topics,1,Sanitized demonstration course for Standard 1 Environmental Studies.
+GV-STD2-MATH-2026,Standard 2 Mathematics 2026,GV_STD2_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD02,topics,1,Sanitized demonstration course for Standard 2 Mathematics.
+GV-STD2-ENG-2026,Standard 2 English 2026,GV_STD2_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD02,topics,1,Sanitized demonstration course for Standard 2 English.
+GV-STD2-EVS-2026,Standard 2 Environmental Studies 2026,GV_STD2_EVS,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD02,topics,1,Sanitized demonstration course for Standard 2 Environmental Studies.
+GV-STD3-MATH-2026,Standard 3 Mathematics 2026,GV_STD3_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD03,topics,1,Sanitized demonstration course for Standard 3 Mathematics.
+GV-STD3-ENG-2026,Standard 3 English 2026,GV_STD3_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD03,topics,1,Sanitized demonstration course for Standard 3 English.
+GV-STD3-EVS-2026,Standard 3 Environmental Studies 2026,GV_STD3_EVS,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD03,topics,1,Sanitized demonstration course for Standard 3 Environmental Studies.
+GV-STD4-MATH-2026,Standard 4 Mathematics 2026,GV_STD4_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD04,topics,1,Sanitized demonstration course for Standard 4 Mathematics.
+GV-STD4-ENG-2026,Standard 4 English 2026,GV_STD4_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD04,topics,1,Sanitized demonstration course for Standard 4 English.
+GV-STD4-EVS-2026,Standard 4 Environmental Studies 2026,GV_STD4_EVS,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD04,topics,1,Sanitized demonstration course for Standard 4 Environmental Studies.
+GV-STD5-MATH-2026,Standard 5 Mathematics 2026,GV_STD5_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD05,topics,1,Sanitized demonstration course for Standard 5 Mathematics.
+GV-STD5-ENG-2026,Standard 5 English 2026,GV_STD5_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD05,topics,1,Sanitized demonstration course for Standard 5 English.
+GV-STD5-EVS-2026,Standard 5 Environmental Studies 2026,GV_STD5_EVS,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD05,topics,1,Sanitized demonstration course for Standard 5 Environmental Studies.
+GV-STD6-MATH-2026,Standard 6 Mathematics 2026,GV_STD6_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD06,topics,1,Sanitized demonstration course for Standard 6 Mathematics.
+GV-STD6-ENG-2026,Standard 6 English 2026,GV_STD6_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD06,topics,1,Sanitized demonstration course for Standard 6 English.
+GV-STD6-SCI-2026,Standard 6 Science 2026,GV_STD6_SCI,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD06,iomadvideo,1,Sanitized demonstration course for Standard 6 Science.
+GV-STD7-MATH-2026,Standard 7 Mathematics 2026,GV_STD7_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD07,topics,1,Sanitized demonstration course for Standard 7 Mathematics.
+GV-STD7-ENG-2026,Standard 7 English 2026,GV_STD7_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD07,topics,1,Sanitized demonstration course for Standard 7 English.
+GV-STD7-SCI-2026,Standard 7 Science 2026,GV_STD7_SCI,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD07,iomadvideo,1,Sanitized demonstration course for Standard 7 Science.
+GV-STD8-MATH-2026,Standard 8 Mathematics 2026,GV_STD8_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD08,topics,1,Sanitized demonstration course for Standard 8 Mathematics.
+GV-STD8-ENG-2026,Standard 8 English 2026,GV_STD8_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD08,topics,1,Sanitized demonstration course for Standard 8 English.
+GV-STD8-SCI-2026,Standard 8 Science 2026,GV_STD8_SCI,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD08,iomadvideo,1,Sanitized demonstration course for Standard 8 Science.
+GV-STD9-MATH-2026,Standard 9 Mathematics 2026,GV_STD9_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD09,topics,1,Sanitized demonstration course for Standard 9 Mathematics.
+GV-STD9-ENG-2026,Standard 9 English 2026,GV_STD9_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD09,topics,1,Sanitized demonstration course for Standard 9 English.
+GV-STD9-SCI-2026,Standard 9 Science 2026,GV_STD9_SCI,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD09,iomadvideo,1,Sanitized demonstration course for Standard 9 Science.
+GV-STD10-MATH-2026,Standard 10 Mathematics 2026,GV_STD10_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD10,topics,1,Sanitized demonstration course for Standard 10 Mathematics.
+GV-STD10-ENG-2026,Standard 10 English 2026,GV_STD10_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD10,topics,1,Sanitized demonstration course for Standard 10 English.
+GV-STD10-SCI-2026,Standard 10 Science 2026,GV_STD10_SCI,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD10,iomadvideo,1,Sanitized demonstration course for Standard 10 Science.
+GV-STD11-MATH-2026,Standard 11 Mathematics 2026,GV_STD11_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD11,topics,1,Sanitized demonstration course for Standard 11 Mathematics.
+GV-STD11-ENG-2026,Standard 11 English 2026,GV_STD11_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD11,topics,1,Sanitized demonstration course for Standard 11 English.
+GV-STD11-PHY-2026,Standard 11 Physics 2026,GV_STD11_PHY,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD11,iomadvideo,1,Sanitized demonstration course for Standard 11 Physics.
+GV-STD12-MATH-2026,Standard 12 Mathematics 2026,GV_STD12_MATH,GV_SCHOOL,GV_MATH,GV_TEMPLATE_STD12,topics,1,Sanitized demonstration course for Standard 12 Mathematics.
+GV-STD12-ENG-2026,Standard 12 English 2026,GV_STD12_ENG,GV_SCHOOL,GV_LANG,GV_TEMPLATE_STD12,topics,1,Sanitized demonstration course for Standard 12 English.
+GV-STD12-PHY-2026,Standard 12 Physics 2026,GV_STD12_PHY,GV_SCHOOL,GV_SCIENCE,GV_TEMPLATE_STD12,iomadvideo,1,Sanitized demonstration course for Standard 12 Physics.
+GV-ORIENTATION-2026,School Orientation 2026,GV_ORIENTATION,GV_SCHOOL,GV_SUPPORT,GV_TEMPLATE_ORIENTATION,topics,1,Sanitized all-learner course used for feature demonstrations.

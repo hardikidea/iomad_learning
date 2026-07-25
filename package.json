@@ -1,0 +1,21 @@
+{
+  "name": "iomad_learning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dockerized IOMAD platform for IOMAD Learning.",
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "prepare": "husky",
+    "sync-overrides": "./scripts/sync-iomad-overrides.sh",
+    "precommit": "./scripts/pre-commit-check.sh",
+    "prepush": "./scripts/audit-changed.sh push",
+    "lint:changed": "./scripts/lint-changed.sh commit",
+    "audit:changed": "./scripts/audit-changed.sh push",
+    "validate": "./scripts/pre-commit-check.sh && ./scripts/audit-changed.sh push",
+    "validate:shell": "bash -n scripts/*.sh docker/iomad/*.sh",
+    "validate:compose": "docker compose config --quiet"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

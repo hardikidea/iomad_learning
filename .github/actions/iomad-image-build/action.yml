@@ -1,0 +1,53 @@
+name: IOMAD Image Build
+description: Build a IOMAD Docker image and optionally scan it with Trivy.
+
+inputs:
+  image_name:
+    description: Local image tag to build.
+    required: true
+  iomad_commit:
+    description: IOMAD Git commit to bake into the image.
+    required: true
+  iomad_ref:
+    description: Reviewed IOMAD ref used to fetch the pinned commit.
+    required: true
+  include_iomad_source:
+    description: Whether to clone IOMAD source into the image.
+    required: false
+    default: "true"
+  scan_image:
+    description: Whether to run a Trivy image scan.
+    required: false
+    default: "false"
+  trivy_version:
+    description: Trivy version to use when scan_image is true.
+    required: false
+    default: "v0.71.2"
+
+runs:
+  using: composite
+  steps:
+    - name: Build IOMAD image
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker build \
+          --build-arg INCLUDE_IOMAD_SOURCE="${{ inputs.include_iomad_source }}" \
+          --build-arg IOMAD_REF="${{ inputs.iomad_ref }}" \
+          --build-arg IOMAD_COMMIT="${{ inputs.iomad_commit }}" \
+          -f docker/iomad/Dockerfile \
+          -t "${{ inputs.image_name }}" \
+          .
+
+    - name: Scan IOMAD image
+      if: inputs.scan_image == 'true'
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        version: ${{ inputs.trivy_version }}
+        image-ref: ${{ inputs.image_name }}
+        format: table
+        vuln-type: os,library
+        severity: HIGH,CRITICAL
+        ignore-unfixed: true
+        exit-code: "1"
+        trivyignores: .trivyignore.yaml

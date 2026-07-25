@@ -1,0 +1,24 @@
+name: Integration Test Workspace
+description: Create deterministic workspace metadata for optional integration-test environments.
+
+inputs:
+  suite_name:
+    description: Test suite name.
+    required: true
+
+outputs:
+  workspace:
+    description: Generated workspace name.
+    value: ${{ steps.workspace.outputs.workspace }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare workspace metadata
+      id: workspace
+      shell: bash
+      run: |
+        set -euo pipefail
+        workspace="${{ inputs.suite_name }}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+        echo "workspace=${workspace}" >> "${GITHUB_OUTPUT}"
+        echo "Prepared ${workspace} for future ${{ inputs.suite_name }} infrastructure." >> "${GITHUB_STEP_SUMMARY}"

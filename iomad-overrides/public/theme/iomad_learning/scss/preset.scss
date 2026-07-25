@@ -1,0 +1,346 @@
+body {
+  background: var(--iomad-learning-pagebackground);
+  color: var(--iomad-learning-bodytext);
+  font-family: var(--iomad-learning-fontfamily);
+  font-size: var(--iomad-learning-basefontsize);
+  font-weight: var(--iomad-learning-bodyweight);
+  line-height: var(--iomad-learning-bodylineheight);
+  letter-spacing: var(--iomad-learning-bodyletterspacing);
+}
+
+::selection {
+  background: var(--iomad-learning-selectionbackground);
+  color: var(--iomad-learning-selectiontext);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--iomad-learning-bodytext);
+  font-family: var(--iomad-learning-headingfont);
+  font-weight: var(--iomad-learning-headingweight);
+  line-height: var(--iomad-learning-headinglineheight);
+  letter-spacing: var(--iomad-learning-headingletterspacing);
+}
+
+h1 { font-size: var(--iomad-learning-h1fontsize); }
+h2 { font-size: var(--iomad-learning-h2fontsize); }
+h3 { font-size: var(--iomad-learning-h3fontsize); }
+h4 { font-size: var(--iomad-learning-h4fontsize); }
+h5 { font-size: var(--iomad-learning-h5fontsize); }
+h6 { font-size: var(--iomad-learning-h6fontsize); }
+
+a {
+  color: var(--iomad-learning-linkcolor);
+  transition: color var(--iomad-learning-motionduration) ease;
+}
+
+a:hover {
+  color: var(--iomad-learning-linkhover);
+}
+
+:focus-visible {
+  outline: var(--iomad-learning-focuswidth) var(--iomad-learning-focusstyle) var(--iomad-learning-focuscolor) !important;
+  outline-offset: var(--iomad-learning-focusoffset);
+}
+
+.navbar,
+.primary-navigation {
+  min-height: var(--iomad-learning-navbarheight);
+  background: var(--iomad-learning-navbarbackground) !important;
+  border-bottom: var(--iomad-learning-borderwidth) solid var(--iomad-learning-navbarborder);
+  box-shadow: var(--iomad-learning-navbarshadow);
+}
+
+.primary-navigation .navigation {
+  align-items: var(--iomad-learning-navigationalign);
+  gap: var(--iomad-learning-navitemgap);
+}
+
+.primary-navigation .navigation .nav-link {
+  color: var(--iomad-learning-navbartext);
+  font-size: var(--iomad-learning-navfontsize);
+  font-weight: var(--iomad-learning-navweight);
+  letter-spacing: var(--iomad-learning-navletterspacing);
+  padding: var(--iomad-learning-navitempaddingy) var(--iomad-learning-navitempaddingx);
+  text-transform: var(--iomad-learning-navtexttransform);
+}
+
+.navbar .logo,
+.navbar-brand .logo {
+  max-height: var(--iomad-learning-headerlogoheight);
+}
+
+.drawer-left {
+  width: var(--iomad-learning-courseindexwidth);
+}
+
+.drawer-right {
+  width: var(--iomad-learning-drawerwidth);
+}
+
+.drawer .list-group,
+.courseindex {
+  background: var(--iomad-learning-sidebarbackground);
+  color: var(--iomad-learning-sidebartext);
+  font-size: var(--iomad-learning-courseindexfontsize);
+}
+
+.courseindex .courseindex-item {
+  min-height: var(--iomad-learning-sidebaritemheight);
+  gap: var(--iomad-learning-courseindexitemgap);
+  padding-inline-start: var(--iomad-learning-sidebarindent);
+}
+
+.courseindex .courseindex-item.pageitem {
+  border-inline-start: var(--iomad-learning-sidebaractiveborder) solid var(--iomad-learning-sidebaractive);
+  box-shadow: var(--iomad-learning-currentitemstyle);
+}
+
+.breadcrumb {
+  gap: var(--iomad-learning-breadcrumbgap);
+  min-height: var(--iomad-learning-breadcrumbheight);
+}
+
+#page {
+  max-width: var(--iomad-learning-contentmaxwidth);
+  padding: var(--iomad-learning-pagepaddingy) var(--iomad-learning-pagepaddingx);
+}
+
+#page.drawers .main-inner {
+  max-width: var(--iomad-learning-coursecontentmaxwidth);
+}
+
+#page-footer.footer-popover {
+  min-height: var(--iomad-learning-footerheight);
+  background-color: var(--iomad-learning-footerbackground) !important;
+  color: var(--iomad-learning-footertext);
+  text-align: var(--iomad-learning-footeralign);
+}
+
+#page-footer.footer-popover a {
+  color: var(--iomad-learning-footertext);
+  text-decoration: underline;
+}
+
+.btn {
+  min-height: var(--iomad-learning-buttonheight);
+  border-radius: var(--iomad-learning-buttonradius);
+  font-size: var(--iomad-learning-buttonfontsize);
+  font-weight: var(--iomad-learning-buttonweight);
+  letter-spacing: var(--iomad-learning-buttonletterspacing);
+  text-transform: var(--iomad-learning-buttontexttransform);
+  transition-duration: var(--iomad-learning-motionduration);
+}
+
+.btn-primary {
+  background: var(--iomad-learning-primarycolor);
+  border-color: var(--iomad-learning-primarycolor);
+  color: var(--iomad-learning-primarycontrast);
+}
+
+.btn-primary:hover {
+  background: var(--iomad-learning-primaryhover);
+  border-color: var(--iomad-learning-primaryhover);
+}
+
+.btn-secondary {
+  background: var(--iomad-learning-secondarycolor);
+  border-color: var(--iomad-learning-secondarycolor);
+  color: var(--iomad-learning-secondarycontrast);
+}
+
+.form-control,
+.form-select {
+  min-height: var(--iomad-learning-inputheight);
+  background: var(--iomad-learning-inputbackground);
+  border-color: var(--iomad-learning-inputborder);
+  border-radius: var(--iomad-learning-inputradius);
+  color: var(--iomad-learning-inputtext);
+}
+
+.card,
+.dropdown-menu {
+  background: var(--iomad-learning-surface);
+  border-color: var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-cardradius);
+  box-shadow: var(--iomad-learning-cardshadow);
+}
+
+.modal-content {
+  border-radius: var(--iomad-learning-modalradius);
+  box-shadow: var(--iomad-learning-modalshadow);
+  padding: var(--iomad-learning-modalpadding);
+}
+
+.table {
+  color: var(--iomad-learning-bodytext);
+  font-size: var(--iomad-learning-tablefontsize);
+}
+
+.table > :not(caption) > * > * {
+  padding: var(--iomad-learning-tablecelly) var(--iomad-learning-tablecellx);
+}
+
+.table thead th {
+  background: var(--iomad-learning-tableheaderbackground);
+  color: var(--iomad-learning-tableheadertext);
+}
+
+.dashboard-card-deck,
+.iomaddashboard-grid,
+.block_iomaddashboard .content {
+  display: grid;
+  grid-template-columns: var(--iomad-learning-dashboardcolumns);
+  gap: var(--iomad-learning-dashboardwidgetgap);
+}
+
+.dashboard-card,
+.block_iomaddashboard .iomaddashboard-widget {
+  min-width: min(100%, var(--iomad-learning-dashboardminwidth));
+  background: var(--iomad-learning-coursecardbackground);
+  border: var(--iomad-learning-borderwidth) solid var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-dashboardwidgetradius);
+  box-shadow: var(--iomad-learning-dashboardwidgetshadow);
+  color: var(--iomad-learning-coursecardtext);
+  padding: var(--iomad-learning-dashboardwidgetpadding);
+}
+
+.dashboard-card .dashboard-card-img {
+  min-height: var(--iomad-learning-courseimageheight);
+  aspect-ratio: var(--iomad-learning-coursecardaspect);
+  border-radius: var(--iomad-learning-courseimageradius);
+}
+
+.dashboard-card .coursename,
+.coursebox .coursename {
+  font-size: var(--iomad-learning-courseheadingfontsize);
+  font-weight: var(--iomad-learning-courseheadingweight);
+}
+
+.dashboard-card .progress {
+  height: var(--iomad-learning-courseprogressheight);
+}
+
+.dashboard-card:hover {
+  transform: translateY(calc(-1 * var(--iomad-learning-coursehovertranslate)));
+  transition: transform var(--iomad-learning-motionduration) ease;
+}
+
+.course-content .section {
+  margin-block-end: var(--iomad-learning-coursesectiongap);
+  border-radius: var(--iomad-learning-coursesectionradius);
+  padding: var(--iomad-learning-coursesectionpadding);
+}
+
+.format-iomadvideo .iomadvideo-player {
+  aspect-ratio: var(--iomad-learning-courseplayeraspect);
+}
+
+.format-iomadvideo .iomadvideo-sidebar {
+  width: var(--iomad-learning-courseplayersidebarwidth);
+}
+
+.badge {
+  border-radius: var(--iomad-learning-coursebadgeradius);
+  padding: var(--iomad-learning-coursebadgepaddingy) var(--iomad-learning-coursebadgepaddingx);
+}
+
+body.pagelayout-login {
+  min-height: var(--iomad-learning-loginminheight);
+  background-color: var(--iomad-learning-loginbackground);
+  background-position: var(--iomad-learning-loginbackgroundposition);
+  background-size: var(--iomad-learning-loginbackgroundsize);
+}
+
+body.pagelayout-login .login-container {
+  width: min(100%, var(--iomad-learning-loginmaxwidth));
+  margin-inline: auto;
+  padding: var(--iomad-learning-loginpadding);
+  background: var(--iomad-learning-loginsurface);
+  border: var(--iomad-learning-loginborderwidth) solid var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-loginradius);
+  box-shadow: var(--iomad-learning-loginshadow);
+  text-align: var(--iomad-learning-loginalign);
+}
+
+body.pagelayout-login .loginform {
+  display: grid;
+  gap: var(--iomad-learning-logininputgap);
+}
+
+body.pagelayout-login .login-heading {
+  font-weight: var(--iomad-learning-loginheadingweight);
+}
+
+body.pagelayout-login .login-logo img {
+  max-height: var(--iomad-learning-loginlogoheight);
+}
+
+body.pagelayout-login .btn-primary {
+  width: calc(var(--iomad-learning-loginbuttonfullwidth) * 100%);
+}
+
+.iomad-learning-focus-toggle {
+  position: fixed;
+  inset-inline-end: var(--iomad-learning-space4);
+  inset-block-end: var(--iomad-learning-space4);
+  z-index: 1050;
+  width: var(--iomad-learning-targetsize);
+  height: var(--iomad-learning-targetsize);
+  border-radius: var(--iomad-learning-radiuspill);
+  box-shadow: var(--iomad-learning-shadowmd);
+}
+
+body.iomad-learning-focus-mode .navbar,
+body.iomad-learning-focus-mode #page-footer,
+body.iomad-learning-focus-mode .drawer,
+body.iomad-learning-focus-mode .drawer-toggles {
+  display: none !important;
+}
+
+body.iomad-learning-focus-mode,
+body.iomad-learning-focus-mode #page {
+  padding: 0 !important;
+}
+
+body.iomad-learning-focus-mode #page.drawers .main-inner {
+  max-width: var(--iomad-learning-readingwidth);
+  margin-inline: auto;
+}
+
+[dir="rtl"] .courseindex .courseindex-item.pageitem {
+  border-inline-start: 0;
+  border-inline-end: var(--iomad-learning-sidebaractiveborder) solid var(--iomad-learning-sidebaractive);
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --iomad-learning-pagepaddingx: 0.75rem;
+    --iomad-learning-pagepaddingy: 0.75rem;
+  }
+
+  .navbar .logo,
+  .navbar-brand .logo {
+    max-height: var(--iomad-learning-headerlogomobileheight);
+  }
+
+  .dashboard-card-deck,
+  .iomaddashboard-grid,
+  .block_iomaddashboard .content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

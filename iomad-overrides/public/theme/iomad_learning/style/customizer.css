@@ -1,0 +1,154 @@
+.iomad-learning-customizer {
+  display: grid;
+  gap: 1rem;
+}
+
+.iomad-learning-customizer-toolbar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(12rem, 16rem) auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  position: sticky;
+  top: 4rem;
+  z-index: 4;
+  background: var(--bs-body-bg);
+  padding-block: 0.5rem;
+}
+
+.iomad-learning-customizer-workspace {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 42rem;
+}
+
+.iomad-learning-token-panel {
+  border: 1px solid var(--bs-border-color);
+  overflow: auto;
+  max-height: calc(100vh - 11rem);
+  padding: 0.75rem;
+}
+
+.iomad-learning-token-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 11rem);
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.iomad-learning-token-control label {
+  margin: 0;
+}
+
+.iomad-learning-preview {
+  background: var(--iomad-learning-pagebackground);
+  color: var(--iomad-learning-bodytext);
+  font-family: var(--iomad-learning-fontfamily);
+  border: 1px solid var(--iomad-learning-bordercolor);
+  overflow: auto;
+}
+
+.iomad-learning-preview-nav {
+  min-height: var(--iomad-learning-navbarheight);
+  background: var(--iomad-learning-navbarbackground);
+  color: var(--iomad-learning-navbartext);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--iomad-learning-navitemgap);
+  padding: var(--iomad-learning-navitempaddingy) var(--iomad-learning-navitempaddingx);
+  border-bottom: var(--iomad-learning-borderwidth) solid var(--iomad-learning-navbarborder);
+  box-shadow: var(--iomad-learning-navbarshadow);
+}
+
+.iomad-learning-preview-nav nav {
+  display: flex;
+  gap: var(--iomad-learning-navitemgap);
+}
+
+.iomad-learning-preview-nav a {
+  color: inherit;
+  padding: var(--iomad-learning-navitempaddingy) var(--iomad-learning-navitempaddingx);
+  font-weight: var(--iomad-learning-navweight);
+  text-transform: var(--iomad-learning-navtexttransform);
+}
+
+.iomad-learning-preview-body {
+  padding: var(--iomad-learning-pagepaddingy) var(--iomad-learning-pagepaddingx);
+  display: grid;
+  gap: var(--iomad-learning-sectiongap);
+}
+
+.iomad-learning-preview-grid {
+  display: grid;
+  grid-template-columns: var(--iomad-learning-coursegridcolumns);
+  gap: var(--iomad-learning-gridgap);
+}
+
+.iomad-learning-preview-course {
+  min-width: min(100%, var(--iomad-learning-coursecardminwidth));
+  background: var(--iomad-learning-coursecardbackground);
+  color: var(--iomad-learning-coursecardtext);
+  border: var(--iomad-learning-borderwidth) solid var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-cardradius);
+  box-shadow: var(--iomad-learning-cardshadow);
+  padding: var(--iomad-learning-cardpadding);
+  display: grid;
+  gap: var(--iomad-learning-cardgap);
+}
+
+.iomad-learning-preview-course h3 {
+  font-size: var(--iomad-learning-courseheadingfontsize);
+  font-weight: var(--iomad-learning-courseheadingweight);
+}
+
+.iomad-learning-preview-image {
+  height: var(--iomad-learning-courseimageheight);
+  border-radius: var(--iomad-learning-courseimageradius);
+  background: #4b6f94;
+}
+
+.preview-image-1 { background: #42735b; }
+.preview-image-2 { background: #8b5c45; }
+
+.iomad-learning-preview-progress {
+  height: var(--iomad-learning-courseprogressheight);
+  background: var(--iomad-learning-surfacealternate);
+  overflow: hidden;
+  border-radius: var(--iomad-learning-radiuspill);
+}
+
+.iomad-learning-preview-progress-bar {
+  width: 64%;
+  height: 100%;
+  background: var(--iomad-learning-courseinprogress);
+}
+
+.iomad-learning-preview-form {
+  width: min(100%, var(--iomad-learning-loginmaxwidth));
+  background: var(--iomad-learning-loginsurface);
+  border: var(--iomad-learning-loginborderwidth) solid var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-loginradius);
+  box-shadow: var(--iomad-learning-loginshadow);
+  padding: var(--iomad-learning-loginpadding);
+  display: grid;
+  gap: var(--iomad-learning-logininputgap);
+  text-align: var(--iomad-learning-loginalign);
+}
+
+@media (max-width: 900px) {
+  .iomad-learning-customizer-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .iomad-learning-token-panel {
+    max-height: 30rem;
+  }
+
+  .iomad-learning-customizer-toolbar {
+    grid-template-columns: 1fr 1fr;
+    top: 0;
+  }
+}

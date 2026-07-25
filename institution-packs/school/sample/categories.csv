@@ -1,0 +1,53 @@
+category_idnumber,name,parent_idnumber,company_shortname,category_type
+GV_AY_2026,Academic Year 2026-27,,GV_SCHOOL,academic_year
+GV_CBSE,CBSE,GV_AY_2026,GV_SCHOOL,board
+GV_EN,English Medium,GV_CBSE,GV_SCHOOL,medium
+GV_STD_01,Standard 1,GV_EN,GV_SCHOOL,standard
+GV_STD1_MATH,Mathematics,GV_STD_01,GV_SCHOOL,subject
+GV_STD1_ENG,English,GV_STD_01,GV_SCHOOL,subject
+GV_STD1_EVS,Environmental Studies,GV_STD_01,GV_SCHOOL,subject
+GV_STD_02,Standard 2,GV_EN,GV_SCHOOL,standard
+GV_STD2_MATH,Mathematics,GV_STD_02,GV_SCHOOL,subject
+GV_STD2_ENG,English,GV_STD_02,GV_SCHOOL,subject
+GV_STD2_EVS,Environmental Studies,GV_STD_02,GV_SCHOOL,subject
+GV_STD_03,Standard 3,GV_EN,GV_SCHOOL,standard
+GV_STD3_MATH,Mathematics,GV_STD_03,GV_SCHOOL,subject
+GV_STD3_ENG,English,GV_STD_03,GV_SCHOOL,subject
+GV_STD3_EVS,Environmental Studies,GV_STD_03,GV_SCHOOL,subject
+GV_STD_04,Standard 4,GV_EN,GV_SCHOOL,standard
+GV_STD4_MATH,Mathematics,GV_STD_04,GV_SCHOOL,subject
+GV_STD4_ENG,English,GV_STD_04,GV_SCHOOL,subject
+GV_STD4_EVS,Environmental Studies,GV_STD_04,GV_SCHOOL,subject
+GV_STD_05,Standard 5,GV_EN,GV_SCHOOL,standard
+GV_STD5_MATH,Mathematics,GV_STD_05,GV_SCHOOL,subject
+GV_STD5_ENG,English,GV_STD_05,GV_SCHOOL,subject
+GV_STD5_EVS,Environmental Studies,GV_STD_05,GV_SCHOOL,subject
+GV_STD_06,Standard 6,GV_EN,GV_SCHOOL,standard
+GV_STD6_MATH,Mathematics,GV_STD_06,GV_SCHOOL,subject
+GV_STD6_ENG,English,GV_STD_06,GV_SCHOOL,subject
+GV_STD6_SCI,Science,GV_STD_06,GV_SCHOOL,subject
+GV_STD_07,Standard 7,GV_EN,GV_SCHOOL,standard
+GV_STD7_MATH,Mathematics,GV_STD_07,GV_SCHOOL,subject
+GV_STD7_ENG,English,GV_STD_07,GV_SCHOOL,subject
+GV_STD7_SCI,Science,GV_STD_07,GV_SCHOOL,subject
+GV_STD_08,Standard 8,GV_EN,GV_SCHOOL,standard
+GV_STD8_MATH,Mathematics,GV_STD_08,GV_SCHOOL,subject
+GV_STD8_ENG,English,GV_STD_08,GV_SCHOOL,subject
+GV_STD8_SCI,Science,GV_STD_08,GV_SCHOOL,subject
+GV_STD_09,Standard 9,GV_EN,GV_SCHOOL,standard
+GV_STD9_MATH,Mathematics,GV_STD_09,GV_SCHOOL,subject
+GV_STD9_ENG,English,GV_STD_09,GV_SCHOOL,subject
+GV_STD9_SCI,Science,GV_STD_09,GV_SCHOOL,subject
+GV_STD_10,Standard 10,GV_EN,GV_SCHOOL,standard
+GV_STD10_MATH,Mathematics,GV_STD_10,GV_SCHOOL,subject
+GV_STD10_ENG,English,GV_STD_10,GV_SCHOOL,subject
+GV_STD10_SCI,Science,GV_STD_10,GV_SCHOOL,subject
+GV_STD_11,Standard 11,GV_EN,GV_SCHOOL,standard
+GV_STD11_MATH,Mathematics,GV_STD_11,GV_SCHOOL,subject
+GV_STD11_ENG,English,GV_STD_11,GV_SCHOOL,subject
+GV_STD11_PHY,Physics,GV_STD_11,GV_SCHOOL,subject
+GV_STD_12,Standard 12,GV_EN,GV_SCHOOL,standard
+GV_STD12_MATH,Mathematics,GV_STD_12,GV_SCHOOL,subject
+GV_STD12_ENG,English,GV_STD_12,GV_SCHOOL,subject
+GV_STD12_PHY,Physics,GV_STD_12,GV_SCHOOL,subject
+GV_ORIENTATION,School Orientation,GV_AY_2026,GV_SCHOOL,course

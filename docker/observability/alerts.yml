@@ -1,0 +1,43 @@
+groups:
+  - name: iomad-platform
+    rules:
+      - alert: IomadReadinessFailed
+        expr: probe_success{job="iomad-readiness"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: IOMAD health contract is failing
+          runbook: docs/12-runbooks/health-failure.md
+      - alert: IomadAggregateCheckFailed
+        expr: iomad_health_check == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: IOMAD aggregate health check failed
+          runbook: docs/12-runbooks/health-failure.md
+      - alert: IomadMetricsMissing
+        expr: absent(iomad_health_report_timestamp_seconds)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: IOMAD metrics are missing
+          runbook: docs/12-runbooks/collector-failure.md
+      - alert: IomadHealthCheckSlow
+        expr: iomad_health_check_duration_seconds > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: IOMAD health dependency check is slow
+          runbook: docs/12-runbooks/health-failure.md
+      - alert: IomadApplicationErrors
+        expr: sum(rate(iomad_exception_total{category=~".*_failed|.*_error|.*_unavailable|internal_error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: IOMAD repository-owned application errors are increasing
+          runbook: docs/incident-runbook.md
