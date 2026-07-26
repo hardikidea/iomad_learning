@@ -3,6 +3,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use theme_iomad_learning\local\icon_catalog;
 use theme_iomad_learning\local\token_catalog;
 
 /**
@@ -116,6 +117,12 @@ function theme_iomad_learning_get_extra_scss($theme): string {
  */
 function theme_iomad_learning_page_init(moodle_page $page): void {
     $page->requires->js_call_amd('theme_iomad_learning/focus', 'init');
+    $page->requires->js_call_amd('theme_iomad_learning/navigation', 'init');
+    $page->requires->js_call_amd(
+        'theme_iomad_learning/iconify',
+        'init',
+        [icon_catalog::client_component_map()],
+    );
 }
 
 /**

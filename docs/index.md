@@ -28,6 +28,7 @@ official source remains a detached, reproducible checkout at the commit in
 - [Service catalogue](11-operations/service-catalogue.md)
 - [Exception catalogue](11-operations/exception-catalogue.md)
 - [Global events and gamification](05-iomad-domains/gamification-and-global-events.md)
+- [Product icon system](icon-system.md)
 
 ## Evidence And Governance
 

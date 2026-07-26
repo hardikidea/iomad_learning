@@ -69,7 +69,7 @@ echo html_writer::select(
 );
 echo html_writer::tag(
     'button',
-    html_writer::tag('i', '', ['class' => 'fa fa-undo', 'aria-hidden' => 'true']),
+    html_writer::tag('i', '', ['class' => 'fa fa-rotate-left', 'aria-hidden' => 'true']),
     [
         'type' => 'button',
         'class' => 'btn btn-secondary',

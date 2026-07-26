@@ -3,6 +3,9 @@
 
 namespace theme_iomad_learning\output;
 
+use theme_iomad_learning\local\icon_catalog;
+use theme_iomad_learning\local\tenant_branding;
+
 /**
  * Preserve IOMAD company assets and provide theme fallbacks.
  *
@@ -11,6 +14,63 @@ namespace theme_iomad_learning\output;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class core_renderer extends \theme_boost\output\core_renderer {
+    /**
+     * Render project SVG icons which do not have an accurate Font Awesome equivalent.
+     *
+     * @param \core\output\pix_icon $icon Icon.
+     * @return string
+     */
+    protected function render_pix_icon(\core\output\pix_icon $icon) {
+        $customclasses = icon_catalog::custom_icon_classes($icon->component, $icon->pix);
+        if ($customclasses === null) {
+            return parent::render_pix_icon($icon);
+        }
+
+        $attributes = $icon->attributes;
+        $classes = trim('icon fa-fw ' . $customclasses . ' ' . ($attributes['class'] ?? ''));
+        $alt = trim((string)($attributes['alt'] ?? ''));
+        unset($attributes['class'], $attributes['alt']);
+        $attributes['class'] = $classes;
+
+        if (!empty($attributes['aria-hidden']) || $alt === '') {
+            $attributes['aria-hidden'] = 'true';
+            unset($attributes['aria-label'], $attributes['role']);
+        } else {
+            $attributes['role'] = 'img';
+            $attributes['aria-label'] = $alt;
+        }
+
+        return \html_writer::tag('span', '', $attributes);
+    }
+
+    /**
+     * Add active-company design variables and supported IOMAD company CSS.
+     *
+     * @return string
+     */
+    public function standard_head_html() {
+        $output = parent::standard_head_html();
+
+        try {
+            $companyid = \local_iomad\iomad::get_my_companyid(\context_system::instance(), false);
+            if ($companyid <= 0) {
+                return $output;
+            }
+            $company = new \local_iomad\company($companyid);
+            $branding = $company->get(['linkcolor', 'customcss'], true);
+            $css = tenant_branding::build_css($branding);
+            if ($css !== '') {
+                $output .= \html_writer::tag('style', $css, [
+                    'data-theme' => 'iomad-learning-tenant',
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            debugging('Unable to load IOMAD company theme settings: ' . $exception->getMessage(), DEBUG_DEVELOPER);
+        }
+
+        return $output;
+    }
+
     /**
      * Site or company logo.
      *

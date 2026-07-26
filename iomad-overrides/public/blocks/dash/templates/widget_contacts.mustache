@@ -38,13 +38,20 @@
                         <div class="img-block">
                             <div class="overlay-block"></div> <!--Contact User border split-->
                             <div class="img-block-overlay">
-                                <a href="{{{profileurl}}}"><i class="fa fa-address-book-o"></i></a>
+                                <a href="{{{profileurl}}}" aria-label="{{#str}}profile{{/str}}">
+                                    <i class="fa-regular fa-address-book" aria-hidden="true"></i>
+                                </a>
                             </div> <!--Contact address icon-->
                             <div class="img-block-overlay img-block-overlay-1">
-                                <a data-userid="{{{id}}}" href="{{{groupsurl}}}" class="contact-widget-viewgroup"><i class="fa fa-users"></i></a>
+                                <a data-userid="{{{id}}}" href="{{{groupsurl}}}" class="contact-widget-viewgroup"
+                                        aria-label="{{#str}}groups{{/str}}">
+                                    <i class="fa fa-user-group" aria-hidden="true"></i>
+                                </a>
                             </div> <!--Contact Users icon-->
                             <div class="img-block-overlay img-block-overlay-2">
-                                <a href="{{contacturl}}"><i class="fa fa-comment"></i></a>
+                                <a href="{{contacturl}}" aria-label="{{#str}}message{{/str}}">
+                                    <i class="fa-regular fa-comment" aria-hidden="true"></i>
+                                </a>
                             </div> <!--Contact comment icon-->
                             {{#unreadcount}}
                             <span class="badge-block">{{unreadcount}}</span> <!--Contact User badge-->

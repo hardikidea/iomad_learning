@@ -70,7 +70,8 @@ define([], function() {
                 row.draggable = true;
                 row.dataset.index = index;
                 row.innerHTML = '<div class="iopb-editor-rowbar">'
-                    + '<span class="iopb-drag-handle" title="Drag component"><i class="fa fa-arrows"></i></span>'
+                    + '<span class="iopb-drag-handle" title="Drag component">'
+                    + '<i class="fa fa-up-down-left-right" aria-hidden="true"></i></span>'
                     + '<strong>' + escape(section.preset) + '</strong>'
                     + '<div class="iopb-editor-actions">'
                     + '<button type="button" class="btn btn-sm btn-secondary" data-action="up" title="Move up">'
@@ -78,7 +79,7 @@ define([], function() {
                     + '<button type="button" class="btn btn-sm btn-secondary" data-action="down" title="Move down">'
                     + '<i class="fa fa-arrow-down" aria-hidden="true"></i><span class="sr-only">Move down</span></button>'
                     + '<button type="button" class="btn btn-sm btn-danger" data-action="remove" title="Remove">'
-                    + '<i class="fa fa-trash" aria-hidden="true"></i><span class="sr-only">Remove</span></button>'
+                    + '<i class="fa fa-trash-can" aria-hidden="true"></i><span class="sr-only">Remove</span></button>'
                     + '</div></div><div class="iopb-editor-fields">'
                     + field(section, 'title', 'Title', false)
                     + field(section, 'body', 'Content', true)
@@ -151,4 +152,3 @@ define([], function() {
 
     return {init: init};
 });
-

@@ -59,6 +59,8 @@ final class token_catalog {
             'borderstrong' => '#9ca8b8',
             'linkcolor' => '#1f55a5',
             'linkhover' => '#173f7c',
+            'navigationiconcolor' => '#5e6878',
+            'navigationiconactive' => '#1f55a5',
             'focuscolor' => '#ffbf47',
             'selectionbackground' => '#dce8fa',
             'selectiontext' => '#172033',
@@ -140,8 +142,8 @@ final class token_catalog {
             'space6' => '2rem',
             'space7' => '3rem',
             'space8' => '4rem',
-            'pagepaddingx' => '1.5rem',
-            'pagepaddingy' => '1.5rem',
+            'pagepaddingx' => '1rem',
+            'pagepaddingy' => '0.75rem',
             'sectiongap' => '2rem',
             'gridgap' => '1rem',
             'cardpadding' => '1rem',
@@ -162,8 +164,6 @@ final class token_catalog {
             'navbarheight' => '4rem',
             'sidebarwidth' => '18rem',
             'drawerwidth' => '20rem',
-            'contentmaxwidth' => '90rem',
-            'coursecontentmaxwidth' => '80rem',
             'inputheight' => '2.75rem',
             'buttonheight' => '2.5rem',
             'footerheight' => '4rem',
@@ -183,7 +183,14 @@ final class token_catalog {
             'targetsize' => '2.75rem',
             'readingwidth' => '70ch',
             'sidebariconsize' => '1.125rem',
+            'navigationiconsize' => '1rem',
+            'adminiconsize' => '3rem',
+            'adminactioniconsize' => '1.25rem',
             'breadcrumbheight' => '2.5rem',
+        ]);
+        self::add($definitions, 'spacing', 'maxwidth', [
+            'contentmaxwidth' => 'none',
+            'coursecontentmaxwidth' => 'none',
         ]);
         self::add($definitions, 'shape', 'radius', [
             'radiusxs' => '0.125rem',
@@ -250,6 +257,7 @@ final class token_catalog {
             'showfooter' => '1',
             'showcourseindex' => '1',
             'showblockdrawer' => '1',
+            'shownavigationicons' => '1',
         ]);
         self::add($definitions, 'navigation', 'align', [
             'navigationalign' => 'start',
@@ -470,6 +478,7 @@ final class token_catalog {
             'size' => self::same(['1rem', '1.125rem', '1.25rem', '2rem', '2.5rem', '2.75rem', '3rem',
                 '4rem', '5rem', '10rem', '16rem', '18rem', '20rem', '22rem', '24rem', '28rem',
                 '32rem', '40rem', '60rem', '70ch', '75rem', '80rem', '90rem']),
+            'maxwidth' => self::same(['none', '60rem', '75rem', '80rem', '90rem']),
             'radius' => self::same(['0', '0.125rem', '0.25rem', '0.375rem', '0.5rem', '0.75rem', '1rem', '999rem']),
             'borderwidth' => self::same(['0', '1px', '2px', '3px', '4px']),
             'shadow' => [

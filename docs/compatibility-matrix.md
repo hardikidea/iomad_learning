@@ -14,7 +14,7 @@
 | `format_designer` | IOMAD/Moodle 5.1 | release `1.7` |
 | `tool_courserating` | IOMAD/Moodle 4.5-5.2 | release `4.5.1` |
 | `local_institutionpack` | IOMAD/Moodle 5.1 only | release `0.2.0` |
-| `theme_iomad_learning` | IOMAD/Moodle 5.1 only | release `1.0.0` |
+| `theme_iomad_learning` | IOMAD/Moodle 5.1 only | release `1.2.0` |
 | `tool_iomadmonitor` | IOMAD/Moodle 5.1 only | release `1.2.0` |
 | `local_global_events` | IOMAD/Moodle 5.1 only | release `0.3.0` beta |
 | `local_iomad_h5p_bridge` | IOMAD/Moodle 5.1 only | release `0.1.0` beta |

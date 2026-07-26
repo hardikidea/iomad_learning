@@ -6,12 +6,14 @@ The theme supplies safe shared fallbacks and a versioned design-token layer.
 
 ## Token Catalog
 
-The catalog contains 235 allow-listed settings across:
+The catalog contains 241 allow-listed settings across:
 
 - colors and semantic state colors;
 - typography, uploaded WOFF2 fonts and reading width;
 - spacing, sizing, shape and elevation;
+- fluid or constrained content widths and compact page padding;
 - primary navigation and two-drawer behavior;
+- Font Awesome navigation icon visibility, size and fallback colors;
 - login layout and background assets;
 - course cards, grids and six course-layout treatments;
 - dashboard density and information hierarchy;
@@ -24,6 +26,10 @@ through token fields.
 Open **Site administration > Appearance > Themes > IOMAD Learning** for
 persisted settings, or `/theme/iomad_learning/customizer.php` for searchable
 live preview. The preview does not bypass Moodle capability checks.
+
+IOMAD company `linkcolor` is applied at request time after shared tokens and
+controls both links and navigation icons. Company `customcss` is applied after
+those variables. This avoids compiling one SCSS cache per tenant.
 
 ## Acceptance
 

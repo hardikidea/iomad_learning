@@ -28,6 +28,9 @@ final class token_catalog_test extends \advanced_testcase {
             $this->assertSame($definition['default'], token_catalog::normalize($key, $definition['default']));
             $this->assertStringStartsWith('--iomad-learning-', token_catalog::css_name($key));
         }
+        $this->assertSame('none', $definitions['contentmaxwidth']['default']);
+        $this->assertSame('none', $definitions['coursecontentmaxwidth']['default']);
+        $this->assertSame('1', $definitions['shownavigationicons']['default']);
     }
 
     /**
@@ -39,5 +42,6 @@ final class token_catalog_test extends \advanced_testcase {
         $this->assertSame('#2454a6', token_catalog::normalize('primarycolor', 'red;display:none'));
         $this->assertSame('1rem', token_catalog::normalize('basefontsize', 'calc(1px);color:red'));
         $this->assertSame('0', token_catalog::normalize('disablemotion', 'yes'));
+        $this->assertSame('none', token_catalog::normalize('contentmaxwidth', 'calc(100% - 1px)'));
     }
 }

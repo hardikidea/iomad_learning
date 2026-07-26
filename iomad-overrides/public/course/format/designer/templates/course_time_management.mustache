@@ -32,14 +32,14 @@
 <div class="course-info-block">
     {{#enrolmentstartdate}}
     <div class="course-start-date">
-        <h6><i class="fa fa-calendar"></i> {{#str}} coursestartdate, format_designer {{/str}}</h6>
+        <h6><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{#str}} coursestartdate, format_designer {{/str}}</h6>
         <h3>{{#userdate}} {{enrolmentstartdate}}, {{#str}} strftimedate {{/str}} {{/userdate}}</h3>
     </div>
     {{/enrolmentstartdate}}
 
     {{#courseduedate}}
     <div class="course-due-date">
-        <h6><i class="fa fa-clock-o"></i> {{#str}} courseduedate, format_designer {{/str}}</h6>
+        <h6><i class="fa-regular fa-clock" aria-hidden="true"></i> {{#str}} courseduedate, format_designer {{/str}}</h6>
         <h3>{{#userdate}} {{courseduedate}}, {{#str}} strftimedate {{/str}} {{/userdate}}</h3>
     </div>
     {{/courseduedate}}
@@ -58,7 +58,7 @@
 
     {{#enrolmentenddate}}
     <div class="course-expire-date">
-        <h6><i class="fa fa-sign-out"></i> {{#str}} courseexpirationdate, format_designer {{/str}} </h6>
+        <h6><i class="fa fa-arrow-right-from-bracket" aria-hidden="true"></i> {{#str}} courseexpirationdate, format_designer {{/str}} </h6>
         {{#enrolmentenddate}}
         <h3>{{#userdate}} {{enrolmentenddate}}, {{#str}} strftimedate {{/str}} {{/userdate}}</h3>
         {{/enrolmentenddate}}
@@ -88,7 +88,7 @@
                                 <div class="title-block">
                                     <a href="{{{profileurl}}}"> <h4>{{{fullname}}}<h4> </a>
                                     <span>
-                                        <i class="icon fa fa-envelope fa-fw iconsmall" title="{{#str}}mail, format_designer{{/str}} " aria-label="mail"></i>
+                                        <i class="icon fa-regular fa-envelope fa-fw iconsmall" title="{{#str}}mail, format_designer{{/str}} " aria-label="mail"></i>
                                         <span class="user-email"> {{email}}</span>
                                     </span>
                                     <span class="user-role">{{role}}</span>
@@ -102,7 +102,7 @@
                                         <a id="message-user-button" role="button" data-conversationid="0" data-userid="{{userid}}" class="btn"
                                             href="{{{contacturl}}}">
                                             <span>
-                                                <i class="icon fa fa-comment fa-fw iconsmall" title="Message" aria-label="Message"></i>
+                                                <i class="icon fa-regular fa-comment fa-fw iconsmall" title="Message" aria-label="Message"></i>
                                                 <span class="header-button-title">{{#str}} message, format_designer {{/str}}</span>
                                             </span>
                                         </a>
@@ -114,7 +114,7 @@
                                                 <span class="header-button-title">{{contacttitle}}</span>
                                             </span>
                                             <span class="loading-icon icon-no-margin">
-                                                <i class="icon fa fa-circle-o-notch fa-spin fa-fw " title="Loading" aria-label="Loading"></i>
+                                                <i class="icon fa fa-circle-notch fa-spin fa-fw" title="Loading" aria-label="Loading"></i>
                                             </span>
                                         </a>
                                         {{/showaddtocontacts}}

@@ -89,6 +89,8 @@ test_targets=(
     public/local/iomad_scorm_gen/tests/package_builder_test.php
     public/local/iomad_scorm_gen/tests/observer_test.php
     public/theme/iomad_learning/tests/token_catalog_test.php
+    public/theme/iomad_learning/tests/tenant_branding_test.php
+    public/theme/iomad_learning/tests/icon_catalog_test.php
     public/local/tenantmaster/tests/json_test.php
     public/local/tenantmaster/tests/default_service_test.php
     public/local/tenantmaster/tests/projection_test.php

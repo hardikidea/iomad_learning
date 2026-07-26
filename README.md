@@ -177,6 +177,7 @@ PREVIOUS_IOMAD_COMMIT=<reviewed-older-sha> make upgrade-test
 - [Page builder catalog](docs/page-builder-catalog.md)
 - [Commerce and WordPress](docs/commerce-wordpress.md)
 - [Theme and live customizer](docs/theme-customizer.md)
+- [Product icon system](docs/icon-system.md)
 - [Site monitor](docs/site-monitor.md)
 - [Health and observability](docs/11-operations/health-and-observability.md)
 - [Gamification and global events](docs/05-iomad-domains/gamification-and-global-events.md)

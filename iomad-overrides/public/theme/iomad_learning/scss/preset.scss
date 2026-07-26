@@ -69,6 +69,82 @@ a:hover {
   text-transform: var(--iomad-learning-navtexttransform);
 }
 
+.iomad-learning-nav-icon,
+.nav-link > .fa {
+  flex: 0 0 var(--iomad-learning-navigationiconsize);
+  width: var(--iomad-learning-navigationiconsize);
+  margin-inline-end: var(--iomad-learning-space2);
+  color: var(--iomad-learning-navigationiconcolor);
+  font-size: var(--iomad-learning-navigationiconsize);
+  line-height: 1;
+  text-align: center;
+}
+
+.nav-link.active > .fa,
+.nav-link:hover > .fa,
+.nav-link:focus-visible > .fa {
+  color: var(--iomad-learning-navigationiconactive);
+}
+
+.icon.fa,
+.iomad-learning-nav-icon,
+.iomad_company_admin .fa-topic,
+.iomad_company_admin .fa-action {
+  vertical-align: -0.125em;
+}
+
+a .icon.fa,
+button .icon.fa,
+.btn .icon.fa {
+  color: inherit;
+}
+
+.iomad-learning-icon-custom {
+  font-family: inherit;
+}
+
+.iomad-learning-icon-custom::before {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  content: "";
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+
+.iomad-learning-icon-institution::before {
+  mask-image: url("[[pix:theme|icons/institution-hierarchy]]");
+}
+
+.activityiconcontainer .iomad-learning-fa-icon {
+  display: inline-grid;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.dash-mod-icon.iomad-learning-fa-icon {
+  display: inline-grid;
+  width: 1.5em;
+  height: 1.5em;
+  margin-inline-end: .375rem;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.iomad-learning-icon-spacer {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+}
+
 .navbar .logo,
 .navbar-brand .logo {
   max-height: var(--iomad-learning-headerlogoheight);
@@ -106,12 +182,28 @@ a:hover {
 }
 
 #page {
+  width: 100%;
   max-width: var(--iomad-learning-contentmaxwidth);
+  padding-block: var(--iomad-learning-pagepaddingy);
+  padding-inline: var(--iomad-learning-pagepaddingx);
+}
+
+#page.drawers {
+  padding-inline: var(--iomad-learning-pagepaddingx);
+}
+
+#page.drawers .main-inner,
+.pagelayout-standard #page.drawers .main-inner,
+body.limitedwidth #page.drawers .main-inner {
+  width: 100%;
+  max-width: var(--iomad-learning-coursecontentmaxwidth);
+  margin-block-start: var(--iomad-learning-pagepaddingy);
+  margin-block-end: var(--iomad-learning-space5);
   padding: var(--iomad-learning-pagepaddingy) var(--iomad-learning-pagepaddingx);
 }
 
-#page.drawers .main-inner {
-  max-width: var(--iomad-learning-coursecontentmaxwidth);
+#page.drawers div[role="main"] {
+  padding-inline: 0;
 }
 
 #page-footer.footer-popover {
@@ -188,6 +280,102 @@ a:hover {
 .table thead th {
   background: var(--iomad-learning-tableheaderbackground);
   color: var(--iomad-learning-tableheadertext);
+}
+
+.iomad_company_admin .nav-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--iomad-learning-space2);
+  overflow-x: auto;
+  border-bottom-color: var(--iomad-learning-bordercolor);
+}
+
+.iomad_company_admin .nav-tabs .nav-link {
+  min-height: var(--iomad-learning-tabheight);
+  padding: var(--iomad-learning-space3) var(--iomad-learning-space4);
+  border: 0;
+  border-bottom: var(--iomad-learning-tabindicatorheight) solid transparent;
+  border-radius: 0;
+  color: var(--iomad-learning-linkcolor);
+  font-weight: var(--iomad-learning-navweight);
+  white-space: nowrap;
+}
+
+.iomad_company_admin .nav-tabs .nav-link.active {
+  border-bottom-color: var(--iomad-learning-navigationiconactive);
+  color: var(--iomad-learning-linkhover);
+}
+
+.iomad_company_admin .iomadlink_container {
+  margin-block: var(--iomad-learning-space4) 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.iomad_company_admin .iomadlink_container.active {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--iomad-learning-gridgap);
+}
+
+.iomad_company_admin .iomadlink_container > a {
+  display: flex;
+  float: none;
+  min-width: 0;
+  min-height: 10rem;
+  margin: 0;
+  padding: var(--iomad-learning-cardpadding);
+  align-items: center;
+  justify-content: center;
+  background: var(--iomad-learning-surface);
+  border: var(--iomad-learning-borderwidth) solid var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-cardradius);
+  color: var(--iomad-learning-linkcolor);
+  text-decoration: none;
+}
+
+.iomad_company_admin .iomadlink_container > a:hover,
+.iomad_company_admin .iomadlink_container > a:focus-visible {
+  border-color: var(--iomad-learning-navigationiconactive);
+  color: var(--iomad-learning-linkhover);
+}
+
+.iomad_company_admin .iomadlink {
+  display: flex;
+  width: 100%;
+  margin: 0 !important;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--iomad-learning-cardgap);
+  text-align: center;
+}
+
+.iomad_company_admin .iomadlink .iomadicon {
+  margin: 0;
+}
+
+.iomad_company_admin .iomadlink .iomadicon .fa-topic {
+  margin: 0;
+  color: var(--iomad-learning-navigationiconcolor);
+  font-size: var(--iomad-learning-adminiconsize);
+  line-height: 1;
+}
+
+.iomad_company_admin .iomadlink .iomadicon .fa-action {
+  width: calc(var(--iomad-learning-adminactioniconsize) + var(--iomad-learning-space2));
+  height: calc(var(--iomad-learning-adminactioniconsize) + var(--iomad-learning-space2));
+  margin-inline-start: calc(-1 * var(--iomad-learning-space3));
+  background: var(--iomad-learning-navigationiconactive);
+  font-size: var(--iomad-learning-adminactioniconsize);
+  line-height: calc(var(--iomad-learning-adminactioniconsize) + var(--iomad-learning-space2));
+}
+
+.iomad_company_admin .actiondescription {
+  color: inherit;
+  font-size: var(--iomad-learning-navfontsize);
+  font-weight: var(--iomad-learning-headingweight);
+  line-height: var(--iomad-learning-compactlineheight);
 }
 
 .dashboard-card-deck,
@@ -332,6 +520,14 @@ body.iomad-learning-focus-mode #page.drawers .main-inner {
   .iomaddashboard-grid,
   .block_iomaddashboard .content {
     grid-template-columns: 1fr;
+  }
+
+  .iomad_company_admin .iomadlink_container.active {
+    grid-template-columns: 1fr;
+  }
+
+  .iomad_company_admin .iomadlink_container > a {
+    min-height: 8.5rem;
   }
 }
 
