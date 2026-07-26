@@ -134,6 +134,10 @@ final class rollover_service {
 
                 try {
                     $targetexternalid = $source->externalid . ':' . $rollover->toyearid;
+                    $payload = json::decode_object((string)$source->payloadjson);
+                    $payload['_tenantmaster_source_externalid'] =
+                        $payload['_tenantmaster_source_externalid'] ?? (string)$source->externalid;
+                    $payload['_tenantmaster_source_masterid'] = (int)$source->id;
                     $existing = $DB->get_record('local_tenantmaster_master', [
                         'tenantid' => $tenant->id,
                         'mastertype' => $source->mastertype,
@@ -149,7 +153,7 @@ final class rollover_service {
                         'code' => substr($source->code . '_' . $rollover->toyearid, 0, 100),
                         'name' => (string)$source->name,
                         'description' => (string)($source->description ?? ''),
-                        'payloadjson' => (string)$source->payloadjson,
+                        'payloadjson' => json::encode($payload),
                         'active' => (int)$source->active,
                         'sortorder' => (int)$source->sortorder,
                     ]);

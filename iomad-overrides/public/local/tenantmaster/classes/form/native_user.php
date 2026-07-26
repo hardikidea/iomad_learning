@@ -20,6 +20,9 @@ final class native_user extends \moodleform {
      */
     protected function definition(): void {
         $mform = $this->_form;
+        $editing = !empty($this->_customdata['editing']);
+        $mform->addElement('hidden', 'userid', 0);
+        $mform->setType('userid', PARAM_INT);
         $mform->addElement('text', 'username', get_string('username'), ['size' => 30]);
         $mform->setType('username', PARAM_USERNAME);
         $mform->addRule('username', null, 'required');
@@ -38,24 +41,30 @@ final class native_user extends \moodleform {
         $mform->addElement('text', 'city', get_string('city'), ['size' => 30]);
         $mform->setType('city', PARAM_NOTAGS);
         $mform->addElement('select', 'country', get_string('country'), get_string_manager()->get_list_of_countries());
-        $mform->addElement(
-            'select',
-            'rolekey',
-            get_string('businessrole', 'local_tenantmaster'),
-            $this->_customdata['roles']
-        );
-        $mform->addElement(
-            'select',
-            'departmentid',
-            get_string('department'),
-            $this->_customdata['departments']
-        );
-        $mform->addElement(
-            'select',
-            'courseid',
-            get_string('course'),
-            $this->_customdata['courses']
-        );
-        $mform->addElement('submit', 'submitnativeuser', get_string('createnativeuser', 'local_tenantmaster'));
+        if ($editing) {
+            $mform->freeze(['username', 'idnumber']);
+            $mform->addElement('advcheckbox', 'suspended', get_string('suspended'));
+            $mform->addElement('submit', 'submitnativeuser', get_string('updatenativeuser', 'local_tenantmaster'));
+        } else {
+            $mform->addElement(
+                'select',
+                'rolekey',
+                get_string('businessrole', 'local_tenantmaster'),
+                $this->_customdata['roles']
+            );
+            $mform->addElement(
+                'select',
+                'departmentid',
+                get_string('department'),
+                $this->_customdata['departments']
+            );
+            $mform->addElement(
+                'select',
+                'courseid',
+                get_string('course'),
+                $this->_customdata['courses']
+            );
+            $mform->addElement('submit', 'submitnativeuser', get_string('createnativeuser', 'local_tenantmaster'));
+        }
     }
 }

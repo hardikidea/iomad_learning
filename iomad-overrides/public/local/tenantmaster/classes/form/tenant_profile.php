@@ -55,6 +55,37 @@ final class tenant_profile extends \moodleform {
         $mform->addElement('text', 'hostname', get_string('hostname', 'local_tenantmaster'), ['size' => 50]);
         $mform->setType('hostname', PARAM_HOST);
 
+        $mform->addElement(
+            'header',
+            'schoolidentity',
+            get_string('indianschoolidentity', 'local_tenantmaster'),
+        );
+        foreach (
+            [
+                'trustlegalname' => 60,
+                'trustregistrationnumber' => 30,
+                'udisecode' => 20,
+                'boardaffiliationnumber' => 30,
+                'recognitionnumber' => 30,
+                'schoolstage' => 30,
+                'managementtype' => 30,
+                'academicsession' => 20,
+                'district' => 30,
+                'block' => 30,
+                'preferredlanguages' => 50,
+            ] as $field => $size
+        ) {
+            $mform->addElement('text', $field, get_string($field, 'local_tenantmaster'), ['size' => $size]);
+            $mform->setType($field, PARAM_TEXT);
+        }
+        $mform->addElement(
+            'text',
+            'establishmentyear',
+            get_string('establishmentyear', 'local_tenantmaster'),
+            ['size' => 8],
+        );
+        $mform->setType('establishmentyear', PARAM_INT);
+
         $mform->addElement('header', 'branding', get_string('branding', 'local_tenantmaster'));
         foreach (['maincolor', 'headingcolor', 'linkcolor'] as $field) {
             $mform->addElement('text', $field, get_string($field, 'local_tenantmaster'), [
@@ -98,6 +129,12 @@ final class tenant_profile extends \moodleform {
         }
         if (strlen((string)$data['customcss']) > 65535) {
             $errors['customcss'] = get_string('customcsstoolong', 'local_tenantmaster');
+        }
+        if (
+            !empty($data['establishmentyear'])
+                && ((int)$data['establishmentyear'] < 1800 || (int)$data['establishmentyear'] > (int)date('Y'))
+        ) {
+            $errors['establishmentyear'] = get_string('invalidestablishmentyear', 'local_tenantmaster');
         }
         return $errors;
     }

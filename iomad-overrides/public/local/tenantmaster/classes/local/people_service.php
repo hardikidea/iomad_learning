@@ -99,15 +99,17 @@ final class people_service {
         }
         if (in_array($rolekey, ['teacher_faculty', 'student_learner'], true)) {
             if (
-                $courseid <= 0 || !$DB->record_exists('local_iomad_company_courses', [
+                $courseid > 0 && !$DB->record_exists('local_iomad_company_courses', [
                     'companyid' => $tenant->companyid,
                     'courseid' => $courseid,
                 ])
             ) {
-                throw new \invalid_parameter_exception('A tenant course is required for this role.');
+                throw new \invalid_parameter_exception('The selected course belongs to another tenant.');
             }
-            company_user::enrol($user, [$courseid], (int)$tenant->companyid, (int)$rolemap->roleid);
-            role_assign((int)$rolemap->roleid, $userid, context_course::instance($courseid)->id);
+            if ($courseid > 0) {
+                company_user::enrol($user, [$courseid], (int)$tenant->companyid, (int)$rolemap->roleid);
+                role_assign((int)$rolemap->roleid, $userid, context_course::instance($courseid)->id);
+            }
         }
         (new audit_service())->record(
             (int)$tenant->id,

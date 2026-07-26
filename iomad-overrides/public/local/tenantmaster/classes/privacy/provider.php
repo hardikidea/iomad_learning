@@ -49,6 +49,18 @@ final class provider implements
         $collection->add_database_table('local_tenantmaster_batchrow', [
             'payloadjson' => 'privacy:metadata:batchrow:payloadjson',
         ], 'privacy:metadata:batchrow');
+        $collection->add_database_table('local_tenantmaster_placement', [
+            'userid' => 'privacy:metadata:placement:userid',
+            'createdby' => 'privacy:metadata:placement:createdby',
+            'modifiedby' => 'privacy:metadata:placement:modifiedby',
+        ], 'privacy:metadata:placement');
+        $collection->add_database_table('local_tenantmaster_progress', [
+            'createdby' => 'privacy:metadata:progress:createdby',
+            'approvedby' => 'privacy:metadata:progress:approvedby',
+        ], 'privacy:metadata:progress');
+        $collection->add_database_table('local_tenantmaster_crscopy', [
+            'createdby' => 'privacy:metadata:coursecopy:createdby',
+        ], 'privacy:metadata:coursecopy');
         return $collection;
     }
 
@@ -71,7 +83,13 @@ final class provider implements
             || $DB->record_exists('local_tenantmaster_batch', ['actorid' => $userid])
             || $DB->record_exists('local_tenantmaster_rollover', ['actorid' => $userid])
             || $DB->record_exists('local_tenantmaster_rollover', ['approvedby' => $userid])
-            || $DB->record_exists('local_tenantmaster_drift', ['resolvedby' => $userid]);
+            || $DB->record_exists('local_tenantmaster_drift', ['resolvedby' => $userid])
+            || $DB->record_exists('local_tenantmaster_placement', ['userid' => $userid])
+            || $DB->record_exists('local_tenantmaster_placement', ['createdby' => $userid])
+            || $DB->record_exists('local_tenantmaster_placement', ['modifiedby' => $userid])
+            || $DB->record_exists('local_tenantmaster_progress', ['createdby' => $userid])
+            || $DB->record_exists('local_tenantmaster_progress', ['approvedby' => $userid])
+            || $DB->record_exists('local_tenantmaster_crscopy', ['createdby' => $userid]);
         if ($exists) {
             $contextlist->add_system_context();
         }
@@ -92,6 +110,7 @@ final class provider implements
         $userid = $contextlist->get_user()->id;
         $audits = $DB->get_records('local_tenantmaster_audit', ['actorid' => $userid], 'timecreated ASC');
         $jobs = $DB->get_records('local_tenantmaster_job', ['actorid' => $userid], 'timecreated ASC');
+        $placements = $DB->get_records('local_tenantmaster_placement', ['userid' => $userid], 'timecreated ASC');
         writer::with_context(context_system::instance())->export_data(
             [get_string('pluginname', 'local_tenantmaster')],
             (object)[
@@ -107,6 +126,12 @@ final class provider implements
                     'status' => $record->status,
                     'timecreated' => $record->timecreated,
                 ], array_values($jobs)),
+                'placements' => array_map(static fn(object $record): object => (object)[
+                    'tenantid' => $record->tenantid,
+                    'academicyearid' => $record->acadyearid,
+                    'status' => $record->status,
+                    'timecreated' => $record->timecreated,
+                ], array_values($placements)),
             ],
         );
     }
@@ -140,6 +165,9 @@ final class provider implements
             'local_tenantmaster_batch' => ['actorid'],
             'local_tenantmaster_rollover' => ['actorid', 'approvedby'],
             'local_tenantmaster_drift' => ['resolvedby'],
+            'local_tenantmaster_placement' => ['createdby', 'modifiedby'],
+            'local_tenantmaster_progress' => ['createdby', 'approvedby'],
+            'local_tenantmaster_crscopy' => ['createdby'],
             ] as $table => $fields
         ) {
             foreach ($fields as $field) {

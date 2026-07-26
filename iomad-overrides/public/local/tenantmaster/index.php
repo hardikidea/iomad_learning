@@ -5,6 +5,7 @@ use local_tenantmaster\form\department;
 use local_tenantmaster\form\academic_year;
 use local_tenantmaster\form\access_assignment;
 use local_tenantmaster\form\cohort_member;
+use local_tenantmaster\form\course_copy;
 use local_tenantmaster\form\guardian_link;
 use local_tenantmaster\form\import_package;
 use local_tenantmaster\form\master;
@@ -14,10 +15,14 @@ use local_tenantmaster\form\native_user;
 use local_tenantmaster\form\onboarding;
 use local_tenantmaster\form\role_assignment;
 use local_tenantmaster\form\rollover;
+use local_tenantmaster\form\school_year_setup;
+use local_tenantmaster\form\student_placement;
+use local_tenantmaster\form\student_progression;
 use local_tenantmaster\form\tenant_profile;
 use local_tenantmaster\local\access;
 use local_tenantmaster\local\academic_year_service;
 use local_tenantmaster\local\catalog;
+use local_tenantmaster\local\course_copy_service;
 use local_tenantmaster\local\default_service;
 use local_tenantmaster\local\drift_service;
 use local_tenantmaster\local\import_service;
@@ -32,6 +37,9 @@ use local_tenantmaster\local\people_service;
 use local_tenantmaster\local\queue_service;
 use local_tenantmaster\local\role_service;
 use local_tenantmaster\local\rollover_service;
+use local_tenantmaster\local\school_year_setup_service;
+use local_tenantmaster\local\student_placement_service;
+use local_tenantmaster\local\student_progression_service;
 use local_tenantmaster\local\tenant_repository;
 use local_tenantmaster\local\tenant_service;
 use local_tenantmaster\local\validation_service;
@@ -45,6 +53,8 @@ $companyid = optional_param('companyid', 0, PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHANUMEXT);
 $editid = optional_param('editid', 0, PARAM_INT);
 $yeareditid = optional_param('yeareditid', 0, PARAM_INT);
+$placementeditid = optional_param('placementeditid', 0, PARAM_INT);
+$usereditid = optional_param('usereditid', 0, PARAM_INT);
 $typefilter = optional_param('type', '', PARAM_ALPHANUMEXT);
 $access = access::resolve($companyid);
 $companyid = $access->companyid();
@@ -136,6 +146,14 @@ if ($action !== '') {
             );
             $notice = get_string('importcomplete', 'local_tenantmaster', $result);
             break;
+        case 'applyprogression':
+            $access->require('local/tenantmaster:manageacademic');
+            (new student_progression_service())->apply(
+                $tenant,
+                required_param('progressid', PARAM_INT),
+            );
+            $notice = get_string('progressionapplied', 'local_tenantmaster');
+            break;
     }
 }
 
@@ -179,6 +197,18 @@ if ($tenant && $section === 'profile') {
             'headingcolor' => $data->headingcolor,
             'linkcolor' => $data->linkcolor,
             'customcss' => $data->customcss,
+            'trustlegalname' => $data->trustlegalname,
+            'trustregistrationnumber' => $data->trustregistrationnumber,
+            'udisecode' => $data->udisecode,
+            'boardaffiliationnumber' => $data->boardaffiliationnumber,
+            'recognitionnumber' => $data->recognitionnumber,
+            'establishmentyear' => $data->establishmentyear,
+            'schoolstage' => $data->schoolstage,
+            'managementtype' => $data->managementtype,
+            'academicsession' => $data->academicsession,
+            'district' => $data->district,
+            'block' => $data->block,
+            'preferredlanguages' => $data->preferredlanguages,
         ]);
         $tenant = (new tenant_service())->save($record);
         $notice = get_string('profilesaved', 'local_tenantmaster');
@@ -225,6 +255,7 @@ if ($tenant && $section === 'organisation') {
 $masterrepository = new master_repository();
 $masterform = null;
 $academicyearform = null;
+$schoolyearsetupform = null;
 if ($tenant && $section === 'academic') {
     $academicyearform = new academic_year($pageurl, ['editing' => $yeareditid > 0]);
     if ($data = $academicyearform->get_data()) {
@@ -267,9 +298,14 @@ if ($tenant && $section === 'academic') {
                 . ' [' . s($parent->mastertype) . ']';
         }
     }
+    $yearoptions = [];
+    foreach ((new academic_year_service())->list((int)$tenant->id) as $yearoption) {
+        $yearoptions[(int)$yearoption->id] = format_string($yearoption->name);
+    }
     $masterform = new master($pageurl, [
         'parents' => $parentoptions,
         'editing' => $editid > 0,
+        'years' => $yearoptions,
     ]);
     if ($data = $masterform->get_data()) {
         require_sesskey();
@@ -278,7 +314,6 @@ if ($tenant && $section === 'academic') {
             $masterrepository->get((int)$tenant->id, (int)$data->parentid);
         }
         $data->tenantid = $tenant->id;
-        $data->acadyearid = 0;
         (new master_service())->save($data);
         redirect(
             new moodle_url('/local/tenantmaster/index.php', [
@@ -294,14 +329,95 @@ if ($tenant && $section === 'academic') {
     } else {
         $masterform->set_data((object)[
             'tenantid' => $tenant->id,
+            'acadyearid' => 0,
             'mastertype' => $typefilter ?: 'grade',
             'payloadjson' => '{}',
             'active' => 1,
         ]);
     }
+    if ((string)$tenant->tenanttype === 'school') {
+        $schoolyearsetupform = new school_year_setup($pageurl, [
+            'years' => $yearoptions,
+            'boards' => tenantmaster_shared_master_options((int)$tenant->id, 'board'),
+            'mediums' => tenantmaster_shared_master_options((int)$tenant->id, 'medium'),
+            'grades' => tenantmaster_shared_master_options((int)$tenant->id, 'grade'),
+            'streams' => tenantmaster_shared_master_options((int)$tenant->id, 'stream'),
+            'subjects' => tenantmaster_shared_master_options((int)$tenant->id, 'subject'),
+        ]);
+        if ($data = $schoolyearsetupform->get_data()) {
+            require_sesskey();
+            $access->require('local/tenantmaster:manageacademic');
+            $result = (new school_year_setup_service())->generate($tenant, $data);
+            redirect($pageurl, get_string('schoolyeargenerated', 'local_tenantmaster', (object)$result));
+        }
+    }
+}
+
+$coursecopyform = null;
+if ($tenant && $section === 'courses') {
+    $courseoptions = tenantmaster_course_options($tenant);
+    $coursecopyform = new course_copy($pageurl, ['courses' => $courseoptions]);
+    if ($data = $coursecopyform->get_data()) {
+        require_sesskey();
+        $access->require('local/tenantmaster:manageacademic');
+        (new course_copy_service())->copy(
+            $tenant,
+            (int)$data->sourcecourseid,
+            (int)$data->targetcourseid,
+            !empty($data->replacecontent),
+        );
+        redirect($pageurl, get_string('coursecontentcopied', 'local_tenantmaster'));
+    }
+}
+
+$placementform = null;
+if ($tenant && $section === 'classes') {
+    if ((string)$tenant->tenanttype !== 'school') {
+        throw new moodle_exception('schooltenantrequired', 'local_tenantmaster');
+    }
+    $useroptions = [];
+    foreach ((new people_service())->list($tenant) as $person) {
+        $useroptions[(int)$person->id] = fullname($person) . ' [' . s($person->idnumber) . ']';
+    }
+    $yearoptions = [];
+    foreach ((new academic_year_service())->list((int)$tenant->id) as $yearoption) {
+        $yearoptions[(int)$yearoption->id] = format_string($yearoption->name);
+    }
+    $placementform = new student_placement($pageurl, [
+        'editing' => $placementeditid > 0,
+        'users' => $useroptions,
+        'years' => $yearoptions,
+        'boards' => tenantmaster_master_options((int)$tenant->id, 'board'),
+        'mediums' => tenantmaster_master_options((int)$tenant->id, 'medium'),
+        'grades' => tenantmaster_master_options((int)$tenant->id, 'grade'),
+        'streams' => tenantmaster_master_options((int)$tenant->id, 'stream'),
+        'divisions' => tenantmaster_master_options((int)$tenant->id, 'division'),
+    ]);
+    if ($data = $placementform->get_data()) {
+        require_sesskey();
+        $access->require('local/tenantmaster:managepeople');
+        $savedplacement = (new student_placement_service())->save($tenant, $data);
+        redirect(
+            $pageurl,
+            get_string('placementsaved', 'local_tenantmaster', $savedplacement->provisionedcourses),
+        );
+    }
+    if ($placementeditid > 0) {
+        $placementform->set_data($DB->get_record('local_tenantmaster_placement', [
+            'id' => $placementeditid,
+            'tenantid' => $tenant->id,
+        ], '*', MUST_EXIST));
+    } else if ((int)$tenant->activeyearid > 0) {
+        $placementform->set_data((object)[
+            'acadyearid' => (int)$tenant->activeyearid,
+            'status' => 'active',
+            'startdate' => time(),
+        ]);
+    }
 }
 
 $rolloverform = null;
+$studentprogressionform = null;
 if ($tenant && $section === 'progression') {
     $years = [];
     foreach ((new academic_year_service())->list((int)$tenant->id) as $year) {
@@ -329,6 +445,31 @@ if ($tenant && $section === 'progression') {
         require_capability('local/tenantmaster:destructive', context_system::instance());
         (new rollover_service())->apply($tenant, (int)$data->rolloverid, (string)$data->backupref);
         redirect($pageurl, get_string('rolloverapplied', 'local_tenantmaster'));
+    }
+    if ((string)$tenant->tenanttype === 'school') {
+        $placementoptions = [];
+        foreach ((new student_placement_service())->list($tenant) as $placement) {
+            if ((string)$placement->status !== 'active') {
+                continue;
+            }
+            $placementoptions[(int)$placement->id] = fullname($placement)
+                . ' - ' . format_string($placement->yearname)
+                . ' - ' . format_string($placement->gradename)
+                . ' / ' . format_string($placement->divisionname);
+        }
+        $studentprogressionform = new student_progression($pageurl, [
+            'placements' => $placementoptions,
+            'years' => $years,
+            'grades' => tenantmaster_master_options((int)$tenant->id, 'grade'),
+            'streams' => tenantmaster_master_options((int)$tenant->id, 'stream'),
+            'divisions' => tenantmaster_master_options((int)$tenant->id, 'division'),
+        ]);
+        if ($data = $studentprogressionform->get_data()) {
+            require_sesskey();
+            $access->require('local/tenantmaster:manageacademic');
+            (new student_progression_service())->plan($tenant, $data);
+            redirect($pageurl, get_string('progressionplanned', 'local_tenantmaster'));
+        }
     }
 }
 
@@ -380,6 +521,7 @@ if ($tenant && $section === 'people') {
         redirect($pageurl, get_string('roleassigned', 'local_tenantmaster'));
     }
     $nativeuserform = new native_user($pageurl, [
+        'editing' => $usereditid > 0,
         'roles' => catalog::localise(catalog::ROLE_KEYS),
         'departments' => $departmentoptions,
         'courses' => $courseoptions,
@@ -387,11 +529,29 @@ if ($tenant && $section === 'people') {
     if ($data = $nativeuserform->get_data()) {
         require_sesskey();
         $access->require('local/tenantmaster:managepeople');
-        $nativeuser = (new native_user_service())->create($tenant, $data);
-        $message = $nativeuser->notificationstatus === 'sent'
-            ? get_string('nativeusercreated', 'local_tenantmaster')
-            : get_string('nativeusercreatedmailfailed', 'local_tenantmaster');
+        if ((int)$data->userid > 0) {
+            (new native_user_service())->update($tenant, $data);
+            $message = get_string('nativeuserupdated', 'local_tenantmaster');
+        } else {
+            $nativeuser = (new native_user_service())->create($tenant, $data);
+            $message = $nativeuser->notificationstatus === 'sent'
+                ? get_string('nativeusercreated', 'local_tenantmaster')
+                : get_string('nativeusercreatedmailfailed', 'local_tenantmaster');
+        }
         redirect($pageurl, $message);
+    }
+    if ($usereditid > 0) {
+        if (
+            !$DB->record_exists('local_iomad_company_users', [
+            'companyid' => $tenant->companyid,
+            'userid' => $usereditid,
+            ])
+        ) {
+            throw new moodle_exception('invaliduser');
+        }
+        $editinguser = $DB->get_record('user', ['id' => $usereditid, 'deleted' => 0], '*', MUST_EXIST);
+        $editinguser->userid = $editinguser->id;
+        $nativeuserform->set_data($editinguser);
     }
     $guardianform = new guardian_link($pageurl, ['users' => $useroptions]);
     if ($data = $guardianform->get_data()) {
@@ -534,6 +694,13 @@ if ($notice !== '') {
 }
 if (!$tenant && !($section === 'tenants' && is_siteadmin())) {
     echo $OUTPUT->notification(get_string('selecttenant', 'local_tenantmaster'), 'info', false);
+    if (is_siteadmin()) {
+        echo $OUTPUT->single_button(
+            new moodle_url('/local/tenantmaster/index.php', ['section' => 'tenants']),
+            get_string('createtenant', 'local_tenantmaster'),
+            'get',
+        );
+    }
     echo tenantmaster_tenant_table($tenantrepository->list());
     echo $OUTPUT->footer();
     exit;
@@ -564,6 +731,10 @@ switch ($section) {
         echo tenantmaster_academic_year_table($tenant);
         echo $OUTPUT->heading(get_string('addacademicyear', 'local_tenantmaster'), 3);
         $academicyearform->display();
+        if ($schoolyearsetupform) {
+            echo $OUTPUT->heading(get_string('schoolyearsetup', 'local_tenantmaster'), 3);
+            $schoolyearsetupform->display();
+        }
         echo tenantmaster_master_filters($companyid, $typefilter);
         echo tenantmaster_master_table(
             $tenant,
@@ -576,14 +747,22 @@ switch ($section) {
     case 'courses':
         echo $OUTPUT->heading(get_string('courses', 'local_tenantmaster'));
         echo tenantmaster_mapping_table($tenant, ['core_course/category', 'core/course']);
+        echo tenantmaster_course_copy_table($tenant);
+        echo $OUTPUT->heading(get_string('copycoursecontent', 'local_tenantmaster'), 3);
+        $coursecopyform->display();
         break;
     case 'people':
         echo $OUTPUT->heading(get_string('usersandroles', 'local_tenantmaster'));
         echo tenantmaster_role_table($roleservice->list((int)$tenant->id));
-        echo tenantmaster_people_table((new people_service())->list($tenant));
+        echo tenantmaster_people_table($tenant, (new people_service())->list($tenant));
         echo $OUTPUT->heading(get_string('assignbusinessrole', 'local_tenantmaster'), 3);
         $peopleform->display();
-        echo $OUTPUT->heading(get_string('createnativeuser', 'local_tenantmaster'), 3);
+        echo $OUTPUT->heading(
+            $usereditid
+                ? get_string('updatenativeuser', 'local_tenantmaster')
+                : get_string('createnativeuser', 'local_tenantmaster'),
+            3,
+        );
         $nativeuserform->display();
         echo $OUTPUT->heading(get_string('guardianrelationship', 'local_tenantmaster'), 3);
         $guardianform->display();
@@ -601,6 +780,17 @@ switch ($section) {
         echo $OUTPUT->heading(get_string('enrolnativeuser', 'local_tenantmaster'), 3);
         $accessform->display();
         break;
+    case 'classes':
+        echo $OUTPUT->heading(get_string('classmanagement', 'local_tenantmaster'));
+        echo tenantmaster_placement_table($tenant);
+        echo $OUTPUT->heading(
+            $placementeditid
+                ? get_string('editplacement', 'local_tenantmaster')
+                : get_string('addplacement', 'local_tenantmaster'),
+            3,
+        );
+        $placementform->display();
+        break;
     case 'assessments':
         echo $OUTPUT->heading(get_string('assessments', 'local_tenantmaster'));
         echo tenantmaster_policy_table($tenant, ['assessment_policy', 'attendance_policy']);
@@ -615,6 +805,11 @@ switch ($section) {
         echo tenantmaster_rollover_table($tenant);
         echo $OUTPUT->heading(get_string('academicroollover', 'local_tenantmaster'), 3);
         $rolloverform->display();
+        if ($studentprogressionform) {
+            echo tenantmaster_student_progression_table($tenant);
+            echo $OUTPUT->heading(get_string('studentprogression', 'local_tenantmaster'), 3);
+            $studentprogressionform->display();
+        }
         break;
     case 'imports':
         echo $OUTPUT->heading(get_string('imports', 'local_tenantmaster'));
@@ -659,6 +854,7 @@ function tenantmaster_section_string(string $section): string {
         'courses' => 'courses',
         'people' => 'usersandroles',
         'access' => 'cohortsandenrolments',
+        'classes' => 'classmanagement',
         'assessments' => 'assessments',
         'certificates' => 'certificates',
         'progression' => 'progression',
@@ -679,16 +875,18 @@ function tenantmaster_section_string(string $section): string {
 function tenantmaster_tabs(string $active, int $companyid): string {
     global $OUTPUT;
 
-    $tabs = [];
-    foreach (
-        [
-        'dashboard',
+    $sections = ['dashboard'];
+    if (is_siteadmin()) {
+        $sections[] = 'tenants';
+    }
+    $sections = array_merge($sections, [
         'profile',
         'organisation',
         'academic',
         'courses',
         'people',
         'access',
+        'classes',
         'assessments',
         'certificates',
         'progression',
@@ -696,8 +894,10 @@ function tenantmaster_tabs(string $active, int $companyid): string {
         'sync',
         'validation',
         'audit',
-        ] as $section
-    ) {
+    ]);
+
+    $tabs = [];
+    foreach ($sections as $section) {
         $tabs[] = new tabobject(
             $section,
             new moodle_url('/local/tenantmaster/index.php', ['section' => $section, 'companyid' => $companyid]),
@@ -1039,10 +1239,11 @@ function tenantmaster_role_table(array $roles): string {
 /**
  * Native company people table.
  *
+ * @param object $tenant Tenant.
  * @param array<int, object> $people People.
  * @return string
  */
-function tenantmaster_people_table(array $people): string {
+function tenantmaster_people_table(object $tenant, array $people): string {
     $table = new html_table();
     $table->head = [
         get_string('name'),
@@ -1050,6 +1251,8 @@ function tenantmaster_people_table(array $people): string {
         get_string('department'),
         get_string('managertype', 'local_tenantmaster'),
         get_string('educator', 'local_tenantmaster'),
+        get_string('status'),
+        get_string('actions'),
     ];
     foreach ($people as $person) {
         $table->data[] = [
@@ -1058,6 +1261,15 @@ function tenantmaster_people_table(array $people): string {
             format_string($person->departmentname ?? ''),
             (int)$person->managertype,
             $person->educator ? get_string('yes') : get_string('no'),
+            $person->suspended ? get_string('suspended') : get_string('active', 'local_tenantmaster'),
+            html_writer::link(
+                new moodle_url('/local/tenantmaster/index.php', [
+                    'section' => 'people',
+                    'companyid' => $tenant->companyid,
+                    'usereditid' => $person->id,
+                ]),
+                get_string('edit'),
+            ),
         ];
     }
     return html_writer::table($table);
@@ -1443,4 +1655,227 @@ function tenantmaster_audit_table(object $tenant): string {
         ];
     }
     return html_writer::table($table);
+}
+
+/**
+ * Active academic-master options with explicit year scope.
+ *
+ * @param int $tenantid Tenant.
+ * @param string $type Master type.
+ * @return array<int, string>
+ */
+function tenantmaster_master_options(int $tenantid, string $type): array {
+    global $DB;
+
+    $records = $DB->get_records_sql(
+        "SELECT m.*, y.name AS yearname
+           FROM {local_tenantmaster_master} m
+      LEFT JOIN {local_tenantmaster_acadyear} y ON y.id = m.acadyearid
+          WHERE m.tenantid = :tenantid
+            AND m.mastertype = :mastertype
+            AND m.active = 1
+       ORDER BY m.sortorder, m.name, y.startdate",
+        ['tenantid' => $tenantid, 'mastertype' => $type],
+    );
+    $options = [];
+    foreach ($records as $record) {
+        $scope = $record->yearname
+            ? format_string($record->yearname)
+            : get_string('sharedallacademicyears', 'local_tenantmaster');
+        $options[(int)$record->id] = format_string($record->name) . ' [' . $scope . ']';
+    }
+    return $options;
+}
+
+/**
+ * Shared source masters used by the school-year generator.
+ *
+ * @param int $tenantid Tenant.
+ * @param string $type Master type.
+ * @return array<int, string>
+ */
+function tenantmaster_shared_master_options(int $tenantid, string $type): array {
+    global $DB;
+
+    $records = $DB->get_records(
+        'local_tenantmaster_master',
+        [
+            'tenantid' => $tenantid,
+            'mastertype' => $type,
+            'acadyearid' => 0,
+            'active' => 1,
+        ],
+        'sortorder, name',
+    );
+    return array_map(
+        static fn(object $record): string => format_string($record->name),
+        $records,
+    );
+}
+
+/**
+ * Native tenant course options.
+ *
+ * @param object $tenant Tenant.
+ * @return array<int, string>
+ */
+function tenantmaster_course_options(object $tenant): array {
+    global $DB;
+
+    $courses = $DB->get_records_sql(
+        "SELECT c.id, c.fullname, c.shortname
+           FROM {local_iomad_company_courses} cc
+           JOIN {course} c ON c.id = cc.courseid
+          WHERE cc.companyid = :companyid
+       ORDER BY c.fullname, c.shortname",
+        ['companyid' => $tenant->companyid],
+    );
+    $options = [];
+    foreach ($courses as $course) {
+        $options[(int)$course->id] = format_string($course->fullname) . ' [' . s($course->shortname) . ']';
+    }
+    return $options;
+}
+
+/**
+ * School class placements and their native cohort mappings.
+ *
+ * @param object $tenant Tenant.
+ * @return string
+ */
+function tenantmaster_placement_table(object $tenant): string {
+    $records = (new student_placement_service())->list($tenant);
+    $table = new html_table();
+    $table->head = [
+        get_string('student', 'local_tenantmaster'),
+        get_string('academicyear', 'local_tenantmaster'),
+        get_string('mastertype_grade', 'local_tenantmaster'),
+        get_string('mastertype_division', 'local_tenantmaster'),
+        get_string('mastertype_medium', 'local_tenantmaster'),
+        get_string('mastertype_stream', 'local_tenantmaster'),
+        get_string('rollnumber', 'local_tenantmaster'),
+        get_string('status'),
+        get_string('nativecohort', 'local_tenantmaster'),
+        get_string('actions'),
+    ];
+    foreach ($records as $record) {
+        $table->data[] = [
+            fullname($record) . ' [' . s($record->useridnumber) . ']',
+            format_string($record->yearname),
+            format_string($record->gradename),
+            format_string($record->divisionname),
+            format_string($record->mediumname ?? ''),
+            format_string($record->streamname ?? ''),
+            s($record->rollnumber ?? ''),
+            get_string('placementstatus_' . $record->status, 'local_tenantmaster'),
+            $record->cohortid ? '#' . (int)$record->cohortid : '-',
+            html_writer::link(
+                new moodle_url('/local/tenantmaster/index.php', [
+                    'section' => 'classes',
+                    'companyid' => $tenant->companyid,
+                    'placementeditid' => $record->id,
+                ]),
+                get_string('edit'),
+            ),
+        ];
+    }
+    return html_writer::table($table);
+}
+
+/**
+ * Reviewed learner progression decisions.
+ *
+ * @param object $tenant Tenant.
+ * @return string
+ */
+function tenantmaster_student_progression_table(object $tenant): string {
+    global $DB;
+
+    $records = $DB->get_records_sql(
+        "SELECT p.*, u.firstname, u.lastname, u.idnumber,
+                fy.name AS fromyearname, ty.name AS toyearname,
+                sg.name AS sourcegradename, tg.name AS targetgradename
+           FROM {local_tenantmaster_progress} p
+           JOIN {local_tenantmaster_placement} sp ON sp.id = p.sourceplaceid
+           JOIN {user} u ON u.id = sp.userid
+           JOIN {local_tenantmaster_acadyear} fy ON fy.id = sp.acadyearid
+           JOIN {local_tenantmaster_acadyear} ty ON ty.id = p.toyearid
+           JOIN {local_tenantmaster_master} sg ON sg.id = sp.gradeid
+      LEFT JOIN {local_tenantmaster_master} tg ON tg.id = p.targetgradeid
+          WHERE p.tenantid = :tenantid
+       ORDER BY p.timecreated DESC",
+        ['tenantid' => $tenant->id],
+    );
+    $table = new html_table();
+    $table->head = [
+        get_string('student', 'local_tenantmaster'),
+        get_string('fromyear', 'local_tenantmaster'),
+        get_string('toyear', 'local_tenantmaster'),
+        get_string('progressiondecision', 'local_tenantmaster'),
+        get_string('targetgrade', 'local_tenantmaster'),
+        get_string('status'),
+        get_string('actions'),
+    ];
+    foreach ($records as $record) {
+        $actions = '-';
+        if ($record->status === 'planned' && $record->decision !== 'conditional') {
+            $actions = tenantmaster_action_button(
+                $tenant,
+                'applyprogression',
+                get_string('applyapprovedprogression', 'local_tenantmaster'),
+                'primary',
+                ['progressid' => $record->id],
+            );
+        }
+        $table->data[] = [
+            fullname($record) . ' [' . s($record->idnumber) . ']',
+            format_string($record->fromyearname) . ' / ' . format_string($record->sourcegradename),
+            format_string($record->toyearname),
+            get_string('decision_' . $record->decision, 'local_tenantmaster'),
+            format_string($record->targetgradename ?? ''),
+            s($record->status),
+            $actions,
+        ];
+    }
+    return html_writer::table($table);
+}
+
+/**
+ * Idempotent native course-content copy history.
+ *
+ * @param object $tenant Tenant.
+ * @return string
+ */
+function tenantmaster_course_copy_table(object $tenant): string {
+    global $DB, $OUTPUT;
+
+    $records = $DB->get_records_sql(
+        "SELECT cp.*, source.fullname AS sourcename, target.fullname AS targetname
+           FROM {local_tenantmaster_crscopy} cp
+           JOIN {course} source ON source.id = cp.sourcecourseid
+           JOIN {course} target ON target.id = cp.targetcourseid
+          WHERE cp.tenantid = :tenantid
+       ORDER BY cp.timecreated DESC",
+        ['tenantid' => $tenant->id],
+    );
+    if (!$records) {
+        return '';
+    }
+    $table = new html_table();
+    $table->head = [
+        get_string('sourcecourse', 'local_tenantmaster'),
+        get_string('targetcourse', 'local_tenantmaster'),
+        get_string('status'),
+        get_string('time'),
+    ];
+    foreach ($records as $record) {
+        $table->data[] = [
+            format_string($record->sourcename),
+            format_string($record->targetname),
+            s($record->status),
+            $record->timefinished ? userdate($record->timefinished) : userdate($record->timecreated),
+        ];
+    }
+    return $OUTPUT->heading(get_string('coursecopyhistory', 'local_tenantmaster'), 3)
+        . html_writer::table($table);
 }

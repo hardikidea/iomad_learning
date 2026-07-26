@@ -18,6 +18,59 @@ use local_iomad\company;
  */
 final class native_user_service {
     /**
+     * Update a native same-tenant user without changing stable identity.
+     *
+     * @param object $tenant Tenant.
+     * @param object $data Validated form data.
+     * @return object Updated native user.
+     */
+    public function update(object $tenant, object $data): object {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/user/lib.php');
+        $userid = (int)$data->userid;
+        if (
+            !$DB->record_exists('local_iomad_company_users', [
+            'companyid' => $tenant->companyid,
+            'userid' => $userid,
+            ])
+        ) {
+            throw new \invalid_parameter_exception('User belongs to another tenant.');
+        }
+        $current = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*', MUST_EXIST);
+        if (
+            $DB->record_exists_select(
+                'user',
+                'email = :email AND id <> :userid AND deleted = 0',
+                ['email' => trim((string)$data->email), 'userid' => $userid],
+            )
+        ) {
+            throw new \invalid_parameter_exception('The email address already belongs to another user.');
+        }
+        if (!validate_email((string)$data->email)) {
+            throw new \invalid_parameter_exception('A valid email address is required.');
+        }
+        $update = (object)[
+            'id' => $userid,
+            'firstname' => trim((string)$data->firstname),
+            'lastname' => trim((string)$data->lastname),
+            'email' => trim((string)$data->email),
+            'city' => trim((string)($data->city ?? '')),
+            'country' => (string)($data->country ?? ''),
+            'suspended' => !empty($data->suspended) ? 1 : 0,
+        ];
+        user_update_user($update, false, false);
+        (new audit_service())->record(
+            (int)$tenant->id,
+            'people.native_user.updated',
+            'success',
+            ['suspended' => (bool)$update->suspended],
+            ['entitytable' => 'user', 'entityid' => $userid, 'targetcomponent' => 'core/user', 'targetid' => $userid],
+        );
+        return $DB->get_record('user', ['id' => $current->id], '*', MUST_EXIST);
+    }
+
+    /**
      * Create one native user and assign the requested business role.
      *
      * @param object $tenant Tenant.

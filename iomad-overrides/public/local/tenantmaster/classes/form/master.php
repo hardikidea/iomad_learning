@@ -29,6 +29,13 @@ final class master extends \moodleform {
         $mform->setType('tenantid', PARAM_INT);
         $mform->addElement(
             'select',
+            'acadyearid',
+            get_string('academicyearscope', 'local_tenantmaster'),
+            [0 => get_string('sharedallacademicyears', 'local_tenantmaster')]
+                + ($this->_customdata['years'] ?? []),
+        );
+        $mform->addElement(
+            'select',
             'mastertype',
             get_string('mastertype', 'local_tenantmaster'),
             catalog::localise(catalog::MASTER_TYPES)
@@ -40,7 +47,7 @@ final class master extends \moodleform {
         $mform->setType('code', PARAM_TEXT);
         $mform->addRule('code', null, 'required');
         if ($editing) {
-            $mform->freeze(['mastertype', 'externalid', 'code']);
+            $mform->freeze(['mastertype', 'externalid', 'code', 'acadyearid']);
         }
         $mform->addElement('text', 'name', get_string('name'), ['size' => 50]);
         $mform->setType('name', PARAM_TEXT);

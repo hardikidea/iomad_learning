@@ -202,6 +202,7 @@ final class validation_service {
         $this->validate_native_mappings($tenant, $counts);
         $this->validate_role_mappings($tenantid, $counts);
         $this->validate_native_access($tenant, $counts);
+        $this->validate_school_placements($tenant, $counts);
         $this->validate_course_configuration($tenant, $counts);
         return $counts;
     }
@@ -439,6 +440,167 @@ final class validation_service {
                     true,
                     $counts
                 );
+            }
+        }
+    }
+
+    /**
+     * Verify each active school placement resolves to native tenant access.
+     *
+     * @param object $tenant Tenant.
+     * @param array<string, int> $counts Counts.
+     */
+    private function validate_school_placements(object $tenant, array &$counts): void {
+        global $DB;
+
+        $placements = $DB->get_records('local_tenantmaster_placement', ['tenantid' => $tenant->id]);
+        foreach ($placements as $placement) {
+            if (
+                !$DB->record_exists('local_iomad_company_users', [
+                'companyid' => $tenant->companyid,
+                'userid' => $placement->userid,
+                ])
+            ) {
+                $this->issue(
+                    (int)$tenant->id,
+                    'people',
+                    'local_tenantmaster_placement',
+                    (int)$placement->id,
+                    'userid',
+                    'error',
+                    'placement_user_outside_tenant',
+                    'A student placement references a user outside the company.',
+                    'Restore company membership or archive the invalid placement.',
+                    true,
+                    $counts,
+                );
+            }
+            foreach (
+                [
+                    'gradeid' => 'grade',
+                    'divisionid' => 'division',
+                    'boardid' => 'board',
+                    'mediumid' => 'medium',
+                    'streamid' => 'stream',
+                ] as $field => $type
+            ) {
+                $masterid = (int)$placement->{$field};
+                if ($masterid <= 0 && in_array($field, ['boardid', 'mediumid', 'streamid'], true)) {
+                    continue;
+                }
+                if (
+                    !$DB->record_exists('local_tenantmaster_master', [
+                    'id' => $masterid,
+                    'tenantid' => $tenant->id,
+                    'mastertype' => $type,
+                    ])
+                ) {
+                    $this->issue(
+                        (int)$tenant->id,
+                        'academic',
+                        'local_tenantmaster_placement',
+                        (int)$placement->id,
+                        $field,
+                        'error',
+                        'placement_master_invalid',
+                        'A placement academic selection is missing or belongs to another tenant.',
+                        'Select a valid tenant-owned academic master.',
+                        true,
+                        $counts,
+                    );
+                }
+            }
+            if ((string)$placement->status !== 'active') {
+                continue;
+            }
+            $cohort = $DB->get_record('cohort', ['id' => $placement->cohortid]);
+            if (
+                !$cohort
+                    || !str_starts_with(
+                        (string)$cohort->idnumber,
+                        'TM:' . $tenant->trustcode . ':COHORT:',
+                    )
+                    || !$DB->record_exists('cohort_members', [
+                        'cohortid' => $placement->cohortid,
+                        'userid' => $placement->userid,
+                    ])
+            ) {
+                $this->issue(
+                    (int)$tenant->id,
+                    'cohorts',
+                    'local_tenantmaster_placement',
+                    (int)$placement->id,
+                    'cohortid',
+                    'error',
+                    'placement_cohort_missing',
+                    'An active placement is not represented by its native cohort membership.',
+                    'Edit and save the placement to reconcile native access.',
+                    true,
+                    $counts,
+                );
+            }
+            try {
+                $payload = json::decode_object((string)$placement->payloadjson);
+            } catch (\Throwable) {
+                $payload = [];
+                $this->issue(
+                    (int)$tenant->id,
+                    'enrolments',
+                    'local_tenantmaster_placement',
+                    (int)$placement->id,
+                    'payloadjson',
+                    'error',
+                    'placement_payload_invalid',
+                    'Placement native projection references are invalid.',
+                    'Edit and save the placement to rebuild projection references.',
+                    true,
+                    $counts,
+                );
+            }
+            foreach (array_map('intval', (array)($payload['courseids'] ?? [])) as $courseid) {
+                if (
+                    !$DB->record_exists('local_iomad_company_courses', [
+                    'companyid' => $tenant->companyid,
+                    'courseid' => $courseid,
+                    ])
+                ) {
+                    $this->issue(
+                        (int)$tenant->id,
+                        'enrolments',
+                        'local_tenantmaster_placement',
+                        (int)$placement->id,
+                        'payloadjson',
+                        'error',
+                        'placement_course_leakage',
+                        'A placement references a course outside the tenant.',
+                        'Reconcile the placement and company-course assignments.',
+                        true,
+                        $counts,
+                    );
+                    continue;
+                }
+                if (
+                    !$DB->record_exists('enrol', [
+                    'enrol' => 'cohort',
+                    'courseid' => $courseid,
+                    'customint1' => $placement->cohortid,
+                    'status' => ENROL_INSTANCE_ENABLED,
+                    ])
+                ) {
+                    $this->issue(
+                        (int)$tenant->id,
+                        'enrolments',
+                        'local_tenantmaster_placement',
+                        (int)$placement->id,
+                        'cohortid',
+                        'error',
+                        'placement_cohort_sync_missing',
+                        'An active placement course lacks its native cohort-sync enrolment.',
+                        'Edit and save the placement to recreate cohort synchronization.',
+                        true,
+                        $counts,
+                    );
+                }
             }
         }
     }

@@ -25,6 +25,11 @@ Open **Site administration > Tenant Master**, select an IOMAD company, and use:
 10. **Synchronization**, **Validation**, and **Audit** for operations and
     evidence.
 
+School operators should follow
+[School management in Tenant Master](school-management.md) for the complete
+menu sequence, native mapping, class placement, course-copy and annual
+progression workflow.
+
 All forms use the default IOMAD/Moodle renderer, navigation, tables,
 breadcrumbs, sesskeys, capabilities, and responsive theme behavior. The plugin
 does not install a theme.
@@ -84,6 +89,7 @@ settings, dirty work remains visible and is not discarded.
 - [Workbook migration](workbook-migration.md)
 - [Data model](data-model.md)
 - [Academic model](academic-model.md)
+- [School management](school-management.md)
 - [Roles and capabilities](roles-capabilities.md)
 - [Synchronization and drift](synchronization.md)
 - [Import packages](import-packages.md)

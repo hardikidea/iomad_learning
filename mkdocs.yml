@@ -32,6 +32,7 @@ nav:
       - Notifications and integrations: 05-iomad-domains/notifications-and-integrations.md
   - Tenant Master:
       - UI administration: tenant-master/README.md
+      - School management: tenant-master/school-management.md
       - Architecture: tenant-master/architecture.md
       - Workbook migration: tenant-master/workbook-migration.md
       - Data model: tenant-master/data-model.md

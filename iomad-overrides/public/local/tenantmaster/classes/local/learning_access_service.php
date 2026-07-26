@@ -3,6 +3,7 @@
 
 namespace local_tenantmaster\local;
 
+use context_course;
 use context_system;
 use local_iomad\company_user;
 
@@ -82,6 +83,38 @@ final class learning_access_service {
     }
 
     /**
+     * Remove a same-tenant user from a managed cohort.
+     *
+     * This is used only for an explicitly approved same-year class transfer.
+     * Removing a cohort member lets Moodle's cohort plugin reconcile access
+     * while preserving the learner's submitted work and grade history.
+     *
+     * @param object $tenant Tenant.
+     * @param int $cohortid Cohort.
+     * @param int $userid User.
+     */
+    public function remove_cohort_member(object $tenant, int $cohortid, int $userid): void {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $this->require_company_user($tenant, $userid);
+        $cohort = $DB->get_record('cohort', ['id' => $cohortid], '*', MUST_EXIST);
+        if (!str_starts_with((string)$cohort->idnumber, 'TM:' . $tenant->trustcode . ':COHORT:')) {
+            throw new \invalid_parameter_exception('Cohort belongs to another tenant.');
+        }
+        if ($DB->record_exists('cohort_members', ['cohortid' => $cohortid, 'userid' => $userid])) {
+            cohort_remove_member($cohortid, $userid);
+        }
+        (new audit_service())->record(
+            (int)$tenant->id,
+            'access.cohort_member.removed',
+            'success',
+            ['cohortid' => $cohortid],
+            ['entitytable' => 'user', 'entityid' => $userid, 'targetcomponent' => 'core/cohort', 'targetid' => $cohortid],
+        );
+    }
+
+    /**
      * Ensure a native course group.
      *
      * @param object $tenant Tenant.
@@ -139,6 +172,94 @@ final class learning_access_service {
             ['groupid' => $groupid],
             ['entitytable' => 'user', 'entityid' => $userid, 'targetcomponent' => 'core/group', 'targetid' => $groupid],
         );
+    }
+
+    /**
+     * Ensure a native cohort-sync enrolment and division group assignment.
+     *
+     * @param object $tenant Tenant.
+     * @param int $courseid Tenant course.
+     * @param int $cohortid Managed cohort.
+     * @param int $roleid Student role.
+     * @param int $groupid Managed course group.
+     * @return int Enrolment instance ID.
+     */
+    public function ensure_cohort_enrolment(
+        object $tenant,
+        int $courseid,
+        int $cohortid,
+        int $roleid,
+        int $groupid,
+    ): int {
+        global $CFG, $DB;
+
+        $this->require_company_course($tenant, $courseid);
+        $cohort = $DB->get_record('cohort', ['id' => $cohortid], '*', MUST_EXIST);
+        if (!str_starts_with((string)$cohort->idnumber, 'TM:' . $tenant->trustcode . ':COHORT:')) {
+            throw new \invalid_parameter_exception('Cohort belongs to another tenant.');
+        }
+        if (!$DB->record_exists('groups', ['id' => $groupid, 'courseid' => $courseid])) {
+            throw new \invalid_parameter_exception('The selected group belongs to another course.');
+        }
+        if (!$DB->record_exists('role', ['id' => $roleid, 'shortname' => 'student'])) {
+            throw new \invalid_parameter_exception('The cohort enrolment role must be the native student role.');
+        }
+
+        require_once($CFG->dirroot . '/enrol/cohort/lib.php');
+        $plugin = enrol_get_plugin('cohort');
+        if (!$plugin) {
+            throw new \moodle_exception('cohortenrolmentunavailable', 'local_tenantmaster');
+        }
+        $instance = $DB->get_record('enrol', [
+            'enrol' => 'cohort',
+            'courseid' => $courseid,
+            'customint1' => $cohortid,
+        ]);
+        if ($instance) {
+            if (
+                (int)$instance->roleid !== $roleid
+                    || (int)$instance->customint2 !== $groupid
+                    || (int)$instance->status !== ENROL_INSTANCE_ENABLED
+            ) {
+                $instance->roleid = $roleid;
+                $instance->customint2 = $groupid;
+                $instance->status = ENROL_INSTANCE_ENABLED;
+                $plugin->update_instance($instance, $instance);
+            }
+            $instanceid = (int)$instance->id;
+        } else {
+            $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+            $instanceid = (int)$plugin->add_instance($course, [
+                'name' => 'Tenant Master class sync',
+                'status' => ENROL_INSTANCE_ENABLED,
+                'customint1' => $cohortid,
+                'customint2' => $groupid,
+                'roleid' => $roleid,
+            ]);
+        }
+
+        require_once($CFG->dirroot . '/course/lib.php');
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        if ((int)$course->groupmode !== SEPARATEGROUPS || empty($course->groupmodeforce)) {
+            update_course((object)[
+                'id' => $courseid,
+                'groupmode' => SEPARATEGROUPS,
+                'groupmodeforce' => 1,
+            ]);
+        }
+        (new audit_service())->record(
+            (int)$tenant->id,
+            'access.cohort_enrolment.saved',
+            'success',
+            ['cohortid' => $cohortid, 'groupid' => $groupid],
+            [
+                'entitytable' => 'enrol',
+                'entityid' => $instanceid,
+                'targetcomponent' => 'enrol_cohort',
+                'targetid' => $instanceid,
+            ],
+        );
+        return $instanceid;
     }
 
     /**
