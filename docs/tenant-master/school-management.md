@@ -29,46 +29,49 @@ Departments and academic course categories are intentionally separate.
 
 ## Initial Setup Sequence
 
-1. Open **Tenants** and create the school company. Use one stable
-   `trust_code`; do not create separate trust and school companies for the same
-   business record.
-2. Open **Institution profile** and enter the school, trust, UDISE, board
-   affiliation, recognition, academic-session, location and branding fields.
-   Do not store Aadhaar, bank, salary or sensitive HR documents.
-3. Open **Organisation** and create campuses and departments such as
-   Administration, Primary, Secondary, Science and Languages.
-4. Open **Academic structure**, create the academic year and mark it current.
-5. Review shared boards, mediums, grades, streams, divisions and subjects.
-6. Use **School year setup** to select a board, medium, one or more grades,
+1. Open the native **IOMAD Dashboard** and create the school company. Use one
+   permanent company code; do not create separate trust and school companies
+   for the same business record.
+2. Configure the school name, address, hostname, theme, logo, colours and
+   email settings in native IOMAD.
+3. Create campuses and departments such as Administration, Primary,
+   Secondary, Science and Languages in native **Manage departments**.
+4. Create principals, HODs, teachers, students and guardians in native IOMAD
+   user administration. Assign company managers and department managers there.
+5. Open **Tenant Master > Managed institutions**, select the existing company
+   and initialise it as **School**.
+6. Open **Institution master data** and enter trust, UDISE, board affiliation,
+   recognition and academic-session metadata. Do not store Aadhaar, bank,
+   salary or sensitive HR documents.
+7. Open **Academic masters**, create the academic year and mark it current.
+8. Review shared boards, mediums, grades, streams, divisions and subjects.
+9. Use **School year setup** to select a board, medium, one or more grades,
    optional stream and subjects. Tenant Master creates:
 
    `Academic year > Board > Medium > Grade > optional Stream > Subject course`
 
-7. Run **Sync all**, or allow automatic synchronization and cron to complete.
-8. Open **Courses** and copy approved content from a template or previous-year
-   course into each empty year-specific course. The copy excludes users,
-   enrolments, roles, grades, completion, logs and other learner history.
-9. Open **Users and roles** to create native principals, HODs, teachers,
-   students and guardians. A student or teacher can be created before a course
-   is assigned.
-10. Assign principals at company scope, HODs at department scope and teachers
-    explicitly to their courses. Multiple teachers can share a subject course.
-11. Link each guardian explicitly to one or more learners. Guardians are not
-    enrolled in learner courses.
-12. Open **Classes and placements** and select the learner, year, board,
+10. Run **Sync all**, or allow automatic synchronization and cron to complete.
+11. Open native **IOMAD Courses** to copy approved content from a template or
+    previous-year course into each empty year-specific course. Exclude users,
+    enrolments, roles, grades, completion, logs and learner history.
+12. Assign teachers explicitly to native subject courses. Multiple teachers
+    can share a course. Link each guardian to learners using the approved
+    native mentor-role workflow; guardians are not enrolled in learner courses.
+13. Open **Classes and placements** and select the learner, year, board,
     medium, grade, stream and division.
 
 Saving an active placement automatically creates or reuses the native class
 cohort, creates a matching group in each applicable subject course, enables
 Separate Groups, creates the cohort-sync enrolment and verifies tenant
 ownership. Subjects without a grade ancestor are not automatically enrolled;
-use **Cohorts and enrolments** for electives and exceptions.
+use native IOMAD course enrolment for electives and exceptions.
 
 ## Academic Year Change
 
 1. Create the next academic year.
 2. Generate its category and course shells through **School year setup**.
-3. Copy approved content into the new empty courses.
+3. Use native IOMAD course administration to copy approved content into the
+   new empty courses.
 4. Use **Progression > Academic rollover** to preview and create year-scoped
    definitions. Rollover requires verified recovery-set evidence before apply.
 5. Create one student progression decision: promote, repeat, conditional,
@@ -89,8 +92,8 @@ Never reset or reuse a live academic course for another year.
   and course groups, then removes the learner from the previous managed cohort.
 - Grade or stream transfer: edit the placement only after academic approval;
   old cohort-sync access is reconciled without deleting submissions or grades.
-- Elective/remedial course: use explicit native enrolment under **Cohorts and
-  enrolments** instead of changing the core class cohort.
+- Elective/remedial course: use explicit native IOMAD enrolment instead of
+  changing the core class cohort.
 - Teacher change: add the replacement teacher to the subject course and group,
   then suspend the former assignment according to HR policy.
 
@@ -110,8 +113,9 @@ return to an empty IOMAD installation:
 make demo-clear RESET_ARGS="--yes --build"
 ```
 
-After reset, create the school from **Tenant Master > Tenants** and follow this
-runbook. Do not run the local reset against stage or production.
+After reset, create the company in native IOMAD, then initialise it from
+**Tenant Master > Managed institutions**. Do not run the local reset against
+stage or production.
 
 ## Acceptance Checks
 

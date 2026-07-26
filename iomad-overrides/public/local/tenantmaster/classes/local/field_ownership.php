@@ -15,23 +15,8 @@ namespace local_tenantmaster\local;
 final class field_ownership {
     /** @var array<string, string[]> */
     private const FIELDS = [
-        'local_iomad/company' => [
-            'name',
-            'code',
-            'address',
-            'city',
-            'region',
-            'postcode',
-            'country',
-            'hostname',
-            'maincolor',
-            'headingcolor',
-            'linkcolor',
-            'customcss',
-            'custom1',
-            'custom2',
-            'custom3',
-        ],
+        // IOMAD is authoritative for all native company fields.
+        'local_iomad/company' => [],
         'local_iomad/department' => [
             'name',
             'shortname',

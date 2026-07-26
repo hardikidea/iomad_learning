@@ -22,11 +22,11 @@ never granted by role mapping.
 | Capability | Default tenant roles | Purpose |
 |---|---|---|
 | `local/tenantmaster:view` | Manager, department manager, reporter, IT coordinator | Open tenant-scoped screens |
-| `manageprofile` | Manager, IT coordinator | Profile, hostname and branding |
-| `manageorganisation` | Manager, department manager, IT coordinator | Native departments |
+| `manageprofile` | Manager, IT coordinator | Institution type and non-native regulatory metadata |
+| `manageorganisation` | Manager, department manager, IT coordinator | Legacy/import adapter; manual CRUD is native IOMAD |
 | `manageacademic` | Manager, department manager | Academic years, masters and policies |
-| `managepeople` | Manager, department manager, IT coordinator | Native users, cohorts, groups and access |
-| `manageroles` | Manager, IT coordinator | Business role and guardian assignment |
+| `managepeople` | Manager, department manager, IT coordinator | Placement/import automation over native records |
+| `manageroles` | Manager, IT coordinator | Role mapping used by approved automation |
 | `sync` | Manager | Sync All and retry |
 | `import` | Manager | Package inspection and apply |
 | `viewaudit` | Manager, department manager, reporter | Validation and audit |
@@ -42,8 +42,8 @@ alter academic or native records.
 `institutionitcoordinator` is a dedicated company-context role. It is not an
 IOMAD manager type and is never a site administrator. Where the pinned IOMAD
 release exposes them, it receives only company view and company-user
-create/update/upload capabilities, plus Tenant Master profile, organisation,
-people, and role-assignment workflows. Import, Sync All, drift resolution,
+create/update/upload capabilities, plus Tenant Master institution metadata and
+placement workflows. Import, Sync All, drift resolution,
 academic-policy management, destructive reconciliation, and site
 administration remain denied.
 
@@ -63,6 +63,7 @@ Before changing a native role:
 1. Export or record the current role definition.
 2. Review every capability and context level.
 3. Update the native role through Moodle/IOMAD role administration.
-4. Reopen **Users and roles** and verify all seven mappings.
+4. Verify native company managers, department managers and course roles in
+   IOMAD, then confirm all seven semantic mappings through validation.
 5. Run Tenant Master validation and tenant-isolation tests.
 6. Test one user of each affected business role without site-admin access.

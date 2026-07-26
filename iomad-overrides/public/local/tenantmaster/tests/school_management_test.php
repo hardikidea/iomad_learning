@@ -27,37 +27,38 @@ require_once(__DIR__ . '/tenantmaster_testcase.php');
  */
 final class school_management_test extends tenantmaster_testcase {
     /**
-     * First-run onboarding creates native IOMAD and Tenant Master records atomically.
+     * First-run setup adopts an existing native company without duplicating it.
      *
-     * @covers \local_tenantmaster\local\onboarding_service::create
+     * @covers \local_tenantmaster\local\onboarding_service::adopt_existing
      */
-    public function test_school_onboarding_creates_native_company_and_defaults(): void {
+    public function test_school_initialisation_adopts_native_company_and_defaults(): void {
         global $DB;
 
         $this->resetAfterTest();
-        $tenant = (new onboarding_service())->create((object)[
+        $this->setAdminUser();
+        $company = company::create_company((object)[
             'name' => 'Validation School',
             'shortname' => 'validationschool',
-            'trustcode' => 'TRUST_VALIDATION',
-            'tenanttype' => 'school',
-            'parentcompanyid' => 0,
+            'code' => 'TRUST_VALIDATION',
             'city' => 'Ahmedabad',
             'country' => 'IN',
             'address' => 'Sanitized validation address',
             'region' => 'Gujarat',
             'postcode' => '380001',
             'hostname' => 'validation-school.example.test',
+            'theme' => '',
+            'parentid' => 0,
+            'custom1' => '',
+            'custom2' => '',
+            'custom3' => '',
+            'templates' => [],
         ]);
+        $tenant = (new onboarding_service())->adopt_existing((int)$company->id, 'school');
 
-        $company = $DB->get_record(
-            'local_iomad_companies',
-            ['id' => $tenant->companyid],
-            '*',
-            MUST_EXIST,
-        );
-        $this->assertSame('Validation School', $company->name);
-        $this->assertSame('TRUST_VALIDATION', $company->code);
+        $this->assertSame('Validation School', $company->get_name());
+        $this->assertSame('TRUST_VALIDATION', $company->get('code'));
         $this->assertSame('school', $tenant->tenanttype);
+        $this->assertSame(1, $DB->count_records('local_iomad_companies', ['code' => 'TRUST_VALIDATION']));
         $this->assertGreaterThan(0, (int)$tenant->activeyearid);
         $this->assertGreaterThan(0, $DB->count_records(
             'local_tenantmaster_rolemap',
@@ -67,7 +68,7 @@ final class school_management_test extends tenantmaster_testcase {
             'local_tenantmaster_master',
             ['tenantid' => $tenant->id, 'mastertype' => 'grade', 'active' => 1],
         ));
-        $this->assertTrue($DB->record_exists('local_tenantmaster_dirty', [
+        $this->assertFalse($DB->record_exists('local_tenantmaster_dirty', [
             'tenantid' => $tenant->id,
             'module' => 'tenant',
         ]));

@@ -4,26 +4,31 @@
 a tenant-scoped IOMAD administration application. Normal operators do not need
 a Tenant Master CLI or an institution-pack CLI.
 
-Open **Site administration > Tenant Master**, select an IOMAD company, and use:
+Create and administer the company first in native IOMAD. Then open **Site
+administration > Tenant Master > Managed institutions** and initialise academic
+management for that existing company.
 
-1. **Dashboard** to review native counts, adopt defaults, validate, or enqueue
+1. **Dashboard** to open native IOMAD administration, review counts, adopt
+   defaults, validate, or enqueue
    Sync All.
-2. **Institution profile** for the combined trust/institution identity,
-   hostname, contact information, and supported IOMAD branding fields.
-3. **Organisation** for native IOMAD departments.
-4. **Academic structure** for academic years, boards, mediums, grades,
+2. **Institution master data** for institution type and regulatory or academic
+   identifiers that have no native IOMAD company field.
+3. **Academic masters** for academic years, boards, mediums, grades,
    programmes, semesters, streams, subjects, templates, and policies.
-5. **Courses** to inspect verified native category and course mappings.
-6. **Users and roles** to create native Moodle users, assign scoped IOMAD
-   business roles, and link guardians to learners.
-7. **Cohorts and enrolments** for native cohorts, groups, memberships, and
-   course access.
-8. **Assessments**, **Certificates**, and **Progression** for policy status,
-   native projections, and guarded academic rollover.
-9. **Imports** for ZIP upload, inspection, plan, approval, apply, resume, and
+4. **Academic course projections** to inspect native category, course and
+   custom-field mappings.
+5. **Classes and placements** to reconcile a school learner's native cohort,
+   group and subject-course access.
+6. **Progression** for policy status, reviewed decisions and guarded rollover.
+7. **Imports** for ZIP upload, inspection, plan, approval, apply, resume, and
    report.
-10. **Synchronization**, **Validation**, and **Audit** for operations and
+8. **Synchronization**, **Validation**, and **Audit** for operations and
     evidence.
+
+Companies, departments, users, memberships, managers, ordinary courses,
+cohorts, groups, enrolments, licences, domains and branding are manually
+managed only in IOMAD. Tenant Master pages provide contextual links to those
+native screens.
 
 School operators should follow
 [School management in Tenant Master](school-management.md) for the complete
@@ -86,6 +91,7 @@ settings, dirty work remains visible and is not discarded.
 ## Documentation
 
 - [Architecture and ownership](architecture.md)
+- [Native-first administration](native-first-administration.md)
 - [Workbook migration](workbook-migration.md)
 - [Data model](data-model.md)
 - [Academic model](academic-model.md)

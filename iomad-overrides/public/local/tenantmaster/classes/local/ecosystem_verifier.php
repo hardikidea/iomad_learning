@@ -39,6 +39,8 @@ final class ecosystem_verifier {
         int $maxreportms = 5000,
         string $flociurl = ''
     ): array {
+        global $DB;
+
         $this->results = [];
         $maxreportms = max(100, min(60000, $maxreportms));
         $this->verify_platform();
@@ -48,14 +50,24 @@ final class ecosystem_verifier {
         $this->verify_global_isolation();
 
         $tenants = $this->tenants($companyshortnames);
+        $nativecompanycount = $DB->count_records('local_iomad_companies');
+        $managedtenantcount = $DB->count_records('local_tenantmaster_tenant');
+        $cleandefault = !$companyshortnames && $nativecompanycount === 0 && $managedtenantcount === 0;
         $this->check(
             'tenantmaster',
             'active_tenant_selection',
             'platform',
             static fn(): array => [
-                'status' => $tenants ? 'pass' : 'fail',
-                'metric' => 'selected=' . count($tenants),
-                'remediation' => 'TM-TENANT-SELECTION',
+                'status' => ($tenants || $cleandefault) ? 'pass' : 'fail',
+                'metric' => $cleandefault
+                    ? 'selected=0;state=clean-default'
+                    : sprintf(
+                        'selected=%d;native=%d;managed=%d',
+                        count($tenants),
+                        $nativecompanycount,
+                        $managedtenantcount,
+                    ),
+                'remediation' => ($tenants || $cleandefault) ? '' : 'TM-TENANT-SELECTION',
             ]
         );
         foreach ($tenants as $tenant) {
@@ -254,12 +266,13 @@ final class ecosystem_verifier {
         $this->check('navigation', 'tenantmaster_route_guards', 'platform', static function () use ($indexfile): array {
             $source = is_file($indexfile) ? (string)file_get_contents($indexfile) : '';
             $sections = [
-                'dashboard', 'profile', 'organisation', 'academic', 'courses', 'people', 'access',
-                'assessments', 'certificates', 'progression', 'imports', 'sync', 'validation', 'audit',
+                'dashboard', 'tenants', 'profile', 'academic', 'courses', 'classes',
+                'progression', 'imports', 'sync', 'validation', 'audit',
             ];
             $valid = str_contains($source, 'require_login()')
                 && str_contains($source, 'require_sesskey()')
-                && str_contains($source, '$access->require(');
+                && str_contains($source, '$access->require(')
+                && str_contains($source, "['organisation', 'people', 'access']");
             foreach ($sections as $section) {
                 $valid = $valid && str_contains($source, "'" . $section . "'");
             }

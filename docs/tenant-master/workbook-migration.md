@@ -27,7 +27,7 @@ pagination, validation, and counts have no workbook row ceiling.
 
 | Workbook area | Plugin/native destination |
 |---|---|
-| Trust and institution | One Tenant Master profile + one IOMAD company |
+| Trust and institution | Existing native IOMAD company + one Tenant Master academic profile link |
 | Campuses/faculties/departments | IOMAD department hierarchy |
 | Years/boards/mediums/grades/programmes/semesters/streams | Tenant Master semantics + Moodle categories |
 | Subjects and templates | Tenant Master definitions + Moodle courses |
@@ -58,10 +58,11 @@ pagination, validation, and counts have no workbook row ceiling.
 2. Normalize approved data into a versioned ZIP containing CSV and
    `manifest.json`.
 3. Remove passwords, tokens, contact details, and real personal data.
-4. Select the target IOMAD company in Tenant Master.
-5. Upload through **Imports** and review row actions/errors.
-6. Apply only a valid plan.
-7. Watch automatic synchronization, run validation, and retain the report.
+4. Create and configure the company in native IOMAD.
+5. Initialise academic management in **Tenant Master > Managed institutions**.
+6. Upload through **Imports** and review row actions/errors.
+7. Apply only a valid plan.
+8. Watch automatic synchronization, run validation, and retain the report.
 
 Workbooks and macros are not executed in production or CI. CSV plus manifest
 checksums are canonical for migration.

@@ -90,7 +90,6 @@ final class queue_service {
     public function sync_all(int $tenantid, string $reason = 'sync_all'): void {
         global $DB;
 
-        $this->mark_dirty($tenantid, 'tenant', 'local_tenantmaster_tenant', $tenantid, $reason, true);
         foreach ($DB->get_records('local_tenantmaster_acadyear', ['tenantid' => $tenantid]) as $academicyear) {
             $this->mark_dirty(
                 $tenantid,

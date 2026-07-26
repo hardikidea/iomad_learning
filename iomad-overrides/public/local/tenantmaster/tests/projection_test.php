@@ -94,6 +94,28 @@ final class projection_test extends tenantmaster_testcase {
             'companyid' => $tenant->companyid,
             'courseid' => $coursemapping->targetid,
         ]));
+        $this->assertSame(
+            $tenant->trustcode,
+            $this->course_custom_field_value((int)$coursemapping->targetid, 'tm_company_code'),
+        );
+        $this->assertSame(
+            'school',
+            $this->course_custom_field_value((int)$coursemapping->targetid, 'tm_institution_type'),
+        );
+        $this->assertSame(
+            'MATHEMATICS',
+            $this->course_custom_field_value((int)$coursemapping->targetid, 'tm_subject'),
+        );
+        [$fieldsql, $fieldparams] = $DB->get_in_or_equal(
+            array_keys(\local_tenantmaster\local\course_metadata_service::FIELDS),
+            SQL_PARAMS_NAMED,
+            'tmfield',
+        );
+        $this->assertSame(13, $DB->count_records_select(
+            'customfield_field',
+            "shortname $fieldsql",
+            $fieldparams,
+        ));
 
         $service->save($this->master_data(
             $tenant,
@@ -105,6 +127,30 @@ final class projection_test extends tenantmaster_testcase {
         ));
         (new projection_service())->process((int)$tenant->id, 'courses');
         $this->assertSame(1, $DB->count_records('course', ['idnumber' => $coursemapping->externalkey]));
+    }
+
+    /**
+     * Read one native course custom field by stable shortname.
+     */
+    private function course_custom_field_value(int $courseid, string $shortname): string {
+        global $DB;
+
+        return (string)$DB->get_field_sql(
+            "SELECT d.value
+               FROM {customfield_data} d
+               JOIN {customfield_field} f ON f.id = d.fieldid
+              WHERE d.instanceid = :courseid
+                AND d.component = :component
+                AND d.area = :area
+                AND f.shortname = :shortname",
+            [
+                'courseid' => $courseid,
+                'component' => 'core_course',
+                'area' => 'course',
+                'shortname' => $shortname,
+            ],
+            MUST_EXIST,
+        );
     }
 
     /**

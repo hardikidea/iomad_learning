@@ -3,6 +3,7 @@
 
 namespace local_tenantmaster;
 
+use local_tenantmaster\local\ecosystem_verifier;
 use local_tenantmaster\local\learning_access_service;
 use local_tenantmaster\local\organisation_service;
 
@@ -18,6 +19,25 @@ require_once(__DIR__ . '/tenantmaster_testcase.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class isolation_test extends tenantmaster_testcase {
+    /**
+     * A clean default installation is a valid ecosystem state.
+     *
+     * @covers \local_tenantmaster\local\ecosystem_verifier
+     */
+    public function test_ecosystem_verifier_accepts_clean_default_installation(): void {
+        $this->resetAfterTest();
+
+        $report = (new ecosystem_verifier())->run();
+        $selection = array_values(array_filter(
+            $report['results'],
+            static fn(array $result): bool => $result['check'] === 'active_tenant_selection',
+        ));
+
+        $this->assertCount(1, $selection);
+        $this->assertSame('pass', $selection[0]['status']);
+        $this->assertSame('selected=0;state=clean-default', $selection[0]['metric']);
+    }
+
     /**
      * A department cannot use a parent from another company.
      *

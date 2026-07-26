@@ -37,59 +37,24 @@ final class iomad_501_adapter implements projection_adapter {
     }
 
     /**
-     * Project tenant profile using the supported IOMAD company API.
+     * Link the tenant profile to its authoritative native IOMAD company.
      *
      * @param object $tenant Tenant.
      * @return projection_result
      */
     public function project_tenant(object $tenant): projection_result {
-        global $CFG, $DB, $USER;
+        global $DB;
 
         $component = 'local_iomad/company';
         $native = $DB->get_record('local_iomad_companies', ['id' => $tenant->companyid], '*', MUST_EXIST);
-        $profile = json::decode_object($tenant->profilejson);
-        $managed = field_ownership::for_component($component);
-        $desiredrecord = clone $native;
-        $desiredrecord->code = $tenant->trustcode;
-        foreach ($managed as $field) {
-            if ($field === 'code') {
-                continue;
-            }
-            if (array_key_exists($field, $profile)) {
-                $desiredrecord->{$field} = $profile[$field];
-            }
-        }
-
-        // The public IOMAD web-service API performs validation and emits the
-        // company_updated event. Background projection runs as the service
-        // administrator only after the initiating user passed tenant capability
-        // checks in the application service.
-        require_once($CFG->dirroot . '/blocks/iomad_company_admin/externallib.php');
-        $payload = ['id' => (int)$tenant->companyid];
-        foreach ($managed as $field) {
-            if (property_exists($desiredrecord, $field) && $desiredrecord->{$field} !== null) {
-                $payload[$field] = $desiredrecord->{$field};
-            }
-        }
-        $originaluser = $USER;
-        try {
-            $USER = get_admin();
-            \block_iomad_company_admin_external::edit_companies([$payload]);
-        } finally {
-            $USER = $originaluser;
-        }
-        $readback = $DB->get_record('local_iomad_companies', ['id' => $tenant->companyid], '*', MUST_EXIST);
-        $desired = field_ownership::select($component, $desiredrecord);
-        $actual = field_ownership::select($component, $readback);
-        $this->assert_readback($component, $desired, $actual);
 
         return new projection_result(
             $component,
             (string)$tenant->trustcode,
             (int)$tenant->companyid,
-            $managed,
-            $desired,
-            $actual,
+            [],
+            [],
+            [],
         );
     }
 
@@ -284,6 +249,7 @@ final class iomad_501_adapter implements projection_adapter {
             true,
             (bool)($payload['licensed'] ?? false),
         );
+        (new course_metadata_service())->project($tenant, $master, $targetid);
 
         $readback = $DB->get_record('course', ['id' => $targetid], '*', MUST_EXIST);
         $actual = field_ownership::select($component, $readback);

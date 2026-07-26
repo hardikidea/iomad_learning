@@ -29,49 +29,37 @@ require_once(__DIR__ . '/tenantmaster_testcase.php');
  */
 final class crud_integration_test extends tenantmaster_testcase {
     /**
-     * Tenant profile updates are projected into the existing native company.
+     * Tenant Master metadata never overwrites authoritative native company fields.
      *
      * @covers \local_tenantmaster\local\tenant_service
-     * @covers \local_tenantmaster\local\iomad_501_adapter::project_tenant
      */
-    #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
-    public function test_tenant_profile_update_projects_to_native_company(): void {
+    public function test_tenant_profile_update_preserves_native_company(): void {
         global $DB;
 
         $this->resetAfterTest();
         $tenant = $this->create_tenant();
+        $nativebefore = $DB->get_record(
+            'local_iomad_companies',
+            ['id' => $tenant->companyid],
+            '*',
+            MUST_EXIST,
+        );
         $record = clone $tenant;
         $record->profilejson = json::encode([
-            'name' => 'Updated school',
-            'address' => 'Learning Road',
-            'city' => 'Surat',
-            'region' => 'Gujarat',
-            'postcode' => '395001',
-            'country' => 'IN',
-            'hostname' => '',
-            'maincolor' => '#123456',
-            'headingcolor' => '#234567',
-            'linkcolor' => '#345678',
-            'customcss' => '.tenant-brand { color: #123456; }',
+            'udisecode' => '24000000001',
+            'boardaffiliationnumber' => 'CBSE-DEMO-001',
         ]);
 
-        (new tenant_service())->save($record);
-        $job = (new projection_service())->process((int)$tenant->id, 'tenant');
-        $dirtyerror = (string)$DB->get_field('local_tenantmaster_dirty', 'lasterror', [
-            'tenantid' => $tenant->id,
-            'module' => 'tenant',
-        ]);
-        $this->assertSame('completed', $job->status, $dirtyerror);
+        $saved = (new tenant_service())->save($record);
 
         $native = $DB->get_record('local_iomad_companies', ['id' => $tenant->companyid], '*', MUST_EXIST);
-        $this->assertSame('Updated school', $native->name);
-        $this->assertSame('Surat', $native->city);
-        $this->assertSame('#123456', $native->maincolor);
-        $this->assertSame(1, $DB->count_records('local_tenantmaster_mapping', [
+        $this->assertSame($nativebefore->name, $native->name);
+        $this->assertSame($nativebefore->city, $native->city);
+        $this->assertSame($nativebefore->maincolor, $native->maincolor);
+        $this->assertSame('24000000001', json::decode_object($saved->profilejson)['udisecode']);
+        $this->assertFalse($DB->record_exists('local_tenantmaster_dirty', [
             'tenantid' => $tenant->id,
-            'component' => 'local_iomad/company',
-            'targetid' => $tenant->companyid,
-            'status' => 'synced',
+            'module' => 'tenant',
         ]));
     }
 

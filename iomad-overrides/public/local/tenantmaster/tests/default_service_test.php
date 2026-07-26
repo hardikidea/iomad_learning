@@ -5,7 +5,6 @@ namespace local_tenantmaster;
 
 use local_iomad\company;
 use local_tenantmaster\local\default_service;
-use local_tenantmaster\local\json;
 use local_tenantmaster\local\onboarding_service;
 
 defined('MOODLE_INTERNAL') || die();
@@ -127,12 +126,10 @@ final class default_service_test extends tenantmaster_testcase {
         $service = new onboarding_service();
         $first = $service->adopt_existing((int)$company->id, 'school');
         $second = $service->adopt_existing((int)$company->id, 'university');
-        $profile = json::decode_object((string)$first->profilejson);
-
         $this->assertSame((int)$first->id, (int)$second->id);
         $this->assertSame('school', $second->tenanttype);
-        $this->assertSame('Imported school', $profile['name']);
-        $this->assertSame('imported-school.example.test', $profile['hostname']);
+        $this->assertSame('SCHOOL_IMPORT', $first->trustcode);
+        $this->assertSame('{}', $first->profilejson);
         $this->assertSame(1, $DB->count_records('local_tenantmaster_tenant', [
             'companyid' => $company->id,
         ]));
@@ -148,6 +145,10 @@ final class default_service_test extends tenantmaster_testcase {
         ]));
         $this->assertGreaterThan(0, $DB->count_records('local_tenantmaster_dirty', [
             'tenantid' => $first->id,
+        ]));
+        $this->assertFalse($DB->record_exists('local_tenantmaster_dirty', [
+            'tenantid' => $first->id,
+            'module' => 'tenant',
         ]));
     }
 }

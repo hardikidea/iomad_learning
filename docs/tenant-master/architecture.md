@@ -7,7 +7,8 @@ Moodle remain the system of record for all executable platform objects.
 
 ```mermaid
 flowchart TB
-    UI["Standard IOMAD UI<br/>forms, tables, tabs and breadcrumbs"]
+    UI["Tenant Master UI<br/>academic masters and orchestration"]
+    IOMADUI["Native IOMAD UI<br/>operational CRUD"]
     APP["Tenant Master services<br/>validation, defaults, imports, rollover"]
     QUEUE["Automatic sync graph<br/>ad-hoc tasks, retries and locks"]
     ADAPTER["IOMAD 5.1 adapter<br/>version-specific calls"]
@@ -15,6 +16,7 @@ flowchart TB
     META["Tenant Master metadata<br/>policies, mappings, hashes, manifests, audit"]
 
     UI --> APP
+    IOMADUI --> NATIVE
     APP --> META
     APP --> QUEUE
     QUEUE --> ADAPTER
@@ -27,13 +29,13 @@ flowchart TB
 
 | Domain | Authority | Tenant Master responsibility |
 |---|---|---|
-| Tenant | IOMAD company | Stable trust mapping and type-specific profile |
-| Organisation | IOMAD departments | Validate scope and call department APIs |
-| People | Moodle user + IOMAD membership | Create native user, assign company, never store profile copy |
-| Roles | Moodle/IOMAD roles | Map business roles to native role/scope |
+| Tenant | IOMAD company | Adopt existing company code; store only institution type and non-native metadata |
+| Organisation | IOMAD departments | Reference native departments; no duplicate manual CRUD |
+| People | Moodle user + IOMAD membership | Reference native company users; no duplicate manual CRUD or profile copy |
+| Roles | Moodle/IOMAD roles | Use native manager/role screens; retain semantic defaults for automation |
 | Academic hierarchy | Moodle course categories | Store academic semantics and project categories |
 | Subjects/templates | Moodle courses | Store reusable definition and project/assign native course |
-| Learning access | Cohorts, groups, enrolments | Validate same-company references and call supported APIs |
+| Learning access | Cohorts, groups, enrolments | Native manual CRUD; placement automation validates scope and calls APIs |
 | Results/history | Grades and completion | Read native records; do not duplicate history |
 | Attendance | Native grade item | Project `TM_ATTENDANCE`; no unsupported attendance plugin |
 | Certificates | `mod_iomadcertificate` | Project one managed activity per company course |
@@ -44,13 +46,14 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    T["Tenant profile"] --> C["IOMAD company"]
-    O["Campus / faculty / department"] --> D["IOMAD department"]
+    C["IOMAD company"] --> T["Tenant academic profile link"]
+    D["IOMAD department"] --> O["Academic orchestration reference"]
     AY["Academic year"] --> AYC["Moodle course category"]
     G["Board / medium / grade / programme / semester / stream"] --> CAT["Moodle course category"]
     S["Subject / course template"] --> COURSE["Moodle course"]
     COURSE --> CC["IOMAD company-course assignment"]
-    P["Person"] --> USER["Moodle user"]
+    COURSE --> CF["Native course custom fields"]
+    P["Native IOMAD user administration"] --> USER["Moodle user"]
     USER --> CU["IOMAD company membership"]
     R["Business role"] --> RA["IOMAD/Moodle scoped role assignment"]
     CO["Class / batch"] --> COHORT["Moodle cohort"]

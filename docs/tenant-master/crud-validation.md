@@ -2,7 +2,7 @@
 
 ## Scope
 
-This validation covers `local_tenantmaster` release 1.0.7 on IOMAD 5.1.5.
+This validation covers `local_tenantmaster` release 1.2.0 on IOMAD 5.1.5.
 Tenant Master metadata remains tenant-scoped while operational records are
 projected through supported Moodle and IOMAD APIs. The plugin does not patch
 IOMAD core or write directly to native IOMAD tables.
@@ -11,13 +11,14 @@ IOMAD core or write directly to native IOMAD tables.
 
 | Domain | Create and read | Update | Removal behavior | Native target |
 |---|---|---|---|---|
-| Tenant profile | Validated tenant record and one company mapping | Managed company fields | Deactivate or archive | IOMAD company |
+| Institution metadata | Existing company link, type and regulatory identifiers | Plugin-owned metadata only | Deactivate or archive | Native company is read-only |
 | Academic year | Tenant-bound stable identity | Dates, name, current state and status | Archive; current year is cleared | Category hierarchy root |
 | Academic master | Type, stable keys, year and parent ownership | Managed descriptive fields and active state | Deactivate or archive | Category, course, certificate or policy metadata |
-| Department | Same-company parent hierarchy | Name and parent; shortname is immutable | Deactivate in managed source | IOMAD department |
-| User and role | Stable external identity and tenant membership | Supported profile, membership and scoped role fields | Suspend, end or unassign where supported | Moodle user and IOMAD company membership |
-| Cohort and group | Stable idnumber and same-tenant references | Supported name and membership changes | Remove managed membership without deleting history | Moodle cohort and group |
-| Enrolment | Supported IOMAD or Moodle enrolment API | Status and managed group membership | Suspend or unenrol only through supported API | Native enrolment and role assignment |
+| Department | Native IOMAD CRUD or approved import | Native IOMAD CRUD | Native IOMAD policy | IOMAD department |
+| User and role | Native IOMAD CRUD | Native IOMAD CRUD | Suspend, end or unassign in IOMAD | Moodle user and IOMAD company membership |
+| Cohort and group | Native CRUD or placement automation | Native CRUD or placement reconciliation | Preserve learning history | Moodle cohort and group |
+| Enrolment | Native IOMAD CRUD or placement automation | Native IOMAD CRUD | Native supported API | Native enrolment and role assignment |
+| Course academic metadata | Created with subject projection | Locked read-back verified values | Cleared only when source no longer applies | Moodle course custom fields |
 
 Stable tenant, academic-year, master, and department keys cannot be changed
 after creation. Parent selection rejects cross-tenant references and hierarchy
@@ -32,7 +33,7 @@ native history remains recoverable.
 
 ```mermaid
 flowchart LR
-    FORM["Validated UI change"] --> SERVICE["Tenant service"]
+    FORM["Validated academic UI change"] --> SERVICE["Tenant Master service"]
     SERVICE --> DIRTY["Mark dependency graph dirty"]
     DIRTY --> TASK["Ad-hoc or scheduled task"]
     TASK --> API["Moodle or IOMAD API"]
@@ -42,7 +43,8 @@ flowchart LR
     API -->|Failure| RETRY["Retryable queue state"]
 ```
 
-A new change resets exhausted retry attempts, repeated changes are debounced,
+A native company edit is not projected back from Tenant Master. A new academic
+change resets exhausted retry attempts, repeated changes are debounced,
 and workers lock by tenant and module. Projection failures remain retryable
 without creating duplicate native records.
 
@@ -78,8 +80,8 @@ mappings, course mappings, and stable-key ownership.
   University data.
 - A Student cannot open Tenant Master administration.
 - Anonymous requests redirect to the standard login page.
-- All 14 sections were checked for both companies on desktop.
-- All 14 sections were checked at a 390-by-844 mobile viewport.
+- Tenant Master's reduced academic navigation and contextual native IOMAD links
+  are covered by authenticated browser smoke checks.
 - Routes returned no PHP exception page, browser page error, console error, or
   document-level horizontal overflow.
 

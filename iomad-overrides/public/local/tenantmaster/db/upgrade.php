@@ -300,5 +300,43 @@ function xmldb_local_tenantmaster_upgrade(int $oldversion): bool {
 
         upgrade_plugin_savepoint(true, 2026072601, 'local', 'tenantmaster');
     }
+    if ($oldversion < 2026072602) {
+        $nativecompanyfields = [
+            'name',
+            'address',
+            'city',
+            'region',
+            'postcode',
+            'country',
+            'hostname',
+            'maincolor',
+            'headingcolor',
+            'linkcolor',
+            'customcss',
+        ];
+        foreach ($DB->get_records('local_tenantmaster_tenant') as $tenant) {
+            $profile = \local_tenantmaster\local\json::decode_object((string)$tenant->profilejson);
+            foreach ($nativecompanyfields as $field) {
+                unset($profile[$field]);
+            }
+            $tenant->profilejson = \local_tenantmaster\local\json::encode($profile);
+            $tenant->sourcehash = \local_tenantmaster\local\json::hash([
+                'trustcode' => $tenant->trustcode,
+                'tenanttype' => $tenant->tenanttype,
+                'profile' => $profile,
+            ]);
+            $tenant->timemodified = time();
+            $DB->update_record('local_tenantmaster_tenant', $tenant);
+        }
+        $DB->set_field_select(
+            'local_tenantmaster_dirty',
+            'state',
+            'synced',
+            'module = :module AND entitytable = :entitytable',
+            ['module' => 'tenant', 'entitytable' => 'local_tenantmaster_tenant'],
+        );
+        (new \local_tenantmaster\local\course_metadata_service())->ensure_definitions();
+        upgrade_plugin_savepoint(true, 2026072602, 'local', 'tenantmaster');
+    }
     return true;
 }

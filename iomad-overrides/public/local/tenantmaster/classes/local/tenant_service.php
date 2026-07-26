@@ -15,18 +15,16 @@ final class tenant_service {
      * Constructor.
      *
      * @param tenant_repository $repository Repository.
-     * @param queue_service $queue Queue.
      * @param audit_service $audit Audit.
      */
     public function __construct(
         private readonly tenant_repository $repository = new tenant_repository(),
-        private readonly queue_service $queue = new queue_service(),
         private readonly audit_service $audit = new audit_service(),
     ) {
     }
 
     /**
-     * Save validated tenant-owned fields and automatically synchronize.
+     * Save validated Tenant Master-owned fields.
      *
      * @param object $data Form data.
      * @return object
@@ -39,7 +37,6 @@ final class tenant_service {
             throw new \invalid_parameter_exception('Invalid trust code.');
         }
         $record = $this->repository->save($data);
-        $this->queue->mark_dirty((int)$record->id, 'tenant', 'local_tenantmaster_tenant', (int)$record->id, 'profile_saved');
         $this->audit->record(
             (int)$record->id,
             'tenant.profile.saved',

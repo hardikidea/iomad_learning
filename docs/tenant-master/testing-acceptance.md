@@ -6,10 +6,12 @@
 |---|---|
 | Repository gate | Shell syntax, Compose, compatibility, docs, XMLDB, override mirror, PHP syntax and sanitized packs pass |
 | Project PHPUnit | Project test files run with warnings and notices treated as failures on PHP 8.3/PostgreSQL 16 |
-| Tenant Master PHPUnit | 9 test files, 24 tests and 97 assertions pass |
+| Tenant Master PHPUnit | 10 test files, 31 tests and 139 assertions pass |
 | JSON and redaction helpers | Strict parsing and deterministic hashing |
 | Default adoption | School/university catalogues, hierarchy, idempotency, active year |
 | Native projection | Academic-year parent, categories, courses, company assignment |
+| Native course metadata | 13 locked course custom fields, hierarchy values and read-back |
+| Clean default state | Empty native company and Tenant Master profile sets pass ecosystem verification without seed data |
 | Gradebook | Assessment category, attendance item, completion, pass grade |
 | Failure path | Retryable item and non-truncated `completed_with_errors` job |
 | Isolation | Cross-company users, courses, groups and enrolments rejected |
@@ -44,8 +46,9 @@ Native projection read-back recorded 105 synchronized mappings for the school
 and 78 for the university, with zero non-synchronized mappings. Each tenant
 has all seven active business-role mappings.
 
-All 14 Tenant Master sections were checked for both demo tenants: 28
-authenticated desktop routes and 14 mobile routes returned HTTP 200.
+The pre-refactor demo acceptance run checked all legacy routes. Release 1.2.0
+replaces those duplicate CRUD routes with native IOMAD links; the current
+release gate rechecks the reduced Tenant Master navigation and native targets.
 Anonymous access redirected to login. Desktop and 390-by-844 mobile checks had
 no horizontal overflow, missing language strings, duplicate DOM IDs, unlabeled
 controls, console errors, or page errors. A tracked pinned-source correction
@@ -81,7 +84,8 @@ Both images label the exact pinned IOMAD commit.
 - [x] School and university defaults are isolated and idempotent.
 - [x] Grade, subject, role, course, and policy data map to real native records.
 - [x] Company departments remain separate from course categories.
-- [x] Every normal workflow is available in the plugin UI.
+- [x] Native IOMAD is the only manual CRUD surface for supported operational records.
+- [x] Tenant Master exposes academic masters and orchestration that have no complete native equivalent.
 - [x] Automatic post-CRUD processing, locks, retries, read-back, audit and drift
   are implemented.
 - [x] Import is versioned, checksummed, tenant-bound, resumable, and rejects

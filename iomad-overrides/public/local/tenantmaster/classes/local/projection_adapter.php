@@ -12,7 +12,7 @@ namespace local_tenantmaster\local;
  */
 interface projection_adapter {
     /**
-     * Project Tenant Master identity to the linked native company.
+     * Read and link the authoritative native company without changing it.
      *
      * @param object $tenant Tenant.
      * @return projection_result

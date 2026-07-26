@@ -7,14 +7,13 @@
 - Moodle/IOMAD: 5.1.5 build 20260608
 - PHP: 8.2-8.4
 - PostgreSQL: 15 or newer
-- Plugin release: 1.0.7, schema version `2026072507`
+- Plugin release: 1.2.0, schema version `2026072602`
 
 ## Native API Map
 
 | Target | Supported call used |
 |---|---|
-| Company create | `local_iomad\company::create_company()` |
-| Company edit | `block_iomad_company_admin_external::edit_companies()` |
+| Company create/edit | Native IOMAD dashboard only; Tenant Master adopts by company code |
 | Department create/update | `local_iomad\company::create_department()` |
 | Root department | `local_iomad\company::get_company_parentnode()` |
 | User create | `user_create_user()` |
@@ -23,6 +22,7 @@
 | Guardian relationship | `role_assign()` at `context_user` |
 | Category create/update | `core_course_category::create()` / `update()` |
 | Course create/update | `create_course()` / `update_course()` |
+| Course custom fields | `core_course\customfield\course_handler` and `core_customfield` controllers |
 | Company course | `local_iomad\company::add_course()` |
 | Cohort | `cohort_add_cohort()`, `cohort_update_cohort()`, `cohort_add_member()` |
 | Group | `groups_create_group()`, `groups_update_group()`, `groups_add_member()` |
@@ -37,6 +37,8 @@ same-tenant validation and exact post-write read-back.
 
 - Forms and `index.php` handle HTTP validation, capability, sesskey, redirect,
   and standard rendering.
+- Native IOMAD forms are the sole manual CRUD surface for company, department,
+  user, role, cohort, group, enrolment, licence and branding records.
 - Application services enforce stable keys and tenant ownership.
 - `queue_service` calculates dependencies and debounces work.
 - `projection_service` owns locks, jobs, retries, read-back, and audit.

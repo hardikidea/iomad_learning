@@ -9,6 +9,7 @@ official source remains a detached, reproducible checkout at the commit in
 - [Repository setup](setup.md)
 - [Tenant Master UI administration](tenant-master/README.md)
 - [Tenant Master architecture and native ownership](tenant-master/architecture.md)
+- [Tenant Master native-first administration](tenant-master/native-first-administration.md)
 - [Tenant Master workbook migration](tenant-master/workbook-migration.md)
 - [Tenant Master roles and capabilities](tenant-master/roles-capabilities.md)
 - [Tenant Master automatic synchronization](tenant-master/synchronization.md)

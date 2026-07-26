@@ -1,19 +1,10 @@
 <?php
 // This file is part of Moodle - http://moodle.org/
 
-use local_tenantmaster\form\department;
 use local_tenantmaster\form\academic_year;
-use local_tenantmaster\form\access_assignment;
-use local_tenantmaster\form\cohort_member;
-use local_tenantmaster\form\course_copy;
-use local_tenantmaster\form\guardian_link;
+use local_tenantmaster\form\company_adoption;
 use local_tenantmaster\form\import_package;
 use local_tenantmaster\form\master;
-use local_tenantmaster\form\native_cohort;
-use local_tenantmaster\form\native_group;
-use local_tenantmaster\form\native_user;
-use local_tenantmaster\form\onboarding;
-use local_tenantmaster\form\role_assignment;
 use local_tenantmaster\form\rollover;
 use local_tenantmaster\form\school_year_setup;
 use local_tenantmaster\form\student_placement;
@@ -22,20 +13,15 @@ use local_tenantmaster\form\tenant_profile;
 use local_tenantmaster\local\access;
 use local_tenantmaster\local\academic_year_service;
 use local_tenantmaster\local\catalog;
-use local_tenantmaster\local\course_copy_service;
 use local_tenantmaster\local\default_service;
 use local_tenantmaster\local\drift_service;
 use local_tenantmaster\local\import_service;
 use local_tenantmaster\local\json;
 use local_tenantmaster\local\master_repository;
 use local_tenantmaster\local\master_service;
-use local_tenantmaster\local\native_user_service;
 use local_tenantmaster\local\onboarding_service;
-use local_tenantmaster\local\learning_access_service;
-use local_tenantmaster\local\organisation_service;
 use local_tenantmaster\local\people_service;
 use local_tenantmaster\local\queue_service;
-use local_tenantmaster\local\role_service;
 use local_tenantmaster\local\rollover_service;
 use local_tenantmaster\local\school_year_setup_service;
 use local_tenantmaster\local\student_placement_service;
@@ -54,7 +40,6 @@ $action = optional_param('action', '', PARAM_ALPHANUMEXT);
 $editid = optional_param('editid', 0, PARAM_INT);
 $yeareditid = optional_param('yeareditid', 0, PARAM_INT);
 $placementeditid = optional_param('placementeditid', 0, PARAM_INT);
-$usereditid = optional_param('usereditid', 0, PARAM_INT);
 $typefilter = optional_param('type', '', PARAM_ALPHANUMEXT);
 $access = access::resolve($companyid);
 $companyid = $access->companyid();
@@ -62,17 +47,25 @@ $tenantrepository = new tenant_repository();
 $tenant = $companyid > 0 ? $tenantrepository->get_by_company($companyid) : null;
 $notice = '';
 
-if ($companyid > 0 && !$tenant) {
-    $company = $DB->get_record('local_iomad_companies', ['id' => $companyid], '*', MUST_EXIST);
-    $searchname = strtolower($company->name . ' ' . $company->shortname);
-    $inferredtype = str_contains($searchname, 'school') ? 'school'
-        : (str_contains($searchname, 'university') ? 'university'
-            : (str_contains($searchname, 'college') ? 'college' : 'training'));
-    $tenant = $tenantrepository->ensure_for_company($companyid, $inferredtype);
-    (new role_service())->ensure_defaults((int)$tenant->id);
-    (new default_service())->adopt($tenant);
-    $tenant = $tenantrepository->get((int)$tenant->id);
-    $notice = get_string('tenantactivated', 'local_tenantmaster');
+// Keep native IOMAD administration links on the selected site-admin company.
+if (is_siteadmin() && $companyid > 0) {
+    $SESSION->currenteditingcompany = $companyid;
+}
+
+if ($tenant && in_array($section, ['organisation', 'people', 'access'], true)) {
+    $destination = match ($section) {
+        'organisation' => '/blocks/iomad_company_admin/company_departments.php',
+        'people' => '/blocks/iomad_company_admin/editusers.php',
+        default => '/blocks/iomad_company_admin/index.php',
+    };
+    redirect(new moodle_url($destination, ['company' => $companyid]));
+}
+if ($tenant && in_array($section, ['assessments', 'certificates'], true)) {
+    redirect(new moodle_url('/local/tenantmaster/index.php', [
+        'section' => 'academic',
+        'companyid' => $companyid,
+        'type' => $section === 'assessments' ? 'assessment_policy' : 'certificate_rule',
+    ]));
 }
 
 $urlparams = ['section' => $section];
@@ -157,22 +150,36 @@ if ($action !== '') {
     }
 }
 
-$onboardingform = null;
+$adoptionform = null;
 if (is_siteadmin() && $companyid === 0 && $section === 'tenants') {
-    $parentcompanies = [0 => get_string('none')];
-    foreach ($DB->get_records('local_iomad_companies', ['suspended' => 0], 'name') as $parentcompany) {
-        $parentcompanies[(int)$parentcompany->id] = format_string($parentcompany->name);
+    $companyoptions = [];
+    $companies = $DB->get_records_sql(
+        "SELECT c.id, c.name, c.shortname, c.code
+           FROM {local_iomad_companies} c
+      LEFT JOIN {local_tenantmaster_tenant} t ON t.companyid = c.id
+          WHERE c.suspended = 0
+            AND t.id IS NULL
+       ORDER BY c.name",
+    );
+    foreach ($companies as $company) {
+        $companyoptions[(int)$company->id] = format_string($company->name)
+            . ' [' . s($company->code ?: get_string('missingcompanycode', 'local_tenantmaster')) . ']';
     }
-    $onboardingform = new onboarding($pageurl, ['parentcompanies' => $parentcompanies]);
-    if ($data = $onboardingform->get_data()) {
+    if ($companyoptions) {
+        $adoptionform = new company_adoption($pageurl, ['companies' => $companyoptions]);
+    }
+    if ($adoptionform && ($data = $adoptionform->get_data())) {
         require_sesskey();
-        $createdtenant = (new onboarding_service())->create($data);
+        $createdtenant = (new onboarding_service())->adopt_existing(
+            (int)$data->adoptcompanyid,
+            (string)$data->tenanttype,
+        );
         redirect(
             new moodle_url('/local/tenantmaster/index.php', [
                 'section' => 'dashboard',
                 'companyid' => $createdtenant->companyid,
             ]),
-            get_string('tenantcreated', 'local_tenantmaster'),
+            get_string('tenantinitialised', 'local_tenantmaster'),
         );
     }
 }
@@ -185,18 +192,7 @@ if ($tenant && $section === 'profile') {
         $access->require('local/tenantmaster:manageprofile');
         $record = clone $tenant;
         $record->tenanttype = $data->tenanttype;
-        $record->profilejson = json::encode([
-            'name' => $data->name,
-            'address' => $data->address,
-            'city' => $data->city,
-            'region' => $data->region,
-            'postcode' => $data->postcode,
-            'country' => $data->country,
-            'hostname' => $data->hostname,
-            'maincolor' => $data->maincolor,
-            'headingcolor' => $data->headingcolor,
-            'linkcolor' => $data->linkcolor,
-            'customcss' => $data->customcss,
+        $metadata = [
             'trustlegalname' => $data->trustlegalname,
             'trustregistrationnumber' => $data->trustregistrationnumber,
             'udisecode' => $data->udisecode,
@@ -209,13 +205,24 @@ if ($tenant && $section === 'profile') {
             'district' => $data->district,
             'block' => $data->block,
             'preferredlanguages' => $data->preferredlanguages,
-        ]);
+            'institutioncode' => $data->institutioncode,
+            'aishecode' => $data->aishecode,
+            'universitytype' => $data->universitytype,
+            'accreditationbody' => $data->accreditationbody,
+            'accreditationgrade' => $data->accreditationgrade,
+            'regulatoryauthority' => $data->regulatoryauthority,
+            'approvalnumber' => $data->approvalnumber,
+            'academiccalendar' => $data->academiccalendar,
+            'creditframework' => $data->creditframework,
+        ];
+        $record->profilejson = json::encode(array_filter(
+            $metadata,
+            static fn(mixed $value): bool => $value !== '' && $value !== 0,
+        ));
         $tenant = (new tenant_service())->save($record);
         $notice = get_string('profilesaved', 'local_tenantmaster');
     }
-    $nativecompany = $DB->get_record('local_iomad_companies', ['id' => $tenant->companyid], '*', MUST_EXIST);
     $profileform->set_data((object)(array_merge(
-        (array)$nativecompany,
         json::decode_object($tenant->profilejson),
         [
             'id' => $tenant->id,
@@ -224,32 +231,6 @@ if ($tenant && $section === 'profile') {
             'tenanttype' => $tenant->tenanttype,
         ],
     )));
-}
-
-$organisationservice = new organisation_service();
-$departmentform = null;
-if ($tenant && $section === 'organisation') {
-    $departments = $organisationservice->list($tenant);
-    $parentoptions = [];
-    foreach ($departments as $native) {
-        $parentoptions[(int)$native->id] = format_string($native->name);
-    }
-    $departmentform = new department($pageurl, [
-        'parents' => $parentoptions,
-        'editing' => $editid > 0,
-    ]);
-    if ($data = $departmentform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:manageorganisation');
-        $organisationservice->save($tenant, $data);
-        redirect($pageurl, get_string('departmentsaved', 'local_tenantmaster'));
-    }
-    if ($editid > 0) {
-        $departmentform->set_data($DB->get_record('local_iomad_company_departments', [
-            'id' => $editid,
-            'companyid' => $tenant->companyid,
-        ], '*', MUST_EXIST));
-    }
 }
 
 $masterrepository = new master_repository();
@@ -350,23 +331,6 @@ if ($tenant && $section === 'academic') {
             $result = (new school_year_setup_service())->generate($tenant, $data);
             redirect($pageurl, get_string('schoolyeargenerated', 'local_tenantmaster', (object)$result));
         }
-    }
-}
-
-$coursecopyform = null;
-if ($tenant && $section === 'courses') {
-    $courseoptions = tenantmaster_course_options($tenant);
-    $coursecopyform = new course_copy($pageurl, ['courses' => $courseoptions]);
-    if ($data = $coursecopyform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:manageacademic');
-        (new course_copy_service())->copy(
-            $tenant,
-            (int)$data->sourcecourseid,
-            (int)$data->targetcourseid,
-            !empty($data->replacecontent),
-        );
-        redirect($pageurl, get_string('coursecontentcopied', 'local_tenantmaster'));
     }
 }
 
@@ -473,204 +437,6 @@ if ($tenant && $section === 'progression') {
     }
 }
 
-$roleservice = new role_service();
-$peopleform = null;
-$nativeuserform = null;
-$guardianform = null;
-if ($tenant && $section === 'people') {
-    $roleservice->ensure_defaults((int)$tenant->id);
-    $peopleservice = new people_service();
-    $people = $peopleservice->list($tenant);
-    $useroptions = [];
-    foreach ($people as $person) {
-        $useroptions[(int)$person->id] = fullname($person) . ' [' . s($person->username) . ']';
-    }
-    $departmentoptions = [];
-    foreach ($organisationservice->list($tenant) as $native) {
-        $departmentoptions[(int)$native->id] = format_string($native->name);
-    }
-    $courseoptions = [0 => get_string('notapplicable', 'local_tenantmaster')];
-    foreach (
-        $DB->get_records_sql(
-            "SELECT c.id, c.fullname
-           FROM {local_iomad_company_courses} cc
-           JOIN {course} c ON c.id = cc.courseid
-          WHERE cc.companyid = :companyid
-       ORDER BY c.fullname",
-            ['companyid' => $tenant->companyid],
-        ) as $course
-    ) {
-        $courseoptions[(int)$course->id] = format_string($course->fullname);
-    }
-    $peopleform = new role_assignment($pageurl, [
-        'users' => $useroptions,
-        'roles' => catalog::localise(catalog::ROLE_KEYS),
-        'departments' => $departmentoptions,
-        'courses' => $courseoptions,
-    ]);
-    if ($data = $peopleform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:manageroles');
-        $peopleservice->assign_role(
-            $tenant,
-            (int)$data->assignmentuserid,
-            (string)$data->assignmentrolekey,
-            (int)$data->assignmentdepartmentid,
-            (int)$data->assignmentcourseid,
-        );
-        redirect($pageurl, get_string('roleassigned', 'local_tenantmaster'));
-    }
-    $nativeuserform = new native_user($pageurl, [
-        'editing' => $usereditid > 0,
-        'roles' => catalog::localise(catalog::ROLE_KEYS),
-        'departments' => $departmentoptions,
-        'courses' => $courseoptions,
-    ]);
-    if ($data = $nativeuserform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:managepeople');
-        if ((int)$data->userid > 0) {
-            (new native_user_service())->update($tenant, $data);
-            $message = get_string('nativeuserupdated', 'local_tenantmaster');
-        } else {
-            $nativeuser = (new native_user_service())->create($tenant, $data);
-            $message = $nativeuser->notificationstatus === 'sent'
-                ? get_string('nativeusercreated', 'local_tenantmaster')
-                : get_string('nativeusercreatedmailfailed', 'local_tenantmaster');
-        }
-        redirect($pageurl, $message);
-    }
-    if ($usereditid > 0) {
-        if (
-            !$DB->record_exists('local_iomad_company_users', [
-            'companyid' => $tenant->companyid,
-            'userid' => $usereditid,
-            ])
-        ) {
-            throw new moodle_exception('invaliduser');
-        }
-        $editinguser = $DB->get_record('user', ['id' => $usereditid, 'deleted' => 0], '*', MUST_EXIST);
-        $editinguser->userid = $editinguser->id;
-        $nativeuserform->set_data($editinguser);
-    }
-    $guardianform = new guardian_link($pageurl, ['users' => $useroptions]);
-    if ($data = $guardianform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:manageroles');
-        $peopleservice->link_guardian($tenant, (int)$data->guardianid, (int)$data->learnerid);
-        redirect($pageurl, get_string('guardianlinked', 'local_tenantmaster'));
-    }
-}
-
-$cohortform = null;
-$cohortmemberform = null;
-$groupform = null;
-$accessform = null;
-if ($tenant && $section === 'access') {
-    $accessservice = new learning_access_service();
-    $nativepeople = (new people_service())->list($tenant);
-    $useroptions = [];
-    foreach ($nativepeople as $person) {
-        $useroptions[(int)$person->id] = fullname($person) . ' [' . s($person->idnumber) . ']';
-    }
-    $courseoptions = [];
-    foreach (
-        $DB->get_records_sql(
-            "SELECT c.id, c.fullname
-           FROM {local_iomad_company_courses} cc
-           JOIN {course} c ON c.id = cc.courseid
-          WHERE cc.companyid = :companyid
-       ORDER BY c.fullname",
-            ['companyid' => $tenant->companyid],
-        ) as $course
-    ) {
-        $courseoptions[(int)$course->id] = format_string($course->fullname);
-    }
-    $cohortoptions = [];
-    foreach (
-        $DB->get_records_select(
-            'cohort',
-            'idnumber LIKE :prefix',
-            ['prefix' => 'TM:' . $tenant->trustcode . ':COHORT:%'],
-            'name',
-        ) as $cohort
-    ) {
-        $cohortoptions[(int)$cohort->id] = format_string($cohort->name);
-    }
-    $groupoptions = [0 => get_string('notapplicable', 'local_tenantmaster')];
-    foreach (
-        $DB->get_records_sql(
-            "SELECT g.id, g.name, c.shortname
-           FROM {groups} g
-           JOIN {course} c ON c.id = g.courseid
-           JOIN {local_iomad_company_courses} cc ON cc.courseid = c.id
-          WHERE cc.companyid = :companyid
-            AND g.idnumber LIKE :groupprefix
-       ORDER BY c.shortname, g.name",
-            [
-            'companyid' => $tenant->companyid,
-            'groupprefix' => 'TM:' . $tenant->trustcode . ':GROUP:%',
-            ],
-        ) as $group
-    ) {
-        $groupoptions[(int)$group->id] = format_string($group->name) . ' [' . s($group->shortname) . ']';
-    }
-
-    $cohortform = new native_cohort($pageurl);
-    if ($data = $cohortform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:managepeople');
-        $accessservice->ensure_cohort(
-            $tenant,
-            (string)$data->cohortexternalid,
-            (string)$data->cohortname,
-            (string)$data->cohortdescription,
-        );
-        redirect($pageurl, get_string('cohortsaved', 'local_tenantmaster'));
-    }
-    $cohortmemberform = new cohort_member($pageurl, ['cohorts' => $cohortoptions, 'users' => $useroptions]);
-    if ($data = $cohortmemberform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:managepeople');
-        $accessservice->add_cohort_member($tenant, (int)$data->cohortid, (int)$data->cohortuserid);
-        redirect($pageurl, get_string('cohortmemberadded', 'local_tenantmaster'));
-    }
-    $groupform = new native_group($pageurl, ['courses' => $courseoptions]);
-    if ($data = $groupform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:managepeople');
-        $accessservice->ensure_group(
-            $tenant,
-            (int)$data->groupcourseid,
-            (string)$data->groupexternalid,
-            (string)$data->groupname,
-        );
-        redirect($pageurl, get_string('groupsaved', 'local_tenantmaster'));
-    }
-    $accessform = new access_assignment($pageurl, [
-        'users' => $useroptions,
-        'courses' => $courseoptions,
-        'groups' => $groupoptions,
-    ]);
-    if ($data = $accessform->get_data()) {
-        require_sesskey();
-        $access->require('local/tenantmaster:managepeople');
-        $rolemap = $DB->get_record('local_tenantmaster_rolemap', [
-            'tenantid' => $tenant->id,
-            'rolekey' => $data->accessrolekey,
-            'active' => 1,
-        ], '*', MUST_EXIST);
-        $accessservice->enrol_user(
-            $tenant,
-            (int)$data->accesscourseid,
-            (int)$data->accessuserid,
-            (int)$rolemap->roleid,
-            (int)$data->accessgroupid,
-        );
-        redirect($pageurl, get_string('nativeuserenrolled', 'local_tenantmaster'));
-    }
-}
-
 $importform = null;
 if ($tenant && $section === 'imports') {
     $importform = new import_package($pageurl);
@@ -693,11 +459,16 @@ if ($notice !== '') {
     echo $OUTPUT->notification($notice, 'success', false);
 }
 if (!$tenant && !($section === 'tenants' && is_siteadmin())) {
-    echo $OUTPUT->notification(get_string('selecttenant', 'local_tenantmaster'), 'info', false);
+    echo $OUTPUT->notification(get_string('selectinitialisedtenant', 'local_tenantmaster'), 'info', false);
     if (is_siteadmin()) {
         echo $OUTPUT->single_button(
             new moodle_url('/local/tenantmaster/index.php', ['section' => 'tenants']),
-            get_string('createtenant', 'local_tenantmaster'),
+            get_string('managetenantmasterinstitutions', 'local_tenantmaster'),
+            'get',
+        );
+        echo $OUTPUT->single_button(
+            new moodle_url('/blocks/iomad_company_admin/company_edit_form.php', ['createnew' => 1]),
+            get_string('createnativeiomadcompany', 'local_tenantmaster'),
             'get',
         );
     }
@@ -708,28 +479,30 @@ if (!$tenant && !($section === 'tenants' && is_siteadmin())) {
 
 switch ($section) {
     case 'tenants':
-        echo $OUTPUT->heading(get_string('tenants', 'local_tenantmaster'));
+        echo $OUTPUT->heading(get_string('managedinstitutions', 'local_tenantmaster'));
+        echo tenantmaster_global_native_actions();
         echo tenantmaster_tenant_table($tenantrepository->list($companyid > 0 && !is_siteadmin() ? $companyid : 0));
-        if ($onboardingform) {
-            echo $OUTPUT->heading(get_string('createtenant', 'local_tenantmaster'), 3);
-            $onboardingform->display();
+        if ($adoptionform) {
+            echo $OUTPUT->heading(get_string('initialiseexistingcompany', 'local_tenantmaster'), 3);
+            $adoptionform->display();
         }
         break;
     case 'profile':
-        echo $OUTPUT->heading(get_string('institutionprofile', 'local_tenantmaster'));
+        echo $OUTPUT->heading(get_string('institutionmasterdata', 'local_tenantmaster'));
+        echo tenantmaster_native_actions($tenant, 'company');
+        echo tenantmaster_native_company_summary($tenant);
+        echo $OUTPUT->heading(get_string('regulatoryandacademicmetadata', 'local_tenantmaster'), 3);
         $profileform->display();
         break;
-    case 'organisation':
-        echo $OUTPUT->heading(get_string('organisation', 'local_tenantmaster'));
-        echo tenantmaster_department_table($tenant, $organisationservice->list($tenant));
-        echo $OUTPUT->heading($editid ? get_string('editdepartment', 'local_tenantmaster')
-            : get_string('adddepartment', 'local_tenantmaster'), 3);
-        $departmentform->display();
-        break;
     case 'academic':
-        echo $OUTPUT->heading(get_string('academicstructure', 'local_tenantmaster'));
+        echo $OUTPUT->heading(get_string('academicmasters', 'local_tenantmaster'));
         echo tenantmaster_academic_year_table($tenant);
-        echo $OUTPUT->heading(get_string('addacademicyear', 'local_tenantmaster'), 3);
+        echo $OUTPUT->heading(
+            $yeareditid
+                ? get_string('editacademicyear', 'local_tenantmaster')
+                : get_string('addacademicyear', 'local_tenantmaster'),
+            3,
+        );
         $academicyearform->display();
         if ($schoolyearsetupform) {
             echo $OUTPUT->heading(get_string('schoolyearsetup', 'local_tenantmaster'), 3);
@@ -745,43 +518,14 @@ switch ($section) {
         $masterform->display();
         break;
     case 'courses':
-        echo $OUTPUT->heading(get_string('courses', 'local_tenantmaster'));
+        echo $OUTPUT->heading(get_string('academiccourseprojections', 'local_tenantmaster'));
+        echo tenantmaster_native_actions($tenant, 'courses');
         echo tenantmaster_mapping_table($tenant, ['core_course/category', 'core/course']);
         echo tenantmaster_course_copy_table($tenant);
-        echo $OUTPUT->heading(get_string('copycoursecontent', 'local_tenantmaster'), 3);
-        $coursecopyform->display();
-        break;
-    case 'people':
-        echo $OUTPUT->heading(get_string('usersandroles', 'local_tenantmaster'));
-        echo tenantmaster_role_table($roleservice->list((int)$tenant->id));
-        echo tenantmaster_people_table($tenant, (new people_service())->list($tenant));
-        echo $OUTPUT->heading(get_string('assignbusinessrole', 'local_tenantmaster'), 3);
-        $peopleform->display();
-        echo $OUTPUT->heading(
-            $usereditid
-                ? get_string('updatenativeuser', 'local_tenantmaster')
-                : get_string('createnativeuser', 'local_tenantmaster'),
-            3,
-        );
-        $nativeuserform->display();
-        echo $OUTPUT->heading(get_string('guardianrelationship', 'local_tenantmaster'), 3);
-        $guardianform->display();
-        break;
-    case 'access':
-        echo $OUTPUT->heading(get_string('cohortsandenrolments', 'local_tenantmaster'));
-        echo tenantmaster_access_summary($tenant);
-        echo tenantmaster_access_details($tenant);
-        echo $OUTPUT->heading(get_string('createcohort', 'local_tenantmaster'), 3);
-        $cohortform->display();
-        echo $OUTPUT->heading(get_string('addcohortmember', 'local_tenantmaster'), 3);
-        $cohortmemberform->display();
-        echo $OUTPUT->heading(get_string('creategroup', 'local_tenantmaster'), 3);
-        $groupform->display();
-        echo $OUTPUT->heading(get_string('enrolnativeuser', 'local_tenantmaster'), 3);
-        $accessform->display();
         break;
     case 'classes':
         echo $OUTPUT->heading(get_string('classmanagement', 'local_tenantmaster'));
+        echo tenantmaster_native_actions($tenant, 'people');
         echo tenantmaster_placement_table($tenant);
         echo $OUTPUT->heading(
             $placementeditid
@@ -790,14 +534,6 @@ switch ($section) {
             3,
         );
         $placementform->display();
-        break;
-    case 'assessments':
-        echo $OUTPUT->heading(get_string('assessments', 'local_tenantmaster'));
-        echo tenantmaster_policy_table($tenant, ['assessment_policy', 'attendance_policy']);
-        break;
-    case 'certificates':
-        echo $OUTPUT->heading(get_string('certificates', 'local_tenantmaster'));
-        echo tenantmaster_policy_table($tenant, ['certificate_rule']);
         break;
     case 'progression':
         echo $OUTPUT->heading(get_string('progression', 'local_tenantmaster'));
@@ -848,15 +584,10 @@ function tenantmaster_section_string(string $section): string {
     return [
         'dashboard' => 'dashboard',
         'tenants' => 'tenants',
-        'profile' => 'institutionprofile',
-        'organisation' => 'organisation',
+        'profile' => 'institutionmasterdata',
         'academic' => 'academicstructure',
-        'courses' => 'courses',
-        'people' => 'usersandroles',
-        'access' => 'cohortsandenrolments',
+        'courses' => 'academiccourseprojections',
         'classes' => 'classmanagement',
-        'assessments' => 'assessments',
-        'certificates' => 'certificates',
         'progression' => 'progression',
         'imports' => 'imports',
         'sync' => 'synchronization',
@@ -879,22 +610,23 @@ function tenantmaster_tabs(string $active, int $companyid): string {
     if (is_siteadmin()) {
         $sections[] = 'tenants';
     }
-    $sections = array_merge($sections, [
-        'profile',
-        'organisation',
-        'academic',
-        'courses',
-        'people',
-        'access',
-        'classes',
-        'assessments',
-        'certificates',
-        'progression',
-        'imports',
-        'sync',
-        'validation',
-        'audit',
-    ]);
+    if ($companyid > 0) {
+        $sections = array_merge($sections, [
+            'profile',
+            'academic',
+            'courses',
+        ]);
+        if ($GLOBALS['DB']->get_field('local_tenantmaster_tenant', 'tenanttype', ['companyid' => $companyid]) === 'school') {
+            $sections[] = 'classes';
+        }
+        $sections = array_merge($sections, [
+            'progression',
+            'imports',
+            'sync',
+            'validation',
+            'audit',
+        ]);
+    }
 
     $tabs = [];
     foreach ($sections as $section) {
@@ -957,7 +689,169 @@ function tenantmaster_dashboard(object $tenant): string {
         'd-flex flex-wrap gap-2 mb-3',
     );
     return $OUTPUT->heading(get_string('dashboard', 'local_tenantmaster'), 2)
+        . tenantmaster_native_actions($tenant, 'overview')
         . $actions . html_writer::table($table);
+}
+
+/**
+ * Site-wide native IOMAD company actions.
+ *
+ * @return string
+ */
+function tenantmaster_global_native_actions(): string {
+    global $OUTPUT;
+
+    $actions = [
+        [
+            '/blocks/iomad_company_admin/company_edit_form.php',
+            ['createnew' => 1],
+            'createnativeiomadcompany',
+            't/add',
+        ],
+        [
+            '/blocks/iomad_company_admin/editcompanies.php',
+            [],
+            'managenativecompanies',
+            'i/settings',
+        ],
+    ];
+    $links = [];
+    foreach ($actions as [$path, $params, $stringkey, $icon]) {
+        $links[] = html_writer::link(
+            new moodle_url($path, $params),
+            $OUTPUT->pix_icon($icon, '') . html_writer::span(get_string($stringkey, 'local_tenantmaster')),
+            ['class' => 'btn btn-secondary'],
+        );
+    }
+    return html_writer::div(implode('', $links), 'd-flex flex-wrap gap-2 mb-3');
+}
+
+/**
+ * Native IOMAD administration actions for the selected company.
+ *
+ * @param object $tenant Tenant.
+ * @param string $area Action area.
+ * @return string
+ */
+function tenantmaster_native_actions(object $tenant, string $area): string {
+    global $OUTPUT;
+
+    $context = \local_iomad\custom_context\context_company::instance((int)$tenant->companyid);
+    $definitions = [
+        'dashboard' => [
+            '/blocks/iomad_company_admin/index.php',
+            'openiomaddashboard',
+            'i/dashboard',
+            null,
+        ],
+        'company' => [
+            '/blocks/iomad_company_admin/company_edit_form.php',
+            'editnativecompany',
+            'i/settings',
+            'block/iomad_company_admin:company_edit',
+        ],
+        'departments' => [
+            '/blocks/iomad_company_admin/company_departments.php',
+            'managenativedepartments',
+            'i/group',
+            'block/iomad_company_admin:edit_departments',
+        ],
+        'profiles' => [
+            '/blocks/iomad_company_admin/company_user_profiles.php',
+            'manageusercustomfields',
+            'i/field',
+            'block/iomad_company_admin:company_user_profiles',
+        ],
+        'users' => [
+            '/blocks/iomad_company_admin/editusers.php',
+            'managenativeusers',
+            'i/users',
+            'block/iomad_company_admin:view_editusers',
+        ],
+        'createuser' => [
+            '/blocks/iomad_company_admin/company_user_create_form.php',
+            'createnativeuser',
+            't/add',
+            'block/iomad_company_admin:user_create',
+        ],
+        'managers' => [
+            '/blocks/iomad_company_admin/company_managers_form.php',
+            'managenativemanagers',
+            'i/cohort',
+            'block/iomad_company_admin:company_manager',
+        ],
+        'courses' => [
+            '/blocks/iomad_company_admin/iomad_courses_form.php',
+            'managenativecourses',
+            'i/course',
+            'block/iomad_company_admin:viewcourses',
+        ],
+        'createcourse' => [
+            '/blocks/iomad_company_admin/company_course_create_form.php',
+            'createnativecourse',
+            't/add',
+            'block/iomad_company_admin:createcourse',
+        ],
+        'groups' => [
+            '/blocks/iomad_company_admin/company_groups_create_form.php',
+            'managenativegroups',
+            'i/group',
+            'block/iomad_company_admin:edit_groups',
+        ],
+        'licences' => [
+            '/blocks/iomad_company_admin/company_license_list.php',
+            'managenativelicences',
+            'i/key',
+            'block/iomad_company_admin:view_licenses',
+        ],
+    ];
+    $areas = match ($area) {
+        'company' => ['dashboard', 'company', 'departments', 'profiles'],
+        'people' => ['dashboard', 'users', 'createuser', 'managers', 'groups'],
+        'courses' => ['dashboard', 'courses', 'createcourse', 'groups', 'licences'],
+        default => ['dashboard', 'company', 'users', 'courses', 'licences'],
+    };
+
+    $links = [];
+    foreach ($areas as $key) {
+        [$path, $stringkey, $icon, $capability] = $definitions[$key];
+        if ($capability && !is_siteadmin() && !has_capability($capability, $context)) {
+            continue;
+        }
+        $links[] = html_writer::link(
+            new moodle_url($path, ['company' => $tenant->companyid, 'companyid' => $tenant->companyid]),
+            $OUTPUT->pix_icon($icon, '') . html_writer::span(get_string($stringkey, 'local_tenantmaster')),
+            ['class' => $key === 'dashboard' ? 'btn btn-primary' : 'btn btn-secondary'],
+        );
+    }
+    return html_writer::div(implode('', $links), 'd-flex flex-wrap gap-2 mb-3');
+}
+
+/**
+ * Read-only native company summary.
+ *
+ * @param object $tenant Tenant.
+ * @return string
+ */
+function tenantmaster_native_company_summary(object $tenant): string {
+    global $DB;
+
+    $company = $DB->get_record('local_iomad_companies', ['id' => $tenant->companyid], '*', MUST_EXIST);
+    $table = new html_table();
+    $table->head = [
+        get_string('nativeiomadfield', 'local_tenantmaster'),
+        get_string('value'),
+    ];
+    $table->data = [
+        [get_string('institutionname', 'local_tenantmaster'), format_string($company->name)],
+        [get_string('shortname'), s($company->shortname)],
+        [get_string('nativecompanycode', 'local_tenantmaster'), s($company->code)],
+        [get_string('hostname', 'local_tenantmaster'), s($company->hostname)],
+        [get_string('city'), s($company->city)],
+        [get_string('country'), s($company->country)],
+        [get_string('theme'), s($company->theme ?: get_string('default'))],
+    ];
+    return html_writer::table($table);
 }
 
 /**
@@ -1020,40 +914,6 @@ function tenantmaster_tenant_table(array $tenants): string {
                     'companyid' => $tenant->companyid,
                 ]),
                 get_string('open', 'local_tenantmaster'),
-            ),
-        ];
-    }
-    return html_writer::table($table);
-}
-
-/**
- * Native department table.
- *
- * @param object $tenant Tenant.
- * @param array<int, object> $departments Departments.
- * @return string
- */
-function tenantmaster_department_table(object $tenant, array $departments): string {
-    $names = array_map(static fn(object $department): string => format_string($department->name), $departments);
-    $table = new html_table();
-    $table->head = [
-        get_string('departmentname', 'local_tenantmaster'),
-        get_string('shortname'),
-        get_string('parent', 'local_tenantmaster'),
-        get_string('actions'),
-    ];
-    foreach ($departments as $department) {
-        $table->data[] = [
-            format_string($department->name),
-            s($department->shortname),
-            $department->parentid ? ($names[$department->parentid] ?? '-') : get_string('root', 'local_tenantmaster'),
-            html_writer::link(
-                new moodle_url('/local/tenantmaster/index.php', [
-                    'section' => 'organisation',
-                    'companyid' => $tenant->companyid,
-                    'editid' => $department->id,
-                ]),
-                get_string('edit'),
             ),
         ];
     }
@@ -1209,212 +1069,6 @@ function tenantmaster_mapping_table(object $tenant, array $components): string {
         ];
     }
     return html_writer::table($table);
-}
-
-/**
- * Business role mapping table.
- *
- * @param array<int, object> $roles Roles.
- * @return string
- */
-function tenantmaster_role_table(array $roles): string {
-    $table = new html_table();
-    $table->head = [
-        get_string('businessrole', 'local_tenantmaster'),
-        get_string('nativerole', 'local_tenantmaster'),
-        get_string('scope', 'local_tenantmaster'),
-        get_string('managertype', 'local_tenantmaster'),
-    ];
-    foreach ($roles as $role) {
-        $table->data[] = [
-            get_string(catalog::ROLE_KEYS[$role->rolekey], 'local_tenantmaster'),
-            format_string($role->rolename ?: $role->roleshortname ?: get_string('unmapped', 'local_tenantmaster')),
-            s($role->scope),
-            (int)$role->managertype,
-        ];
-    }
-    return html_writer::table($table);
-}
-
-/**
- * Native company people table.
- *
- * @param object $tenant Tenant.
- * @param array<int, object> $people People.
- * @return string
- */
-function tenantmaster_people_table(object $tenant, array $people): string {
-    $table = new html_table();
-    $table->head = [
-        get_string('name'),
-        get_string('idnumber'),
-        get_string('department'),
-        get_string('managertype', 'local_tenantmaster'),
-        get_string('educator', 'local_tenantmaster'),
-        get_string('status'),
-        get_string('actions'),
-    ];
-    foreach ($people as $person) {
-        $table->data[] = [
-            fullname($person),
-            s($person->idnumber),
-            format_string($person->departmentname ?? ''),
-            (int)$person->managertype,
-            $person->educator ? get_string('yes') : get_string('no'),
-            $person->suspended ? get_string('suspended') : get_string('active', 'local_tenantmaster'),
-            html_writer::link(
-                new moodle_url('/local/tenantmaster/index.php', [
-                    'section' => 'people',
-                    'companyid' => $tenant->companyid,
-                    'usereditid' => $person->id,
-                ]),
-                get_string('edit'),
-            ),
-        ];
-    }
-    return html_writer::table($table);
-}
-
-/**
- * Native access summary.
- *
- * @param object $tenant Tenant.
- * @return string
- */
-function tenantmaster_access_summary(object $tenant): string {
-    global $DB;
-
-    $table = new html_table();
-    $table->head = [
-        get_string('nativeentity', 'local_tenantmaster'),
-        get_string('count', 'local_tenantmaster'),
-    ];
-    $table->data = [
-        [get_string('companymemberships', 'local_tenantmaster'),
-            $DB->count_records('local_iomad_company_users', ['companyid' => $tenant->companyid])],
-        [get_string('companycourses', 'local_tenantmaster'),
-            $DB->count_records('local_iomad_company_courses', ['companyid' => $tenant->companyid])],
-        [get_string('cohorts', 'local_tenantmaster'), $DB->count_records_select(
-            'cohort',
-            'idnumber LIKE :prefix',
-            ['prefix' => 'TM:' . $tenant->trustcode . ':%'],
-        )],
-        [get_string('groups'), $DB->count_records_sql(
-            "SELECT COUNT(DISTINCT g.id)
-               FROM {groups} g
-               JOIN {local_iomad_company_courses} cc ON cc.courseid = g.courseid
-              WHERE cc.companyid = :companyid
-                AND g.idnumber LIKE :groupprefix",
-            [
-                'companyid' => $tenant->companyid,
-                'groupprefix' => 'TM:' . $tenant->trustcode . ':GROUP:%',
-            ],
-        )],
-        [get_string('enrolments', 'local_tenantmaster'), $DB->count_records_sql(
-            "SELECT COUNT(DISTINCT ue.id)
-               FROM {user_enrolments} ue
-               JOIN {enrol} e ON e.id = ue.enrolid
-               JOIN {local_iomad_company_courses} cc ON cc.courseid = e.courseid
-               JOIN {local_iomad_company_users} cu
-                 ON cu.userid = ue.userid AND cu.companyid = cc.companyid
-              WHERE cc.companyid = :companyid",
-            ['companyid' => $tenant->companyid],
-        )],
-    ];
-    return html_writer::table($table);
-}
-
-/**
- * Detailed native cohorts, groups and enrolments.
- *
- * @param object $tenant Tenant.
- * @return string
- */
-function tenantmaster_access_details(object $tenant): string {
-    global $DB, $OUTPUT;
-
-    $cohorts = $DB->get_records_select(
-        'cohort',
-        'idnumber LIKE :prefix',
-        ['prefix' => 'TM:' . $tenant->trustcode . ':COHORT:%'],
-        'name',
-    );
-    $cohorttable = new html_table();
-    $cohorttable->head = [
-        get_string('name'),
-        get_string('idnumber'),
-        get_string('members', 'local_tenantmaster'),
-    ];
-    foreach ($cohorts as $cohort) {
-        $cohorttable->data[] = [
-            format_string($cohort->name),
-            s($cohort->idnumber),
-            $DB->count_records('cohort_members', ['cohortid' => $cohort->id]),
-        ];
-    }
-
-    $groups = $DB->get_records_sql(
-        "SELECT g.id, g.name, g.idnumber, c.fullname AS coursename,
-                COUNT(gm.id) AS membercount
-           FROM {groups} g
-           JOIN {course} c ON c.id = g.courseid
-           JOIN {local_iomad_company_courses} cc ON cc.courseid = c.id
-      LEFT JOIN {groups_members} gm ON gm.groupid = g.id
-          WHERE cc.companyid = :companyid
-            AND g.idnumber LIKE :groupprefix
-       GROUP BY g.id, g.name, g.idnumber, c.fullname
-       ORDER BY c.fullname, g.name",
-        [
-            'companyid' => $tenant->companyid,
-            'groupprefix' => 'TM:' . $tenant->trustcode . ':GROUP:%',
-        ],
-    );
-    $grouptable = new html_table();
-    $grouptable->head = [
-        get_string('name'),
-        get_string('course'),
-        get_string('idnumber'),
-        get_string('members', 'local_tenantmaster'),
-    ];
-    foreach ($groups as $group) {
-        $grouptable->data[] = [
-            format_string($group->name),
-            format_string($group->coursename),
-            s($group->idnumber),
-            (int)$group->membercount,
-        ];
-    }
-
-    $enrolments = $DB->get_records_sql(
-        "SELECT ue.id, u.idnumber AS useridnumber, c.fullname AS coursename
-           FROM {user_enrolments} ue
-           JOIN {enrol} e ON e.id = ue.enrolid
-           JOIN {course} c ON c.id = e.courseid
-           JOIN {local_iomad_company_courses} cc ON cc.courseid = c.id
-           JOIN {local_iomad_company_users} cu
-             ON cu.userid = ue.userid AND cu.companyid = cc.companyid
-           JOIN {user} u ON u.id = ue.userid
-          WHERE cc.companyid = :companyid
-       ORDER BY c.fullname, u.idnumber",
-        ['companyid' => $tenant->companyid],
-        0,
-        200,
-    );
-    $enroltable = new html_table();
-    $enroltable->head = [get_string('user'), get_string('course')];
-    foreach ($enrolments as $enrolment) {
-        $enroltable->data[] = [
-            s($enrolment->useridnumber),
-            format_string($enrolment->coursename),
-        ];
-    }
-
-    return $OUTPUT->heading(get_string('cohorts', 'local_tenantmaster'), 3)
-        . html_writer::table($cohorttable)
-        . $OUTPUT->heading(get_string('groups'), 3)
-        . html_writer::table($grouptable)
-        . $OUTPUT->heading(get_string('enrolments', 'local_tenantmaster'), 3)
-        . html_writer::table($enroltable);
 }
 
 /**
@@ -1711,30 +1365,6 @@ function tenantmaster_shared_master_options(int $tenantid, string $type): array 
         static fn(object $record): string => format_string($record->name),
         $records,
     );
-}
-
-/**
- * Native tenant course options.
- *
- * @param object $tenant Tenant.
- * @return array<int, string>
- */
-function tenantmaster_course_options(object $tenant): array {
-    global $DB;
-
-    $courses = $DB->get_records_sql(
-        "SELECT c.id, c.fullname, c.shortname
-           FROM {local_iomad_company_courses} cc
-           JOIN {course} c ON c.id = cc.courseid
-          WHERE cc.companyid = :companyid
-       ORDER BY c.fullname, c.shortname",
-        ['companyid' => $tenant->companyid],
-    );
-    $options = [];
-    foreach ($courses as $course) {
-        $options[(int)$course->id] = format_string($course->fullname) . ' [' . s($course->shortname) . ']';
-    }
-    return $options;
 }
 
 /**

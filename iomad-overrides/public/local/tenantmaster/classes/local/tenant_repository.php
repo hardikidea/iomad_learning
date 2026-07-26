@@ -92,7 +92,7 @@ final class tenant_repository {
     }
 
     /**
-     * Provision a minimal profile for an existing native company.
+     * Provision a minimal academic profile for an existing native company.
      *
      * @param int $companyid Company ID.
      * @param string $tenanttype Tenant type.
@@ -106,29 +106,23 @@ final class tenant_repository {
             return $existing;
         }
         $company = $DB->get_record('local_iomad_companies', ['id' => $companyid], '*', MUST_EXIST);
-        $basecode = trim((string)$company->code) ?: (string)$company->shortname;
-        $trustcode = strtoupper(preg_replace('/[^A-Za-z0-9._:-]/', '_', $basecode));
-        $candidate = $trustcode;
-        $suffix = 1;
-        while ($DB->record_exists('local_tenantmaster_tenant', ['trustcode' => $candidate])) {
-            $candidate = $trustcode . '_' . ++$suffix;
+        $trustcode = trim((string)$company->code);
+        if (!catalog::valid_external_key($trustcode)) {
+            throw new \invalid_parameter_exception(
+                'Configure a stable native IOMAD company code before initialising Tenant Master.',
+            );
+        }
+        if ($DB->record_exists('local_tenantmaster_tenant', ['trustcode' => $trustcode])) {
+            throw new \invalid_parameter_exception('The native IOMAD company code is already in use.');
         }
         return $this->save((object)[
             'companyid' => $companyid,
-            'trustcode' => $candidate,
+            'trustcode' => $trustcode,
             'tenanttype' => $tenanttype,
             'status' => 'active',
             'activeyearid' => 0,
             'defaultversion' => null,
-            'profilejson' => json::encode([
-                'name' => (string)$company->name,
-                'address' => (string)($company->address ?? ''),
-                'city' => (string)($company->city ?? ''),
-                'region' => (string)($company->region ?? ''),
-                'postcode' => (string)($company->postcode ?? ''),
-                'country' => (string)($company->country ?? ''),
-                'hostname' => (string)($company->hostname ?? ''),
-            ]),
+            'profilejson' => '{}',
         ]);
     }
 }
