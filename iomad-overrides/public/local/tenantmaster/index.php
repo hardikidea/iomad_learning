@@ -2849,14 +2849,32 @@ function tenantmaster_import_guide(object $tenant): string {
         );
     }
 
+    $heading = static function (string $pix, string $label, string $modifier) use ($OUTPUT): string {
+        return html_writer::span(
+            $OUTPUT->pix_icon($pix, '')
+                . html_writer::span($label),
+            'tenantmaster-import-schema-heading tenantmaster-import-schema-heading--' . $modifier,
+        );
+    };
     $table = new html_table();
     $table->attributes['class'] = 'generaltable tenantmaster-import-schema-table';
     $table->head = [
-        get_string('file'),
-        get_string('requiredcolumns', 'local_tenantmaster'),
-        get_string('optionalcolumns', 'local_tenantmaster'),
-        get_string('nativeoutcome', 'local_tenantmaster'),
-        get_string('actions'),
+        $heading('i/file', get_string('file'), 'file'),
+        $heading('i/req', get_string('requiredcolumns', 'local_tenantmaster'), 'required'),
+        $heading('i/info', get_string('optionalcolumns', 'local_tenantmaster'), 'optional'),
+        $heading('i/settings', get_string('nativeoutcome', 'local_tenantmaster'), 'native'),
+        $heading('i/navigationitem', get_string('actions'), 'actions'),
+    ];
+    $entityicons = [
+        'academic_years' => 'i/calendar',
+        'academic_masters' => 'i/course',
+        'departments' => 'i/group',
+        'cohorts' => 't/cohort',
+        'cohort_members' => 'i/user',
+        'groups' => 'i/group',
+        'group_members' => 'i/user',
+        'user_roles' => 'i/permissions',
+        'guardian_links' => 't/link',
     ];
     foreach (import_schema::entities() as $entity => $definition) {
         $csvurl = new moodle_url('/local/tenantmaster/download_template.php', [
@@ -2881,17 +2899,39 @@ function tenantmaster_import_guide(object $tenant): string {
             static fn(string $column): string => html_writer::tag('code', s($column)),
             $definition['optional'],
         );
+        $entitylabel = html_writer::div(
+            html_writer::span(
+                $OUTPUT->pix_icon($entityicons[$entity] ?? 'i/file', ''),
+                'tenantmaster-import-entity__icon',
+            ) . html_writer::div(
+                html_writer::tag(
+                    'strong',
+                    get_string('importentity_' . $entity, 'local_tenantmaster'),
+                ) . html_writer::tag('code', $entity . '.csv', ['class' => 'd-block']),
+                'tenantmaster-import-entity__copy',
+            ),
+            'tenantmaster-import-entity',
+        );
+        $nativeoutcome = html_writer::span(
+            $OUTPUT->pix_icon('t/markasread', '')
+                . html_writer::span(get_string($definition['resultkey'], 'local_tenantmaster')),
+            'tenantmaster-import-outcome',
+        );
         $cells = [
-            new html_table_cell(html_writer::tag(
-                'strong',
-                get_string('importentity_' . $entity, 'local_tenantmaster'),
-            ) . html_writer::tag('code', $entity . '.csv', ['class' => 'd-block'])),
+            new html_table_cell($entitylabel),
             new html_table_cell(implode(' ', $required)),
             new html_table_cell($optional
                 ? implode(' ', $optional)
                 : html_writer::span(get_string('nooptionalcolumns', 'local_tenantmaster'), 'text-muted')),
-            new html_table_cell(get_string($definition['resultkey'], 'local_tenantmaster')),
+            new html_table_cell($nativeoutcome),
             new html_table_cell($csvbutton),
+        ];
+        $cellclasses = [
+            'tenantmaster-import-schema__file',
+            'tenantmaster-import-schema__required',
+            'tenantmaster-import-schema__optional',
+            'tenantmaster-import-schema__outcome',
+            'tenantmaster-import-schema__actions',
         ];
         $labels = [
             get_string('file'),
@@ -2902,6 +2942,7 @@ function tenantmaster_import_guide(object $tenant): string {
         ];
         foreach ($cells as $index => $cell) {
             $cell->attributes['data-label'] = $labels[$index];
+            $cell->attributes['class'] = $cellclasses[$index];
         }
         $table->data[] = new html_table_row($cells);
     }

@@ -4,7 +4,15 @@ define([], function() {
     const svgNamespace = 'http://www.w3.org/2000/svg';
     const imageSelector = 'img.icon:not(.userpicture), img.activityicon, img.dash-mod-icon';
     const spacerSelector = 'img.icon.spacer';
-    const legacySelector = '.fa, .fas, .far, .fab';
+    const legacySelector = [
+        '.fa', '.fas', '.far', '.fab',
+        '.fa-solid', '.fa-regular', '.fa-brands', '.fa-light', '.fa-thin', '.fa-duotone', '.fa-sharp',
+        'i[class^="fa-"]', 'span[class^="fa-"]',
+    ].join(',');
+    const legacyStyleClasses = [
+        'fa', 'fas', 'far', 'fab',
+        'fa-solid', 'fa-regular', 'fa-brands', 'fa-light', 'fa-thin', 'fa-duotone', 'fa-sharp',
+    ];
     const preservedLegacyClasses = ['fa-action', 'fa-fw', 'fa-spin', 'fa-topic'];
 
     const exactImageIcons = new Map([
@@ -26,6 +34,7 @@ define([], function() {
         ['i/next', 'chevronRight'],
         ['i/permissions', 'shield'],
         ['i/previous', 'chevronLeft'],
+        ['i/req', 'required'],
         ['i/restore', 'restore'],
         ['i/trash', 'trash'],
         ['i/viewcategory', 'eye'],
@@ -53,7 +62,7 @@ define([], function() {
         ['print', 'print'], ['refresh', 'refresh'], ['report', 'report'], ['save', 'save'],
         ['search', 'search'], ['show', 'eye'], ['star', 'star'], ['tag', 'tag'],
         ['time', 'clock'], ['upload', 'upload'], ['user', 'user'], ['video', 'video'],
-        ['warning', 'alert'],
+        ['required', 'required'], ['warning', 'alert'],
     ];
 
     const keywordName = (value) => {
@@ -154,7 +163,7 @@ define([], function() {
     const replaceLegacy = (node, legacyMap, sprite) => {
         const classes = [...node.classList].filter((className) => {
             if (!className.startsWith('fa-')) {
-                return className !== 'fa' && className !== 'fas' && className !== 'far' && className !== 'fab';
+                return !legacyStyleClasses.includes(className);
             }
             return preservedLegacyClasses.includes(className);
         });

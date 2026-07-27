@@ -57,8 +57,8 @@ final class icon_catalog_test extends \advanced_testcase {
         $this->assertSame('edit', icon_catalog::resolve('moodle', 't/edit'));
         $this->assertSame('trash', icon_catalog::resolve(null, 't/delete'));
         $this->assertSame('download', icon_catalog::resolve('core', 'a/download_all'));
-        $this->assertSame('alert', icon_catalog::resolve('core', 'i/req'));
-        $this->assertSame('alert', icon_catalog::resolve('core', 'req'));
+        $this->assertSame('required', icon_catalog::resolve('core', 'i/req'));
+        $this->assertSame('required', icon_catalog::resolve('core', 'req'));
         $this->assertSame('chevronRight', icon_catalog::resolve('core', 't/collapsed_empty'));
         $this->assertSame('check', icon_catalog::resolve('core', 't/markasread'));
         $this->assertSame('help', icon_catalog::resolve('core', 't/life-ring'));
@@ -114,6 +114,8 @@ final class icon_catalog_test extends \advanced_testcase {
         $this->assertSame('folderPlus', $map['fa-folder-plus']);
         $this->assertSame('externalLink', $map['fa-up-right-from-square']);
         $this->assertSame('group', $map['fa-users-gear']);
+        $this->assertSame('book', $map['fa-book-open']);
+        $this->assertSame('fileImport', $map['fa-file-csv']);
         foreach ($map as $icon) {
             $this->assertTrue(svg_icon_library::has($icon));
         }

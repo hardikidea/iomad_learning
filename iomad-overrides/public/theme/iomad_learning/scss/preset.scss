@@ -225,6 +225,139 @@ button .iomad-learning-svg-icon,
   animation: iomad-learning-spin 0.9s linear infinite;
 }
 
+.iomad-learning-svg-icon[data-icon="required"],
+.iomad-learning-svg-icon[data-icon="failure"],
+.iomad-learning-svg-icon[data-icon="trash"] {
+  color: var(--iomad-learning-dangercolor);
+}
+
+.iomad-learning-svg-icon[data-icon="alert"] {
+  color: var(--iomad-learning-warningcolor);
+}
+
+.iomad-learning-svg-icon[data-icon="checkCircle"] {
+  color: var(--iomad-learning-successcolor);
+}
+
+.iomad-learning-svg-icon[data-icon="info"] {
+  color: var(--iomad-learning-infocolor);
+}
+
+.fdescription.required {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.25rem;
+  margin-block-start: var(--iomad-learning-space3);
+  padding: var(--iomad-learning-space2) var(--iomad-learning-space3);
+  align-items: center;
+  gap: var(--iomad-learning-space2);
+  background: var(--iomad-learning-surfacealternate);
+  background: color-mix(
+    in srgb,
+    var(--iomad-learning-dangercolor) 8%,
+    var(--iomad-learning-surface)
+  );
+  border: var(--iomad-learning-borderwidth) solid color-mix(
+    in srgb,
+    var(--iomad-learning-dangercolor) 24%,
+    var(--iomad-learning-bordercolor)
+  );
+  border-inline-start-width: calc(3 * var(--iomad-learning-borderwidth));
+  border-radius: var(--iomad-learning-radiussm);
+  color: var(--iomad-learning-bodytext);
+  font-size: var(--iomad-learning-smallfontsize);
+  font-weight: var(--iomad-learning-navweight);
+  line-height: 1;
+}
+
+.fdescription.required .iomad-learning-svg-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-basis: 1.125rem;
+  margin: 0;
+}
+
+.mform .form-label-addon {
+  gap: var(--iomad-learning-space1);
+}
+
+.mform .form-label-addon .text-danger {
+  display: inline-flex;
+  width: 1.625rem;
+  height: 1.625rem;
+  align-items: center;
+  justify-content: center;
+  background: var(--iomad-learning-surfacealternate);
+  background: color-mix(
+    in srgb,
+    var(--iomad-learning-dangercolor) 9%,
+    var(--iomad-learning-surface)
+  );
+  border: var(--iomad-learning-borderwidth) solid color-mix(
+    in srgb,
+    var(--iomad-learning-dangercolor) 22%,
+    var(--iomad-learning-bordercolor)
+  );
+  border-radius: var(--iomad-learning-radiuspill);
+}
+
+.mform .form-label-addon .text-danger .iomad-learning-svg-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-basis: 1rem;
+  margin: 0;
+}
+
+.mform .form-label-addon .btn.btn-link {
+  display: inline-flex;
+  width: 1.625rem;
+  height: 1.625rem;
+  margin-inline-end: 0 !important;
+  align-items: center;
+  justify-content: center;
+  background: var(--iomad-learning-surfacealternate);
+  border: var(--iomad-learning-borderwidth) solid var(--iomad-learning-bordercolor);
+  border-radius: var(--iomad-learning-radiuspill);
+  color: var(--iomad-learning-iconmuted);
+  transition:
+    background-color var(--iomad-learning-motionduration) ease,
+    border-color var(--iomad-learning-motionduration) ease,
+    color var(--iomad-learning-motionduration) ease,
+    transform var(--iomad-learning-motionduration) ease;
+}
+
+.mform .form-label-addon .btn.btn-link:hover,
+.mform .form-label-addon .btn.btn-link:focus-visible {
+  background: var(--iomad-learning-selectionbackground);
+  border-color: var(--iomad-learning-navigationiconactive);
+  color: var(--iomad-learning-navigationiconactive);
+  transform: translateY(-1px);
+}
+
+a.action-icon,
+button.action-icon {
+  display: inline-flex;
+  min-width: 2rem;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--iomad-learning-radiussm);
+  color: var(--iomad-learning-iconcolor);
+  transition:
+    background-color var(--iomad-learning-motionduration) ease,
+    color var(--iomad-learning-motionduration) ease,
+    transform var(--iomad-learning-motionduration) ease;
+}
+
+a.action-icon:hover,
+a.action-icon:focus-visible,
+button.action-icon:hover,
+button.action-icon:focus-visible {
+  background: var(--iomad-learning-selectionbackground);
+  color: var(--iomad-learning-navigationiconactive);
+  transform: translateY(-1px);
+}
+
 @keyframes iomad-learning-spin {
   to {
     transform: rotate(360deg);

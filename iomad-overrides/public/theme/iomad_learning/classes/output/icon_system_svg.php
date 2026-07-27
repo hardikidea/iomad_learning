@@ -41,7 +41,10 @@ final class icon_system_svg extends \core\output\icon_system {
         $alt = trim((string)($attributes['alt'] ?? ''));
         $sourceclasses = preg_split('/\s+/', trim((string)($attributes['class'] ?? ''))) ?: [];
         $classes = array_filter($sourceclasses, static function (string $class): bool {
-            if (in_array($class, ['fa', 'fas', 'far', 'fab'], true)) {
+            if (in_array($class, [
+                'fa', 'fas', 'far', 'fab',
+                'fa-solid', 'fa-regular', 'fa-brands', 'fa-light', 'fa-thin', 'fa-duotone', 'fa-sharp',
+            ], true)) {
                 return false;
             }
             if (str_starts_with($class, 'fa-')) {

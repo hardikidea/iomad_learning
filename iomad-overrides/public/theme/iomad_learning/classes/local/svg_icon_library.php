@@ -25,7 +25,7 @@ final class svg_icon_library {
         'image', 'info', 'institution', 'key', 'language', 'leaf', 'lightbulb', 'link', 'list', 'lock',
         'logout', 'mail', 'mapPin', 'menu', 'message', 'monitor', 'more', 'package', 'palette',
         'paperclip', 'pause', 'play', 'print', 'puzzle', 'refresh', 'report', 'restore', 'save',
-        'search', 'settings', 'shapes', 'shield', 'smile', 'sort', 'spinner', 'star', 'store', 'tag',
+        'required', 'search', 'settings', 'shapes', 'shield', 'smile', 'sort', 'spinner', 'star', 'store', 'tag',
         'trash', 'trophy', 'upload', 'user', 'userAdd', 'video', 'volume', 'wand', 'workflow',
         'facebook', 'instagram', 'linkedin', 'whatsapp', 'xSocial', 'youtube',
     ];

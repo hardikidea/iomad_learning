@@ -690,9 +690,18 @@
 }
 
 .tenantmaster-import-step__icon {
+    align-items: center;
+    background: var(--iomad-learning-surfacealternate, #eef2f7);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
     color: var(--iomad-learning-primarycolor, #155eef);
-    flex: 0 0 var(--iomad-learning-navigationiconsize, 1.25rem);
-    margin-block-start: .25rem;
+    display: inline-flex;
+    flex: 0 0 2.5rem;
+    height: 2.5rem;
+    justify-content: center;
+    margin-block-start: 0;
+    padding: .55rem;
+    width: 2.5rem;
 }
 
 .tenantmaster-import-step__copy {
@@ -778,6 +787,122 @@
 
 .tenantmaster-import-schema-table code {
     max-width: 100%;
+}
+
+.tenantmaster-import-schema-heading,
+.tenantmaster-import-entity,
+.tenantmaster-import-outcome {
+    align-items: center;
+    display: inline-flex;
+    gap: var(--iomad-learning-space2, .5rem);
+    min-width: 0;
+}
+
+.tenantmaster-import-schema-heading {
+    font-weight: 700;
+}
+
+.tenantmaster-import-schema-heading .iomad-learning-svg-icon {
+    flex: 0 0 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    width: 1.125rem;
+}
+
+.tenantmaster-import-schema-heading--required {
+    color: var(--iomad-learning-dangercolor, #b42318);
+}
+
+.tenantmaster-import-schema-heading--optional {
+    color: var(--iomad-learning-infocolor, #176b87);
+}
+
+.tenantmaster-import-schema-heading--native {
+    color: var(--iomad-learning-primarycolor, #8a3145);
+}
+
+.tenantmaster-import-entity {
+    align-items: flex-start;
+}
+
+.tenantmaster-import-entity__icon {
+    align-items: center;
+    background: var(--iomad-learning-selectionbackground, #f3e5e8);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
+    color: var(--iomad-learning-primarycolor, #8a3145);
+    display: inline-flex;
+    flex: 0 0 2.25rem;
+    height: 2.25rem;
+    justify-content: center;
+    width: 2.25rem;
+}
+
+.tenantmaster-import-entity__icon .iomad-learning-svg-icon {
+    flex-basis: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    width: 1.125rem;
+}
+
+.tenantmaster-import-entity__copy {
+    min-width: 0;
+}
+
+.tenantmaster-import-entity__copy strong {
+    display: block;
+    line-height: var(--iomad-learning-compactlineheight, 1.35);
+}
+
+.tenantmaster-import-outcome {
+    align-items: flex-start;
+    line-height: var(--iomad-learning-compactlineheight, 1.35);
+}
+
+.tenantmaster-import-outcome .iomad-learning-svg-icon {
+    color: var(--iomad-learning-successcolor, #217a45);
+    flex: 0 0 1.125rem;
+    height: 1.125rem;
+    margin-block-start: .1rem;
+    width: 1.125rem;
+}
+
+.tenantmaster-import-schema__required code {
+    background: color-mix(
+        in srgb,
+        var(--iomad-learning-dangercolor, #b42318) 7%,
+        var(--iomad-learning-surface, #fff)
+    );
+    border-color: color-mix(
+        in srgb,
+        var(--iomad-learning-dangercolor, #b42318) 24%,
+        var(--iomad-learning-bordercolor, #d0d5dd)
+    );
+}
+
+.tenantmaster-import-schema__optional code {
+    background: color-mix(
+        in srgb,
+        var(--iomad-learning-infocolor, #176b87) 7%,
+        var(--iomad-learning-surface, #fff)
+    );
+    border-color: color-mix(
+        in srgb,
+        var(--iomad-learning-infocolor, #176b87) 22%,
+        var(--iomad-learning-bordercolor, #d0d5dd)
+    );
+}
+
+.tenantmaster-import-schema-table tbody tr {
+    transition: background-color var(--iomad-learning-motionduration, 150ms) ease;
+}
+
+.tenantmaster-import-schema-table tbody tr:hover {
+    background: color-mix(
+        in srgb,
+        var(--iomad-learning-selectionbackground, #f3e5e8) 55%,
+        var(--iomad-learning-surface, #fff)
+    );
 }
 
 .tenantmaster-import-schema-table td:first-child code {

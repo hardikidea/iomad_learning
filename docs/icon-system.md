@@ -18,16 +18,17 @@ documents, and uploaded content remain media and are not replaced.
    `iconify` AMD adapter.
 5. Raw `fa-*` elements emitted by legacy upstream IOMAD templates are upgraded
    regardless of whether the wrapper is an `i`, `span`, `div`, or another HTML
-   element. The reviewed legacy-class map avoids an upstream template fork.
+   element. Font Awesome 4 wrappers and Font Awesome 5/6 style prefixes such as
+   `fa-solid`, `fa-regular`, and `fa-brands` share the same reviewed mapping.
 6. Navigation links without an upstream icon receive a route/label mapping and
    then a neutral `link` fallback. This includes `#page-navbar` breadcrumbs.
 7. Transparent spacer images become layout-only spans.
 
-The reviewed sprite currently contains 106 symbols, including dedicated
+The reviewed sprite currently contains 113 symbols, including dedicated
 loading, permissions, restore, content-bank, cohort, file-picker view,
-language, location, attachment and emoji-category controls. A generic activity
-waveform is used only where the source action is genuinely an activity or
-telemetry event.
+language, location, attachment, required-field and emoji-category controls. A
+generic activity waveform is used only where the source action is genuinely an
+activity or telemetry event.
 
 All interface symbols use a `24 24` view box, round line caps and joins, the
 configured `iconstrokewidth`, and `currentColor`. Size, active state, header
@@ -58,7 +59,9 @@ the `rtlmirroricons` token is enabled.
 
 Status meaning does not depend on color. Completion uses `checkCircle`, failure
 uses `failure`, pending uses `clock`, incomplete uses `alert`, and suspended
-uses `pause`.
+uses `pause`. Required fields use the dedicated `required` symbol instead of a
+warning triangle; the text label remains present wherever Moodle renders its
+required-field legend.
 
 ## Adding An Icon
 
