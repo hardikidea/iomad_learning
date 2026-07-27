@@ -4,6 +4,8 @@
 namespace local_tenantmaster;
 
 use local_tenantmaster\local\import_service;
+use local_tenantmaster\local\import_schema;
+use local_tenantmaster\local\import_template_service;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -59,5 +61,54 @@ final class import_service_test extends tenantmaster_testcase {
             'mastertype' => 'subject',
             'externalid' => 'SUBJECT_ROBOTICS',
         ]));
+    }
+
+    /**
+     * Downloaded starter packages are tenant-matched, safe no-op imports.
+     *
+     * @covers \local_tenantmaster\local\import_template_service
+     * @covers \local_tenantmaster\local\import_schema
+     */
+    public function test_download_template_is_a_valid_empty_package(): void {
+        global $CFG;
+
+        $this->resetAfterTest();
+        $tenant = $this->create_tenant();
+        $templateservice = new import_template_service();
+        $content = $templateservice->build_zip($tenant);
+        $path = tempnam($CFG->tempdir, 'tenantmaster-template-test-');
+        file_put_contents($path, $content);
+
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path));
+        $manifest = json_decode(
+            (string)$zip->getFromName('manifest.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        $this->assertSame(import_schema::VERSION, $manifest['schema_version']);
+        $this->assertSame($tenant->trustcode, $manifest['tenant']['trust_code']);
+        $this->assertCount(count(import_schema::entities()), $manifest['files']);
+        foreach ($manifest['files'] as $file) {
+            $csv = (string)$zip->getFromName($file['path']);
+            $this->assertSame(0, $file['rows']);
+            $this->assertSame(hash('sha256', $csv), $file['sha256']);
+            $this->assertNotFalse($zip->locateName('examples/' . $file['path']));
+        }
+        $this->assertNotFalse($zip->locateName('field-guide.csv'));
+        $this->assertNotFalse($zip->locateName('README.txt'));
+        $zip->close();
+        unlink($path);
+
+        $batch = (new import_service())->inspect(
+            $tenant,
+            $templateservice->zip_filename($tenant),
+            $content,
+            'merge',
+        );
+        $this->assertSame('planned', $batch->status);
+        $this->assertSame(0, (int)$batch->rowcount);
+        $this->assertSame(0, (int)$batch->errorcount);
     }
 }

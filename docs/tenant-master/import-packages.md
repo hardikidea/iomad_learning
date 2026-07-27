@@ -3,6 +3,26 @@
 Tenant Master import is available entirely in the plugin UI. It accepts a ZIP
 with `manifest.json` at the root and normalized UTF-8 CSV files.
 
+## Operator Workflow
+
+Open **Tenant Master > Imports** for the intended institution. The page shows
+required and optional fields for every supported entity and provides:
+
+- an institution-specific starter ZIP with the correct trust code;
+- individual header-only CSV downloads;
+- sanitized examples under `examples/`;
+- `field-guide.csv` with formats, examples and dependency notes;
+- a README covering checksums, row counts and package assembly.
+
+Root CSV files in the starter package contain headers only. Consequently, the
+downloaded ZIP is a valid no-op package before it is edited. Example rows are
+not referenced by the manifest and cannot be imported accidentally.
+
+After editing a root CSV, recalculate its SHA-256 value and data-row count in
+`manifest.json`. Remove unused file entries or retain their header-only CSV
+with `rows` set to `0`. Upload the ZIP, select the least destructive import
+mode, inspect the plan, and only then approve and apply it.
+
 ## Pipeline
 
 ```mermaid
@@ -57,8 +77,9 @@ unlisted entities are rejected.
 | `user_roles` | `user_externalid,rolekey,department_shortname,course_idnumber` | Scoped native role/access |
 | `guardian_links` | `guardian_externalid,learner_externalid` | Native user-context mentor role |
 
-Optional master columns include parent external ID, description, configuration
-JSON, active state, order, and academic-year reference where supported.
+Optional academic-master columns are `parent_externalid`, `description`,
+`configurationjson`, `active`, and `sortorder`. Academic years optionally
+accept `status`; cohorts optionally accept `description`.
 
 Passwords, password-reset values, tokens, secrets, first/last name, email,
 phone, and address columns are rejected. Create personal accounts through the

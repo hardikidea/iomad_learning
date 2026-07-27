@@ -24,6 +24,7 @@ final class import_package extends \moodleform {
             'accepted_types' => ['.zip'],
             'maxbytes' => 50 * 1024 * 1024,
         ]);
+        $mform->addHelpButton('packagefile', 'packagefile', 'local_tenantmaster');
         $mform->addRule('packagefile', null, 'required');
         $mform->addElement('select', 'importmode', get_string('importmode', 'local_tenantmaster'), [
             'create_only' => get_string('importmode_create_only', 'local_tenantmaster'),
@@ -31,7 +32,14 @@ final class import_package extends \moodleform {
             'update' => get_string('importmode_update', 'local_tenantmaster'),
             'deactivate_missing' => get_string('importmode_deactivate_missing', 'local_tenantmaster'),
         ]);
+        $mform->addHelpButton('importmode', 'importmode', 'local_tenantmaster');
         $mform->setDefault('importmode', 'merge');
+        $mform->addElement(
+            'static',
+            'uploadconstraints',
+            get_string('beforeupload', 'local_tenantmaster'),
+            get_string('uploadconstraints', 'local_tenantmaster'),
+        );
         $mform->addElement('submit', 'submitimportpackage', get_string('inspectpackage', 'local_tenantmaster'));
     }
 }

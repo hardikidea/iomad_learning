@@ -14,34 +14,6 @@ namespace local_tenantmaster\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class import_service {
-    private const SCHEMA_VERSION = '1.0';
-
-    /** @var array<string, string[]> */
-    private const REQUIRED_COLUMNS = [
-        'academic_years' => ['externalid', 'code', 'name', 'startdate', 'enddate', 'iscurrent'],
-        'academic_masters' => ['mastertype', 'externalid', 'code', 'name'],
-        'departments' => ['externalid', 'shortname', 'name', 'parent_shortname'],
-        'cohorts' => ['externalid', 'name'],
-        'cohort_members' => ['cohort_externalid', 'user_externalid'],
-        'groups' => ['externalid', 'name', 'course_idnumber'],
-        'group_members' => ['group_externalid', 'course_idnumber', 'user_externalid'],
-        'user_roles' => ['user_externalid', 'rolekey', 'department_shortname', 'course_idnumber'],
-        'guardian_links' => ['guardian_externalid', 'learner_externalid'],
-    ];
-
-    /** @var string[] */
-    private const FORBIDDEN_COLUMNS = [
-        'password',
-        'newpassword',
-        'token',
-        'secret',
-        'firstname',
-        'lastname',
-        'email',
-        'phone',
-        'address',
-    ];
-
     /**
      * Inspect a package and persist an immutable normalized plan.
      *
@@ -128,7 +100,7 @@ final class import_service {
             $transaction = $DB->start_delegated_transaction();
             $batchid = (int)$DB->insert_record('local_tenantmaster_batch', (object)[
                 'tenantid' => $tenant->id,
-                'schemaversion' => self::SCHEMA_VERSION,
+                'schemaversion' => import_schema::VERSION,
                 'mode' => $mode,
                 'status' => 'inspected',
                 'manifestjson' => json::encode($manifest),
@@ -357,7 +329,7 @@ final class import_service {
      * @param array<string, mixed> $manifest Manifest.
      */
     private function validate_manifest(object $tenant, array $manifest): void {
-        if (($manifest['schema_version'] ?? '') !== self::SCHEMA_VERSION) {
+        if (($manifest['schema_version'] ?? '') !== import_schema::VERSION) {
             throw new \invalid_parameter_exception('Unsupported import schema version.');
         }
         if (($manifest['tenant']['trust_code'] ?? '') !== $tenant->trustcode) {
@@ -379,7 +351,7 @@ final class import_service {
             ) {
                 throw new \invalid_parameter_exception('Unsafe package path.');
             }
-            if (!array_key_exists($entity, self::REQUIRED_COLUMNS)) {
+            if (!import_schema::supports($entity)) {
                 throw new \invalid_parameter_exception('Unsupported import entity: ' . $entity);
             }
             if (isset($seenpaths[$path]) || !preg_match('/^[a-f0-9]{64}$/', (string)($file['sha256'] ?? ''))) {
@@ -403,7 +375,7 @@ final class import_service {
         $handle = fopen('php://temp', 'r+');
         fwrite($handle, $content);
         rewind($handle);
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, null, ',', '"', '');
         if ($headers === false) {
             fclose($handle);
             throw new \invalid_parameter_exception('CSV header is required.');
@@ -414,20 +386,20 @@ final class import_service {
             fclose($handle);
             throw new \invalid_parameter_exception('CSV headers must be unique.');
         }
-        foreach (self::FORBIDDEN_COLUMNS as $forbidden) {
+        foreach (import_schema::forbidden_columns() as $forbidden) {
             if (in_array($forbidden, $headers, true)) {
                 fclose($handle);
                 throw new \invalid_parameter_exception('Sensitive column is forbidden: ' . $forbidden);
             }
         }
-        foreach (self::REQUIRED_COLUMNS[$entity] as $required) {
+        foreach (import_schema::required_columns($entity) as $required) {
             if (!in_array($required, $headers, true)) {
                 fclose($handle);
                 throw new \invalid_parameter_exception('Missing required column: ' . $required);
             }
         }
         $rows = [];
-        while (($values = fgetcsv($handle)) !== false) {
+        while (($values = fgetcsv($handle, null, ',', '"', '')) !== false) {
             if (!array_filter($values, static fn(mixed $value): bool => trim((string)$value) !== '')) {
                 continue;
             }

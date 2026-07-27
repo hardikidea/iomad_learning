@@ -17,6 +17,7 @@ use local_tenantmaster\local\catalog;
 use local_tenantmaster\local\catalogue_service;
 use local_tenantmaster\local\default_service;
 use local_tenantmaster\local\drift_service;
+use local_tenantmaster\local\import_schema;
 use local_tenantmaster\local\import_service;
 use local_tenantmaster\local\json;
 use local_tenantmaster\local\master_repository;
@@ -870,9 +871,13 @@ switch ($section) {
         break;
     case 'imports':
         echo tenantmaster_origin_badge(false);
-        echo tenantmaster_import_table($tenant);
+        echo tenantmaster_import_guide($tenant);
         echo $OUTPUT->heading(get_string('uploadpackage', 'local_tenantmaster'), 3);
+        echo html_writer::start_div('tenantmaster-import-upload');
         $importform->display();
+        echo html_writer::end_div();
+        echo $OUTPUT->heading(get_string('importbatchhistory', 'local_tenantmaster'), 3);
+        echo tenantmaster_import_table($tenant);
         break;
     case 'sync':
         echo tenantmaster_origin_badge(false);
@@ -2762,6 +2767,13 @@ function tenantmaster_import_table(object $tenant): string {
     global $DB;
 
     $records = $DB->get_records('local_tenantmaster_batch', ['tenantid' => $tenant->id], 'timecreated DESC');
+    if (!$records) {
+        return html_writer::div(
+            get_string('noimportbatches', 'local_tenantmaster'),
+            'alert alert-info tenantmaster-empty-state',
+            ['role' => 'status'],
+        );
+    }
     $table = new html_table();
     $table->head = [
         get_string('checksum', 'local_tenantmaster'),
@@ -2794,6 +2806,150 @@ function tenantmaster_import_table(object $tenant): string {
         ];
     }
     return html_writer::table($table);
+}
+
+/**
+ * Import preparation, template downloads and accepted-field reference.
+ *
+ * @param object $tenant Tenant.
+ * @return string
+ */
+function tenantmaster_import_guide(object $tenant): string {
+    global $OUTPUT;
+
+    $downloadurl = new moodle_url('/local/tenantmaster/download_template.php', [
+        'companyid' => $tenant->companyid,
+        'format' => 'zip',
+    ]);
+    $downloadbutton = html_writer::link(
+        $downloadurl,
+        $OUTPUT->pix_icon('t/download', '')
+            . html_writer::span(get_string('downloadstarterpackage', 'local_tenantmaster')),
+        [
+            'class' => 'btn btn-primary tenantmaster-import-guide__download',
+            'download' => '',
+        ],
+    );
+    $steps = [
+        ['1', 'importstepdownload', 'importstepdownloadhelp', 'fa-download'],
+        ['2', 'importstepprepare', 'importsteppreparehelp', 'fa-file-csv'],
+        ['3', 'importstepinspect', 'importstepinspecthelp', 'fa-clipboard-check'],
+    ];
+    $stepcontent = '';
+    foreach ($steps as [$number, $titlekey, $helpkey, $icon]) {
+        $stepcontent .= html_writer::div(
+            html_writer::span($number, 'tenantmaster-import-step__number')
+                . html_writer::span('', 'fa ' . $icon . ' tenantmaster-import-step__icon')
+                . html_writer::div(
+                    html_writer::tag('h4', get_string($titlekey, 'local_tenantmaster'))
+                        . html_writer::tag('p', get_string($helpkey, 'local_tenantmaster')),
+                    'tenantmaster-import-step__copy',
+                ),
+            'tenantmaster-import-step',
+        );
+    }
+
+    $table = new html_table();
+    $table->attributes['class'] = 'generaltable tenantmaster-import-schema-table';
+    $table->head = [
+        get_string('file'),
+        get_string('requiredcolumns', 'local_tenantmaster'),
+        get_string('optionalcolumns', 'local_tenantmaster'),
+        get_string('nativeoutcome', 'local_tenantmaster'),
+        get_string('actions'),
+    ];
+    foreach (import_schema::entities() as $entity => $definition) {
+        $csvurl = new moodle_url('/local/tenantmaster/download_template.php', [
+            'companyid' => $tenant->companyid,
+            'format' => 'csv',
+            'entity' => $entity,
+        ]);
+        $csvbutton = html_writer::link(
+            $csvurl,
+            $OUTPUT->pix_icon('t/download', '')
+                . html_writer::span(get_string('downloadcsvtemplate', 'local_tenantmaster')),
+            [
+                'class' => 'btn btn-sm btn-outline-secondary',
+                'download' => '',
+            ],
+        );
+        $required = array_map(
+            static fn(string $column): string => html_writer::tag('code', s($column)),
+            $definition['required'],
+        );
+        $optional = array_map(
+            static fn(string $column): string => html_writer::tag('code', s($column)),
+            $definition['optional'],
+        );
+        $cells = [
+            new html_table_cell(html_writer::tag(
+                'strong',
+                get_string('importentity_' . $entity, 'local_tenantmaster'),
+            ) . html_writer::tag('code', $entity . '.csv', ['class' => 'd-block'])),
+            new html_table_cell(implode(' ', $required)),
+            new html_table_cell($optional
+                ? implode(' ', $optional)
+                : html_writer::span(get_string('nooptionalcolumns', 'local_tenantmaster'), 'text-muted')),
+            new html_table_cell(get_string($definition['resultkey'], 'local_tenantmaster')),
+            new html_table_cell($csvbutton),
+        ];
+        $labels = [
+            get_string('file'),
+            get_string('requiredcolumns', 'local_tenantmaster'),
+            get_string('optionalcolumns', 'local_tenantmaster'),
+            get_string('nativeoutcome', 'local_tenantmaster'),
+            get_string('actions'),
+        ];
+        foreach ($cells as $index => $cell) {
+            $cell->attributes['data-label'] = $labels[$index];
+        }
+        $table->data[] = new html_table_row($cells);
+    }
+
+    $header = html_writer::div(
+        html_writer::div(
+            html_writer::tag(
+                'h3',
+                get_string('importworkflowtitle', 'local_tenantmaster'),
+                ['id' => 'tenantmaster-import-workflow-title'],
+            )
+                . html_writer::tag('p', get_string('importworkflowintro', 'local_tenantmaster')),
+            'tenantmaster-import-guide__copy',
+        ) . $downloadbutton,
+        'tenantmaster-import-guide__header',
+    );
+    $reference = html_writer::tag(
+        'h3',
+        get_string('importfieldreference', 'local_tenantmaster'),
+        ['class' => 'tenantmaster-import-guide__reference-title'],
+    ) . html_writer::tag(
+        'p',
+        get_string('importfieldreferencehelp', 'local_tenantmaster'),
+        ['class' => 'tenantmaster-import-guide__reference-help'],
+    ) . html_writer::table($table);
+    $notes = html_writer::div(
+        html_writer::span('', 'fa fa-circle-info')
+            . html_writer::span(get_string('importmanifestnote', 'local_tenantmaster')),
+        'alert alert-info tenantmaster-import-note',
+        ['role' => 'note'],
+    ) . html_writer::div(
+        html_writer::span('', 'fa fa-shield')
+            . html_writer::span(get_string('importsecuritynote', 'local_tenantmaster')),
+        'alert alert-warning tenantmaster-import-note',
+        ['role' => 'note'],
+    );
+
+    return html_writer::tag(
+        'section',
+        $header
+            . html_writer::div($stepcontent, 'tenantmaster-import-steps')
+            . $notes
+            . $reference,
+        [
+            'class' => 'tenantmaster-import-guide',
+            'aria-labelledby' => 'tenantmaster-import-workflow-title',
+        ],
+    );
 }
 
 /**
