@@ -31,11 +31,11 @@ final class student_progression extends \moodleform {
         $mform->addRule('sourceplaceid', null, 'required');
         $mform->addElement(
             'select',
-            'toyearid',
+            'progressiontoyearid',
             get_string('toyear', 'local_tenantmaster'),
             $this->_customdata['years'],
         );
-        $mform->addRule('toyearid', null, 'required');
+        $mform->addRule('progressiontoyearid', null, 'required');
         $decisions = array_combine(
             student_progression_service::DECISIONS,
             array_map(

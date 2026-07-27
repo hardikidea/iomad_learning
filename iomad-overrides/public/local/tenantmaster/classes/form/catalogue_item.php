@@ -43,7 +43,7 @@ final class catalogue_item extends \moodleform {
         $mform->addElement('text', 'externalid', get_string('externalid', 'local_tenantmaster'));
         $mform->setType('externalid', PARAM_ALPHANUMEXT);
         $mform->addRule('externalid', null, 'required');
-        $mform->addElement('text', 'code', get_string('code'));
+        $mform->addElement('text', 'code', get_string('code', 'local_tenantmaster'));
         $mform->setType('code', PARAM_ALPHANUMEXT);
         $mform->addRule('code', null, 'required');
         if ($editing) {

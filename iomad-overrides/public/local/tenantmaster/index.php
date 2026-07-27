@@ -120,6 +120,7 @@ $pageurl = new moodle_url('/local/tenantmaster/index.php', $urlparams);
 $PAGE->set_url($pageurl);
 $PAGE->set_context($section === 'catalogue' ? context_system::instance() : $access->context());
 $PAGE->set_pagelayout('admin');
+$PAGE->add_body_class('tenantmaster-section-' . $section);
 $sectionstring = tenantmaster_section_string($section);
 $sectionlabel = get_string($sectionstring, 'local_tenantmaster');
 if ($section === 'academic' && $academicview === 'years') {
@@ -663,6 +664,7 @@ if ($tenant && $section === 'progression') {
         if ($data = $studentprogressionform->get_data()) {
             require_sesskey();
             $access->require('local/tenantmaster:manageacademic');
+            $data->toyearid = $data->progressiontoyearid;
             (new student_progression_service())->plan($tenant, $data);
             redirect($pageurl, get_string('progressionplanned', 'local_tenantmaster'));
         }
@@ -694,7 +696,9 @@ echo tenantmaster_workspace_navigation($section, $tenant, $academicview, $typefi
 if ($notice !== '') {
     echo $OUTPUT->notification($notice, 'success', false);
 }
+echo html_writer::start_div('tenantmaster-page tenantmaster-page--' . $section);
 if (!$tenant && !(is_siteadmin() && in_array($section, ['dashboard', 'tenants', 'catalogue'], true))) {
+    echo tenantmaster_section_header($section, null, $academicview, $typefilter);
     echo $OUTPUT->notification(get_string('selectinitialisedtenant', 'local_tenantmaster'), 'info', false);
     if (is_siteadmin()) {
         echo $OUTPUT->single_button(
@@ -709,13 +713,17 @@ if (!$tenant && !(is_siteadmin() && in_array($section, ['dashboard', 'tenants', 
         );
     }
     echo tenantmaster_tenant_table($tenantrepository->list());
+    echo html_writer::end_div();
     echo $OUTPUT->footer();
     exit;
 }
 
+if ($section !== 'dashboard') {
+    echo tenantmaster_section_header($section, $tenant, $academicview, $typefilter);
+}
+
 switch ($section) {
     case 'tenants':
-        echo $OUTPUT->heading(get_string('managedinstitutions', 'local_tenantmaster'));
         echo tenantmaster_global_native_actions();
         echo tenantmaster_tenant_table($tenantrepository->list($companyid > 0 && !is_siteadmin() ? $companyid : 0));
         if (is_siteadmin()) {
@@ -728,7 +736,6 @@ switch ($section) {
         }
         break;
     case 'catalogue':
-        echo $OUTPUT->heading(get_string('globalmastertemplates', 'local_tenantmaster'));
         if ($catalogueimpact) {
             echo tenantmaster_catalogue_confirmation(
                 $catalogueimpact,
@@ -754,7 +761,6 @@ switch ($section) {
         $catalogueform->display();
         break;
     case 'profile':
-        echo $OUTPUT->heading(get_string('institutionmasterdata', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(true);
         echo tenantmaster_native_actions($tenant, 'company');
         echo tenantmaster_native_company_summary($tenant);
@@ -763,18 +769,11 @@ switch ($section) {
         $profileform->display();
         break;
     case 'organisation':
-        echo $OUTPUT->heading(get_string('organisation', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(true);
         echo tenantmaster_native_actions($tenant, 'company');
         echo tenantmaster_department_table($tenant);
         break;
     case 'academic':
-        $academicstring = $academicview === 'years'
-            ? get_string('academicyears', 'local_tenantmaster')
-            : ($typefilter !== ''
-                ? get_string(catalog::MASTER_TYPES[$typefilter], 'local_tenantmaster')
-                : get_string('tenantmasterdata', 'local_tenantmaster'));
-        echo $OUTPUT->heading($academicstring);
         echo tenantmaster_tenant_scope($tenant);
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_academic_navigation($tenant, $academicview, $typefilter);
@@ -810,7 +809,6 @@ switch ($section) {
         $masterform->display();
         break;
     case 'courses':
-        echo $OUTPUT->heading(get_string('academiccourseprojections', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(true);
         echo tenantmaster_native_actions($tenant, 'courses');
         echo tenantmaster_course_filter($tenant, $search, $visibility);
@@ -822,7 +820,6 @@ switch ($section) {
         echo tenantmaster_course_copy_table($tenant);
         break;
     case 'people':
-        echo $OUTPUT->heading(get_string('usersandroles', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(true);
         echo tenantmaster_native_actions($tenant, 'people');
         echo tenantmaster_people_filter($tenant, $search);
@@ -831,27 +828,23 @@ switch ($section) {
         echo tenantmaster_user_profile_field_table($tenant);
         break;
     case 'access':
-        echo $OUTPUT->heading(get_string('cohortsandenrolments', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(true);
         echo tenantmaster_native_actions($tenant, 'courses');
         echo tenantmaster_native_access_tables($tenant);
         break;
     case 'assessments':
-        echo $OUTPUT->heading(get_string('assessments', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_master_domain_actions($tenant, 'assessment_policy');
         echo tenantmaster_policy_table($tenant, ['assessment_policy', 'attendance_policy']);
         echo tenantmaster_native_actions($tenant, 'courses');
         break;
     case 'certificates':
-        echo $OUTPUT->heading(get_string('certificates', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_master_domain_actions($tenant, 'certificate_rule');
         echo tenantmaster_policy_table($tenant, ['certificate_rule']);
         echo tenantmaster_native_actions($tenant, 'courses');
         break;
     case 'classes':
-        echo $OUTPUT->heading(get_string('classmanagement', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_native_actions($tenant, 'people');
         echo tenantmaster_placement_table($tenant);
@@ -864,7 +857,6 @@ switch ($section) {
         $placementform->display();
         break;
     case 'progression':
-        echo $OUTPUT->heading(get_string('progression', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_policy_table($tenant, ['progression_rule']);
         echo tenantmaster_rollover_table($tenant);
@@ -877,26 +869,22 @@ switch ($section) {
         }
         break;
     case 'imports':
-        echo $OUTPUT->heading(get_string('imports', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_import_table($tenant);
         echo $OUTPUT->heading(get_string('uploadpackage', 'local_tenantmaster'), 3);
         $importform->display();
         break;
     case 'sync':
-        echo $OUTPUT->heading(get_string('synchronization', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_action_button($tenant, 'syncall', get_string('syncall', 'local_tenantmaster'), 'primary');
         echo tenantmaster_sync_tables($tenant);
         break;
     case 'validation':
-        echo $OUTPUT->heading(get_string('validation', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_action_button($tenant, 'validate', get_string('validateall', 'local_tenantmaster'), 'secondary');
         echo tenantmaster_validation_table($tenant);
         break;
     case 'audit':
-        echo $OUTPUT->heading(get_string('audit', 'local_tenantmaster'));
         echo tenantmaster_origin_badge(false);
         echo tenantmaster_audit_table($tenant);
         break;
@@ -905,6 +893,7 @@ switch ($section) {
         break;
 }
 
+echo html_writer::end_div();
 echo $OUTPUT->footer();
 
 /**
@@ -933,6 +922,98 @@ function tenantmaster_section_string(string $section): string {
         'validation' => 'validation',
         'audit' => 'audit',
     ][$section] ?? 'dashboard';
+}
+
+/**
+ * Render a consistent product header for one Tenant Master work area.
+ *
+ * @param string $section Section.
+ * @param object|null $tenant Tenant.
+ * @param string $academicview Academic sub-view.
+ * @param string $mastertype Academic master type.
+ * @return string
+ */
+function tenantmaster_section_header(
+    string $section,
+    ?object $tenant,
+    string $academicview = 'masters',
+    string $mastertype = '',
+): string {
+    global $DB;
+
+    $definitions = [
+        'dashboard' => ['pluginname', 'sectionhelp_dashboard', 'fa-building-columns', 'mixed'],
+        'tenants' => ['managedinstitutions', 'sectionhelp_tenants', 'fa-building-columns', 'native'],
+        'catalogue' => ['globalmastertemplates', 'sectionhelp_catalogue', 'fa-layer-group', 'custom'],
+        'profile' => ['institutionmasterdata', 'sectionhelp_profile', 'fa-building', 'mixed'],
+        'organisation' => ['organisation', 'sectionhelp_organisation', 'fa-diagram-project', 'native'],
+        'academic' => ['tenantmasterdata', 'sectionhelp_academic', 'fa-book-open', 'custom'],
+        'courses' => ['academiccourseprojections', 'sectionhelp_courses', 'fa-graduation-cap', 'mixed'],
+        'people' => ['usersandroles', 'sectionhelp_people', 'fa-users', 'native'],
+        'access' => ['cohortsandenrolments', 'sectionhelp_access', 'fa-link', 'native'],
+        'assessments' => ['assessments', 'sectionhelp_assessments', 'fa-list-check', 'mixed'],
+        'certificates' => ['certificates', 'sectionhelp_certificates', 'fa-certificate', 'mixed'],
+        'classes' => ['classmanagement', 'sectionhelp_classes', 'fa-people-group', 'mixed'],
+        'progression' => ['progression', 'sectionhelp_progression', 'fa-chart-line', 'custom'],
+        'imports' => ['imports', 'sectionhelp_imports', 'fa-file-import', 'custom'],
+        'sync' => ['synchronization', 'sectionhelp_sync', 'fa-arrows-rotate', 'mixed'],
+        'validation' => ['validation', 'sectionhelp_validation', 'fa-shield', 'mixed'],
+        'audit' => ['audit', 'sectionhelp_audit', 'fa-clipboard', 'custom'],
+    ];
+    [$titlekey, $descriptionkey, $icon, $origin] = $definitions[$section]
+        ?? ['pluginname', 'sectionhelp_dashboard', 'fa-building-columns', 'custom'];
+    $title = get_string($titlekey, 'local_tenantmaster');
+    if ($section === 'academic' && $academicview === 'years') {
+        $title = get_string('academicyears', 'local_tenantmaster');
+    } else if ($section === 'academic' && isset(catalog::MASTER_TYPES[$mastertype])) {
+        $title = get_string(catalog::MASTER_TYPES[$mastertype], 'local_tenantmaster');
+    }
+
+    $scope = get_string('sitewideadministration', 'local_tenantmaster');
+    if ($tenant && !in_array($section, ['catalogue', 'tenants'], true)) {
+        $company = $DB->get_record(
+            'local_iomad_companies',
+            ['id' => $tenant->companyid],
+            'name, code',
+            MUST_EXIST,
+        );
+        $scope = format_string($company->name) . ' [' . s($company->code) . ']';
+    }
+    $owner = get_string('origin_' . $origin, 'local_tenantmaster');
+    $meta = html_writer::span(
+        html_writer::span('', 'fa fa-building')
+            . html_writer::span($scope),
+        'tenantmaster-section-header__scope',
+    ) . html_writer::span(
+        $owner,
+        'tenantmaster-section-header__owner tenantmaster-section-header__owner--' . $origin,
+    );
+
+    return html_writer::tag(
+        'section',
+        html_writer::span('', 'fa ' . $icon . ' tenantmaster-section-header__icon')
+            . html_writer::div(
+                html_writer::span(
+                    get_string($tenant ? 'tenantworkspace' : 'tenantmastersetup', 'local_tenantmaster'),
+                    'tenantmaster-section-header__eyebrow',
+                )
+                    . html_writer::tag('h2', $title, [
+                        'id' => 'tenantmaster-section-title',
+                        'class' => 'tenantmaster-section-header__title',
+                    ])
+                    . html_writer::tag(
+                        'p',
+                        get_string($descriptionkey, 'local_tenantmaster'),
+                        ['class' => 'tenantmaster-section-header__description'],
+                    ),
+                'tenantmaster-section-header__body',
+            )
+            . html_writer::div($meta, 'tenantmaster-section-header__meta'),
+        [
+            'class' => 'tenantmaster-section-header',
+            'aria-labelledby' => 'tenantmaster-section-title',
+        ],
+    );
 }
 
 /**
@@ -1022,7 +1103,11 @@ function tenantmaster_context_bar(
         'companyid',
         $companyid,
         false,
-        ['class' => 'custom-select', 'id' => 'tenantmaster-company-context'],
+        [
+            'class' => 'custom-select',
+            'id' => 'tenantmaster-company-context',
+            'aria-label' => get_string('activeinstitution', 'local_tenantmaster'),
+        ],
     );
     $form = html_writer::start_tag('form', [
         'method' => 'get',
@@ -1039,17 +1124,37 @@ function tenantmaster_context_bar(
             'value' => $value,
         ]);
     }
-    $form .= html_writer::tag(
-            'label',
-            html_writer::span(get_string('activeinstitution', 'local_tenantmaster')) . $select,
-            ['for' => 'tenantmaster-company-context'],
-        )
-        . html_writer::tag('button', get_string('open', 'local_tenantmaster'), [
-            'type' => 'submit',
-            'class' => 'btn btn-secondary',
+    $form .= html_writer::tag('label', get_string('activeinstitution', 'local_tenantmaster'), [
+            'for' => 'tenantmaster-company-context',
+            'class' => 'visually-hidden',
         ])
+        . $select
+        . html_writer::tag(
+            'button',
+            html_writer::span('', 'fa fa-arrow-right') . html_writer::span(get_string('open', 'local_tenantmaster')),
+            [
+                'type' => 'submit',
+                'class' => 'btn btn-secondary',
+            ],
+        )
         . html_writer::end_tag('form');
-    return html_writer::div($form, 'tenantmaster-contextbar');
+    $identity = html_writer::div(
+        html_writer::span('', 'fa fa-building-columns tenantmaster-contextbar__icon')
+            . html_writer::div(
+                html_writer::tag('strong', get_string('activeinstitution', 'local_tenantmaster'))
+                    . html_writer::tag('small', get_string('activeinstitutionhelp', 'local_tenantmaster')),
+                'tenantmaster-contextbar__copy',
+            ),
+        'tenantmaster-contextbar__identity',
+    );
+    return html_writer::tag(
+        'section',
+        $identity . $form,
+        [
+            'class' => 'tenantmaster-contextbar',
+            'aria-label' => get_string('activeinstitution', 'local_tenantmaster'),
+        ],
+    );
 }
 
 /**
@@ -1198,7 +1303,8 @@ function tenantmaster_global_dashboard(): string {
             ],
         );
     }
-    return $OUTPUT->heading(get_string('tenantmastersetup', 'local_tenantmaster'), 2)
+    return tenantmaster_section_header('dashboard', null)
+        . $OUTPUT->heading(get_string('tenantmastersetup', 'local_tenantmaster'), 3)
         . html_writer::div(implode('', $tiles), 'tenantmaster-tools tenantmaster-tools--administration');
 }
 
@@ -1496,7 +1602,7 @@ function tenantmaster_dashboard(object $tenant): string {
         ),
         'tenantmaster-actions mb-3',
     );
-    return $OUTPUT->heading(get_string('tenantworkspace', 'local_tenantmaster'), 2)
+    return tenantmaster_section_header('dashboard', $tenant)
         . html_writer::div(implode('', $summary), 'tenantmaster-summary')
         . $actions
         . tenantmaster_dashboard_tools($tenant);

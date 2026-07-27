@@ -12,11 +12,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_tenantmaster';
-$plugin->version = 2026072708;
+$plugin->version = 2026072710;
 $plugin->requires = 2025100600;
 $plugin->supported = [501, 501];
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.8.0';
+$plugin->release = '1.9.1';
 $plugin->dependencies = [
     'local_iomad' => 2025100600,
 ];

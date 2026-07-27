@@ -10,22 +10,55 @@
 }
 
 .tenantmaster-contextbar {
-    border-block: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    background: var(--iomad-learning-surfacealternate, #f8fafc);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
     margin-block-end: var(--iomad-learning-space4, 1rem);
-    padding-block: var(--iomad-learning-space3, .75rem);
+    padding: var(--iomad-learning-space3, .75rem);
+}
+
+.tenantmaster-contextbar__identity {
+    align-items: center;
+    display: flex;
+    flex: 0 1 24rem;
+    gap: var(--iomad-learning-space3, .75rem);
+    min-width: 0;
+}
+
+.tenantmaster-contextbar__icon {
+    align-items: center;
+    background: var(--iomad-learning-selectionbackground, #eaf2ff);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: 50%;
+    color: var(--iomad-learning-primarycolor, #155eef);
+    display: inline-flex;
+    flex: 0 0 2.5rem;
+    height: 2.5rem;
+    justify-content: center;
+}
+
+.tenantmaster-contextbar__copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tenantmaster-contextbar__copy small {
+    color: var(--iomad-learning-mutedtext, #475467);
+    line-height: var(--iomad-learning-compactlineheight, 1.35);
 }
 
 .tenantmaster-contextbar form,
 .tenantmaster-filterbar form {
-    align-items: end;
+    align-items: center;
     display: flex;
-    flex: 1 1 30rem;
+    flex: 1 1 24rem;
     flex-wrap: wrap;
     gap: var(--iomad-learning-space2, .5rem);
+    justify-content: flex-end;
     margin: 0;
 }
 
-.tenantmaster-contextbar label,
 .tenantmaster-filterbar label {
     display: flex;
     flex: 1 1 14rem;
@@ -38,8 +71,109 @@
 .tenantmaster-contextbar select,
 .tenantmaster-filterbar select,
 .tenantmaster-filterbar input {
+    flex: 1 1 18rem;
     max-width: 100%;
     min-height: var(--iomad-learning-buttonheight, 2.5rem);
+}
+
+.tenantmaster-contextbar .btn {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: var(--iomad-learning-space2, .5rem);
+    justify-content: center;
+}
+
+.tenantmaster-page {
+    min-width: 0;
+}
+
+.tenantmaster-section-header {
+    align-items: center;
+    background: var(--iomad-learning-surfacealternate, #f8fafc);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-inline-start: .25rem solid var(--iomad-learning-primarycolor, #155eef);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
+    display: flex;
+    gap: var(--iomad-learning-space4, 1rem);
+    margin-block-end: var(--iomad-learning-space4, 1rem);
+    padding: var(--iomad-learning-space4, 1rem);
+}
+
+.tenantmaster-section-header__icon {
+    align-items: center;
+    background: var(--iomad-learning-selectionbackground, #eaf2ff);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
+    color: var(--iomad-learning-primarycolor, #155eef);
+    display: inline-flex;
+    flex: 0 0 3rem;
+    font-size: 1.25rem;
+    height: 3rem;
+    justify-content: center;
+}
+
+.tenantmaster-section-header__body {
+    flex: 1 1 36rem;
+    min-width: 0;
+}
+
+.tenantmaster-section-header__eyebrow {
+    color: var(--iomad-learning-primarycolor, #155eef);
+    display: block;
+    font-size: var(--iomad-learning-smallfontsize, .875rem);
+    font-weight: 700;
+    margin-block-end: var(--iomad-learning-space1, .25rem);
+}
+
+.tenantmaster-section-header__title {
+    margin: 0;
+}
+
+.tenantmaster-section-header__description {
+    color: var(--iomad-learning-mutedtext, #475467);
+    line-height: var(--iomad-learning-compactlineheight, 1.35);
+    margin: var(--iomad-learning-space1, .25rem) 0 0;
+    max-width: 72ch;
+}
+
+.tenantmaster-section-header__meta {
+    align-items: flex-end;
+    display: flex;
+    flex: 0 1 22rem;
+    flex-direction: column;
+    gap: var(--iomad-learning-space2, .5rem);
+    min-width: 0;
+}
+
+.tenantmaster-section-header__scope {
+    align-items: center;
+    display: flex;
+    font-weight: 600;
+    gap: var(--iomad-learning-space2, .5rem);
+    max-width: 100%;
+}
+
+.tenantmaster-section-header__scope span:last-child {
+    overflow-wrap: anywhere;
+}
+
+.tenantmaster-section-header__owner {
+    border: 1px solid currentColor;
+    border-radius: var(--iomad-learning-radiuspill, 999px);
+    font-size: var(--iomad-learning-smallfontsize, .875rem);
+    font-weight: 600;
+    line-height: 1;
+    padding: .35rem .55rem;
+}
+
+.tenantmaster-section-header__owner--native {
+    color: var(--iomad-learning-secondarycolor, #475467);
+}
+
+.tenantmaster-section-header__owner--custom,
+.tenantmaster-section-header__owner--mixed {
+    color: var(--iomad-learning-primarycolor, #155eef);
 }
 
 .tenantmaster-origin {
@@ -159,13 +293,27 @@
     min-height: 5rem;
     padding: var(--iomad-learning-space3, .75rem);
     text-decoration: none;
+    transition:
+        background-color var(--iomad-learning-motionduration, 160ms) ease,
+        border-color var(--iomad-learning-motionduration, 160ms) ease,
+        box-shadow var(--iomad-learning-motionduration, 160ms) ease,
+        color var(--iomad-learning-motionduration, 160ms) ease,
+        transform var(--iomad-learning-motionduration, 160ms) ease;
 }
 
 .tenantmaster-tool:hover,
 .tenantmaster-tool:focus-visible {
+    background: var(--iomad-learning-selectionbackground, #eaf2ff);
     border-color: var(--iomad-learning-linkhover, #004eeb);
+    box-shadow: var(--iomad-learning-shadowmd, 0 .25rem .75rem rgb(16 24 40 / 12%));
     color: var(--iomad-learning-linkhover, #004eeb);
     text-decoration: none;
+    transform: translateY(calc(-1 * var(--iomad-learning-coursehovertranslate, 2px)));
+}
+
+.tenantmaster-tool:focus-visible {
+    outline: 2px solid var(--iomad-learning-focuscolor, #155eef);
+    outline-offset: 2px;
 }
 
 .tenantmaster-tool.is-active {
@@ -188,11 +336,25 @@
 }
 
 .tenantmaster-tool .icon,
-.tenantmaster-tool .iomad-learning-svg-icon {
+.tenantmaster-tool .iomad-learning-svg-icon,
+.tenantmaster-tool > .fa {
     flex: 0 0 var(--iomad-learning-navigationiconsize, 1.25rem);
     height: var(--iomad-learning-navigationiconsize, 1.25rem);
     margin: .15rem 0 0;
+    transition:
+        color var(--iomad-learning-motionduration, 160ms) ease,
+        transform var(--iomad-learning-motionduration, 160ms) ease;
     width: var(--iomad-learning-navigationiconsize, 1.25rem);
+}
+
+.tenantmaster-tool:hover .icon,
+.tenantmaster-tool:hover .iomad-learning-svg-icon,
+.tenantmaster-tool:hover > .fa,
+.tenantmaster-tool:focus-visible .icon,
+.tenantmaster-tool:focus-visible .iomad-learning-svg-icon,
+.tenantmaster-tool:focus-visible > .fa {
+    color: var(--iomad-learning-linkhover, #004eeb);
+    transform: scale(1.05);
 }
 
 .tenantmaster-tool__body {
@@ -210,7 +372,7 @@
 
 .tenantmaster-tools--workflow .tenantmaster-tool {
     flex: 1 1 19rem;
-    min-height: 7.5rem;
+    min-height: 8rem;
 }
 
 .tenantmaster-tool__heading {
@@ -382,9 +544,76 @@
     font-family: var(--font-monospace, monospace);
 }
 
-.generaltable td small {
+.tenantmaster-page > h3 {
+    border-block-start: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    margin-block-start: var(--iomad-learning-space5, 1.5rem);
+    padding-block-start: var(--iomad-learning-space4, 1rem);
+}
+
+.tenantmaster-page .mform {
+    background: var(--iomad-learning-surfacealternate, #f8fafc);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
+    margin-block: var(--iomad-learning-space3, .75rem) var(--iomad-learning-space5, 1.5rem);
+    max-width: 72rem;
+    padding: var(--iomad-learning-space4, 1rem);
+}
+
+.tenantmaster-page .mform .form-group:last-of-type {
+    margin-block-end: 0;
+}
+
+.tenantmaster-page .mform textarea {
+    min-height: 7rem;
+}
+
+.tenantmaster-page .table-responsive {
+    background: var(--iomad-learning-surface, #fff);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-radiussm, .25rem);
+    margin-block: var(--iomad-learning-space3, .75rem) var(--iomad-learning-space4, 1rem);
+    overscroll-behavior-inline: contain;
+    scrollbar-gutter: stable;
+}
+
+.tenantmaster-page .table-responsive .generaltable {
+    margin: 0;
+}
+
+.tenantmaster-page .generaltable thead th {
+    background: var(--iomad-learning-surfacealternate, #f8fafc);
+    border-block-end-color: var(--iomad-learning-bordercolor, #d0d5dd);
+}
+
+.tenantmaster-page .generaltable tbody tr {
+    transition: background-color var(--iomad-learning-motionduration, 160ms) ease;
+}
+
+.tenantmaster-page .generaltable tbody tr:hover {
+    background: var(--iomad-learning-selectionbackground, #eaf2ff);
+}
+
+.tenantmaster-page .generaltable td,
+.tenantmaster-page .generaltable th {
+    vertical-align: middle;
+}
+
+.tenantmaster-page .generaltable td small {
     display: block;
     margin-top: var(--iomad-learning-space1, .25rem);
+}
+
+.tenantmaster-page > .tenantmaster-origin {
+    margin-block-end: var(--iomad-learning-space3, .75rem);
+}
+
+.tenantmaster-page > .singlebutton,
+.tenantmaster-page > .tenantmaster-actions {
+    margin-block: var(--iomad-learning-space3, .75rem);
+}
+
+.tenantmaster-page .notification {
+    border-radius: var(--iomad-learning-radiussm, .25rem);
 }
 
 @media (max-width: 48rem) {
@@ -394,6 +623,17 @@
     .tenantmaster-filterbar form {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .tenantmaster-contextbar__identity,
+    .tenantmaster-section-header__body,
+    .tenantmaster-section-header__meta {
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .tenantmaster-contextbar__identity {
+        align-items: flex-start;
     }
 
     .tenantmaster-contextbar label,
@@ -408,6 +648,28 @@
     .tenantmaster-filterbar form {
         flex: 0 1 auto;
         width: 100%;
+    }
+
+    .tenantmaster-contextbar select,
+    .tenantmaster-contextbar .btn {
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .tenantmaster-section-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: var(--iomad-learning-space3, .75rem);
+    }
+
+    .tenantmaster-section-header__icon {
+        flex-basis: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .tenantmaster-section-header__meta {
+        align-items: flex-start;
+        padding-inline-start: calc(2.5rem + var(--iomad-learning-space4, 1rem));
     }
 
     .tenantmaster-table-tools {
@@ -442,4 +704,26 @@
         margin-inline-start: 0;
     }
 
+    .tenantmaster-page .mform {
+        padding: var(--iomad-learning-space3, .75rem);
+    }
+
+    .tenantmaster-tools--workflow .tenantmaster-tool {
+        min-height: 6.5rem;
+    }
+}
+
+@media (max-width: 30rem) {
+    .tenantmaster-section-header__meta {
+        padding-inline-start: 0;
+    }
+
+    .tenantmaster-actions .singlebutton,
+    .tenantmaster-actions form {
+        flex: 1 1 10rem;
+    }
+
+    .tenantmaster-actions .btn {
+        width: 100%;
+    }
 }

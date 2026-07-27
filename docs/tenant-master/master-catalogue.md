@@ -96,6 +96,30 @@ Removal never deletes a native company, department, category, course, user,
 enrolment, grade, submission, completion, certificate or academic-history
 record.
 
+## Clean-State Reset
+
+Use a catalogue reset only for an explicitly approved development, test or
+new-tenant preparation workflow:
+
+1. Create and verify a matching database, dataroot and immutable-image backup.
+2. Stop cron so a multi-item reset cannot be projected only partially.
+3. Remove child templates before their parents. The UI blocks an unsafe order.
+4. Deactivate the matching tenant master records through Tenant Master services.
+5. Process catalogue propagation and tenant projection work to completion.
+6. Confirm zero active catalogue templates, zero active matching tenant masters,
+   zero blocked work and zero visible mapped categories or courses.
+7. Restart cron and run tenant validation.
+
+The expected clean state retains catalogue tombstones, inactive tenant master
+records, mappings and audit evidence. Native categories and courses are hidden,
+not deleted. Users, enrolments, grades, submissions, completion and certificates
+are unchanged.
+
+To reverse the reset, use **Show removed > Restore and synchronize** in
+dependency order, then review tenant conflicts. Restoring the verified recovery
+set is required when the database, dataroot and image must return to the exact
+pre-reset state.
+
 ## Permissions
 
 `local/tenantmaster:managecatalogue` is a system-context capability. Site
