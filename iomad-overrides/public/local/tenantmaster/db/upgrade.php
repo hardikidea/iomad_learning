@@ -440,5 +440,85 @@ function xmldb_local_tenantmaster_upgrade(int $oldversion): bool {
     if ($oldversion < 2026072701) {
         upgrade_plugin_savepoint(true, 2026072701, 'local', 'tenantmaster');
     }
+    if ($oldversion < 2026072702) {
+        upgrade_plugin_savepoint(true, 2026072702, 'local', 'tenantmaster');
+    }
+    if ($oldversion < 2026072703) {
+        upgrade_plugin_savepoint(true, 2026072703, 'local', 'tenantmaster');
+    }
+    if ($oldversion < 2026072704) {
+        upgrade_plugin_savepoint(true, 2026072704, 'local', 'tenantmaster');
+    }
+    if ($oldversion < 2026072705) {
+        upgrade_plugin_savepoint(true, 2026072705, 'local', 'tenantmaster');
+    }
+    if ($oldversion < 2026072706) {
+        $dbman = $DB->get_manager();
+        $catalogue = new xmldb_table('local_tenantmaster_catitem');
+        $deleted = new xmldb_field(
+            'deleted',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'lastpropagated',
+        );
+        if (!$dbman->field_exists($catalogue, $deleted)) {
+            $dbman->add_field($catalogue, $deleted);
+        }
+        $activebeforedelete = new xmldb_field(
+            'activebeforedelete',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'deleted',
+        );
+        if (!$dbman->field_exists($catalogue, $activebeforedelete)) {
+            $dbman->add_field($catalogue, $activebeforedelete);
+        }
+        $timedeleted = new xmldb_field(
+            'timedeleted',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'activebeforedelete',
+        );
+        if (!$dbman->field_exists($catalogue, $timedeleted)) {
+            $dbman->add_field($catalogue, $timedeleted);
+        }
+        $deletedby = new xmldb_field(
+            'deletedby',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'timedeleted',
+        );
+        if (!$dbman->field_exists($catalogue, $deletedby)) {
+            $dbman->add_field($catalogue, $deletedby);
+        }
+        $deletedindex = new xmldb_index(
+            'scope_type_deleted',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['scope', 'mastertype', 'deleted'],
+        );
+        if (!$dbman->index_exists($catalogue, $deletedindex)) {
+            $dbman->add_index($catalogue, $deletedindex);
+        }
+        upgrade_plugin_savepoint(true, 2026072706, 'local', 'tenantmaster');
+    }
+    if ($oldversion < 2026072707) {
+        upgrade_plugin_savepoint(true, 2026072707, 'local', 'tenantmaster');
+    }
     return true;
 }

@@ -7,7 +7,29 @@
 - Moodle/IOMAD: 5.1.5 build 20260608
 - PHP: 8.2-8.4
 - PostgreSQL: 15 or newer
-- Plugin release: 1.2.0, schema version `2026072602`
+- Plugin release: 1.8.0, version `2026072708`
+
+## Admin Tools Extension
+
+IOMAD 5.1 hard-codes its eight dashboard tabs before loading plugin
+`db/iomadmenu.php` entries. Tenant Master needs a company-scoped top-level tab,
+so the project tracks reviewed overrides of:
+
+- `public/blocks/iomad_company_admin/block_iomad_company_admin.php`;
+- `public/blocks/iomad_company_admin/index.php`.
+
+The override adds a generic opt-in contract (`tabcustom`, `tablabel`,
+`tabicon`) and does not hard-code Tenant Master into the IOMAD block. Menu
+entries are still filtered by IOMAD capability checks before a tab or tile is
+rendered. Admin Tools converts each `moodle_url` to its raw form before
+Mustache escapes the `href`; this avoids turning query separators into literal
+`amp;` parameter names. The original pinned-file hashes are recorded in
+`iomad-overrides/.iomad-tracked-overrides`; `make sync-overrides` and immutable
+image builds fail when either upstream file changes.
+
+On every IOMAD upgrade, review the upstream tab builder, recalculate the two
+hashes only after review, run the navigation PHPUnit test, and browser-test the
+native eight panes plus the Tenants pane at desktop and mobile widths.
 
 ## Native API Map
 
@@ -66,6 +88,7 @@ $HOME/.composer/vendor/bin/phpcs \
   --standard=phpcs.xml.dist \
   iomad-overrides/public/local/tenantmaster
 ./scripts/test-phpunit.sh \
+  public/local/tenantmaster/tests/navigation_test.php \
   public/local/tenantmaster/tests/crud_integration_test.php \
   public/local/tenantmaster/tests/lifecycle_test.php \
   public/local/tenantmaster/tests/default_service_test.php \

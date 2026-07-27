@@ -42,9 +42,15 @@ Tenant hostnames use port 80 locally, for example `http://school.localhost`.
 
 Default local credentials are in `.env.example`; change them before any shared environment.
 
-Tenant administration is available in **Site administration > Tenant Master**.
-Normal tenant onboarding, academic setup, native user/role management, cohorts,
-groups, enrolments, validation, drift, imports, and rollover are UI workflows.
+Optional reusable defaults and plugin settings are available in **Site
+administration > Tenant Master**. Company operations are available after
+company selection in the dedicated **IOMAD Admin Tools > Tenants** tab.
+Academic years and each institution-relevant master domain are separate tiles;
+school tenants see Board, Medium, Grade, Stream, Division and Subject, while
+university and college tenants see Programme, Semester, Specialisation, Credit
+and Subject. Normal tenant onboarding, academic setup, native
+user/role management, cohorts, groups, enrolments, validation, drift, imports,
+and rollover are UI workflows.
 Validated changes synchronize automatically to real IOMAD/Moodle records; a
 Tenant Master CLI is not required. See the
 [Tenant Master guide](docs/tenant-master/README.md).

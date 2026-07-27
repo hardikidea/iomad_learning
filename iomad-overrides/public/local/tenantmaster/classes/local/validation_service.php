@@ -111,6 +111,7 @@ final class validation_service {
         }
 
         $masters = $DB->get_records('local_tenantmaster_master', ['tenantid' => $tenantid]);
+        $allowedmastertypes = catalog::master_types_for_tenant((string)$tenant->tenanttype);
         foreach ($masters as $master) {
             if (!array_key_exists((string)$master->mastertype, catalog::MASTER_TYPES)) {
                 $this->issue(
@@ -125,6 +126,25 @@ final class validation_service {
                     'Select a supported academic master type.',
                     true,
                     $counts
+                );
+            }
+            if (
+                !empty($master->active)
+                    && array_key_exists((string)$master->mastertype, catalog::MASTER_TYPES)
+                    && !in_array((string)$master->mastertype, $allowedmastertypes, true)
+            ) {
+                $this->issue(
+                    $tenantid,
+                    'academic',
+                    'local_tenantmaster_master',
+                    (int)$master->id,
+                    'mastertype',
+                    'error',
+                    'master_type_tenant_mismatch',
+                    'The active academic master type does not belong to this institution type.',
+                    'Correct the institution type through a reviewed migration or deactivate the incompatible master.',
+                    true,
+                    $counts,
                 );
             }
             if (

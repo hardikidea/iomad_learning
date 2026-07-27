@@ -8,6 +8,7 @@ use local_tenantmaster\local\academic_year_service;
 use local_tenantmaster\local\drift_service;
 use local_tenantmaster\local\json;
 use local_tenantmaster\local\learning_access_service;
+use local_tenantmaster\local\master_repository;
 use local_tenantmaster\local\master_service;
 use local_tenantmaster\local\organisation_service;
 use local_tenantmaster\local\people_service;
@@ -15,6 +16,7 @@ use local_tenantmaster\local\projection_service;
 use local_tenantmaster\local\queue_service;
 use local_tenantmaster\local\role_service;
 use local_tenantmaster\local\tenant_service;
+use local_tenantmaster\local\validation_service;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -60,6 +62,55 @@ final class crud_integration_test extends tenantmaster_testcase {
         $this->assertFalse($DB->record_exists('local_tenantmaster_dirty', [
             'tenantid' => $tenant->id,
             'module' => 'tenant',
+        ]));
+    }
+
+    /**
+     * Institution type cannot drift away from its adopted academic model.
+     *
+     * @covers \local_tenantmaster\local\tenant_service
+     */
+    public function test_tenant_type_is_immutable_after_initialisation(): void {
+        $this->resetAfterTest();
+        $tenant = $this->create_tenant('school');
+        $tenant->tenanttype = 'university';
+
+        $this->expectException(\invalid_parameter_exception::class);
+        (new tenant_service())->save($tenant);
+    }
+
+    /**
+     * Validation blocks master domains that contradict the institution type.
+     *
+     * @covers \local_tenantmaster\local\validation_service
+     */
+    public function test_validation_detects_tenant_master_type_mismatch(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $tenant = $this->create_tenant('university');
+        (new master_repository())->save((object)[
+            'tenantid' => (int)$tenant->id,
+            'acadyearid' => 0,
+            'parentid' => 0,
+            'mastertype' => 'grade',
+            'externalid' => 'GRADE_INVALID_FOR_UNIVERSITY',
+            'code' => 'GRADE_INVALID_FOR_UNIVERSITY',
+            'name' => 'Invalid university grade',
+            'description' => null,
+            'payloadjson' => '{}',
+            'active' => 1,
+            'sortorder' => 1,
+        ]);
+
+        $result = (new validation_service())->validate((int)$tenant->id);
+
+        $this->assertGreaterThanOrEqual(1, $result['blocking']);
+        $this->assertTrue($DB->record_exists('local_tenantmaster_valissue', [
+            'tenantid' => (int)$tenant->id,
+            'issuecode' => 'master_type_tenant_mismatch',
+            'status' => 'open',
+            'blocking' => 1,
         ]));
     }
 

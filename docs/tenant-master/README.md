@@ -4,18 +4,20 @@
 a tenant-scoped IOMAD administration application. Normal operators do not need
 a Tenant Master CLI or an institution-pack CLI.
 
-Site administrators can configure reusable academic defaults before creating a
-company in **Site administration > Tenant Master > Master catalogue**. Create
-and administer each company in native IOMAD, then open **Managed institutions**
-and initialise academic management for that existing company.
+Site administrators can optionally configure reusable academic defaults before
+creating a company in **Site administration > Tenant Master > Global master
+templates**. Create and administer each company in native IOMAD, initialise
+academic management for that existing company, then select it in **IOMAD Admin
+Tools** and open the dedicated **Tenants** tab.
 
-1. **Master catalogue** for system-level Shared, School, University, College
-   and Training templates with safe background propagation.
-2. **Dashboard** to open grouped native and academic operations, review live
-   counts, adopt defaults, validate, or enqueue Sync All.
+1. **Global master templates** for system-level Shared, School, University, College
+   and Training templates with safe background propagation, impact-previewed
+   removal and restoration.
+2. **Tenant workspace** to follow numbered setup, academic lifecycle and
+   assurance tiles for the selected company.
 3. **Institution master data** for institution type and regulatory or academic
    identifiers that have no native IOMAD company field.
-4. **Academic masters** for academic years, boards, mediums, grades,
+4. **Tenant master data** for tenant-owned academic years, boards, mediums, grades,
    programmes, semesters, streams, subjects, templates, and policies.
 5. **Organisation**, **Users and roles**, and **Cohorts and enrolments** to
    review live native records and open capability-filtered IOMAD operations.
@@ -43,9 +45,11 @@ progression workflow.
 
 All forms use the default IOMAD/Moodle renderer, navigation, tables,
 breadcrumbs, sesskeys, capabilities, and responsive theme behavior. Populated
-tables provide local row filtering and sortable data columns; native edit
+tables provide local row filtering, sortable data columns and 20-row client
+pagination where the tenant-scoped result set is larger; native edit
 actions continue to open supported IOMAD or Moodle administration screens. The
-plugin does not install a theme.
+plugin does not install a theme. Detail screens use a compact return control
+instead of repeating every operation as horizontal tabs.
 
 ## Automatic Processing
 
@@ -93,6 +97,9 @@ settings, dirty work remains visible and is not discarded.
 - No workflow grants site administrator to a tenant role.
 - There is no automatic deletion of companies, users, active courses,
   enrolments, grades, submissions, completion, certificates, or history.
+- Global template deletion creates a reversible audit tombstone and
+  deactivates only unchanged inherited tenant definitions through the normal
+  synchronization queue.
 - Destructive rollover reconciliation requires system-level capability,
   preview, confirmation, and a recovery-set reference.
 
@@ -100,7 +107,7 @@ settings, dirty work remains visible and is not discarded.
 
 - [Architecture and ownership](architecture.md)
 - [Native-first administration](native-first-administration.md)
-- [Master catalogue](master-catalogue.md)
+- [Global master templates](master-catalogue.md)
 - [Control surface and Admin Tools](control-surface.md)
 - [DPS school use case](dps-school-use-case.md)
 - [Workbook migration](workbook-migration.md)

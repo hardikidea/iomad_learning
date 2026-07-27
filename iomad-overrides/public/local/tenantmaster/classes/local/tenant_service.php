@@ -33,6 +33,14 @@ final class tenant_service {
         if (!array_key_exists((string)$data->tenanttype, catalog::TENANT_TYPES)) {
             throw new \invalid_parameter_exception('Invalid tenant type.');
         }
+        if (!empty($data->id)) {
+            $existing = $this->repository->get((int)$data->id);
+            if ((string)$existing->tenanttype !== (string)$data->tenanttype) {
+                throw new \invalid_parameter_exception(
+                    'Tenant type is immutable after initialisation. Reconcile through a reviewed migration.',
+                );
+            }
+        }
         if (!catalog::valid_external_key((string)$data->trustcode)) {
             throw new \invalid_parameter_exception('Invalid trust code.');
         }

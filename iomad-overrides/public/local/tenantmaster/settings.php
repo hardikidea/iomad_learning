@@ -8,35 +8,12 @@ if ($hassiteconfig) {
         'local_tenantmaster',
         get_string('pluginname', 'local_tenantmaster'),
     ));
-    $pages = [
-        'catalogue' => 'mastercatalogue',
-        'dashboard' => 'dashboard',
-        'tenants' => 'tenants',
-        'profile' => 'institutionprofile',
-        'organisation' => 'organisation',
-        'academic' => 'academicstructure',
-        'courses' => 'courses',
-        'people' => 'usersandroles',
-        'access' => 'cohortsandenrolments',
-        'assessments' => 'assessments',
-        'certificates' => 'certificates',
-        'progression' => 'progression',
-        'imports' => 'imports',
-        'sync' => 'synchronization',
-        'validation' => 'validation',
-        'audit' => 'audit',
-    ];
-    foreach ($pages as $section => $stringkey) {
-        $capability = $section === 'catalogue'
-            ? 'local/tenantmaster:managecatalogue'
-            : 'local/tenantmaster:view';
-        $ADMIN->add('local_tenantmaster', new admin_externalpage(
-            'local_tenantmaster_' . $section,
-            get_string($stringkey, 'local_tenantmaster'),
-            new moodle_url('/local/tenantmaster/index.php', ['section' => $section]),
-            $capability,
-        ));
-    }
+    $ADMIN->add('local_tenantmaster', new admin_externalpage(
+        'local_tenantmaster_catalogue',
+        get_string('globalmastertemplates', 'local_tenantmaster'),
+        new moodle_url('/local/tenantmaster/index.php', ['section' => 'catalogue']),
+        'local/tenantmaster:managecatalogue',
+    ));
 
     $settings = new admin_settingpage(
         'local_tenantmaster_settings',

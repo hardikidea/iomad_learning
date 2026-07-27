@@ -84,7 +84,8 @@ users before exclusion. The baseline demo database was removed through
 Moodle's `uninstall_plugin()` API while maintenance mode was enabled; no plugin
 tables or configuration were deleted directly.
 
-The baseline includes five checksum-guarded compatibility hotfixes:
+The baseline includes nine checksum-guarded compatibility or integration
+overrides:
 
 - `local/iomad/version.php` no longer requires the excluded plugin.
 - The company advanced-settings page loads SAML support only when its library
@@ -97,6 +98,12 @@ The baseline includes five checksum-guarded compatibility hotfixes:
   patched releases after the pinned lock acquired seven published advisories.
   Runtime installation remains `--no-dev`; CI audits and tests the reviewed
   deployable lock.
+- The IOMAD My Courses preference source and compiled AMD module keep
+  tenant-aware tab preferences stable.
+- The IOMAD Admin Tools block and full dashboard page accept
+  capability-filtered, plugin-defined top-level tabs. Tenant Master uses this
+  extension for the selected-company **Tenants** pane. Menu URLs are normalized
+  before Mustache escaping so query parameters remain valid.
 
 The exclusion manifest also removes
 `admin/tool/mfa/factor/sms/db/hooks.php`. The pinned upstream file declares

@@ -75,11 +75,16 @@ final class catalogue_service {
      *
      * @param string $scope Scope.
      * @param string $mastertype Type.
+     * @param bool $includeremoved Include removed audit tombstones.
      * @return array<int, object>
      */
-    public function list(string $scope = '', string $mastertype = ''): array {
+    public function list(
+        string $scope = '',
+        string $mastertype = '',
+        bool $includeremoved = false,
+    ): array {
         $this->ensure_seeded();
-        return $this->repository->list($scope, $mastertype);
+        return $this->repository->list($scope, $mastertype, null, $includeremoved);
     }
 
     /**
@@ -120,6 +125,9 @@ final class catalogue_service {
         json::decode_object($payloadjson);
 
         $current = !empty($data->id) ? $this->repository->get((int)$data->id) : null;
+        if ($current && !empty($current->deleted)) {
+            throw new \invalid_parameter_exception('Restore a removed catalogue item before editing it.');
+        }
         if ($current && (
             (string)$current->scope !== $scope
                 || (string)$current->mastertype !== $mastertype
@@ -152,7 +160,8 @@ final class catalogue_service {
         if ($parentitemid > 0) {
             $parent = $this->repository->get($parentitemid);
             if (
-                (string)$parent->scope !== $scope
+                !empty($parent->deleted)
+                    || (string)$parent->scope !== $scope
                     || (string)$parent->mastertype !== $mastertype
                     || ($current && (int)$parent->id === (int)$current->id)
             ) {
@@ -193,6 +202,9 @@ final class catalogue_service {
      */
     public function set_active(int $id, bool $active): object {
         $current = $this->get($id);
+        if (!empty($current->deleted)) {
+            throw new \invalid_parameter_exception('Restore a removed catalogue item before changing its status.');
+        }
         return $this->save((object)[
             'id' => $current->id,
             'scope' => $current->scope,
@@ -206,6 +218,117 @@ final class catalogue_service {
             'active' => $active ? 1 : 0,
             'sortorder' => $current->sortorder,
         ]);
+    }
+
+    /**
+     * Describe the effect of removing one global template.
+     *
+     * @param int $id Item ID.
+     * @return object
+     */
+    public function removal_impact(int $id): object {
+        global $DB;
+
+        $item = $this->get($id);
+        $children = $DB->count_records('local_tenantmaster_catitem', [
+            'scope' => $item->scope,
+            'mastertype' => $item->mastertype,
+            'parentexternalid' => $item->externalid,
+            'deleted' => 0,
+        ]);
+        $params = [
+            'mastertype' => $item->mastertype,
+            'externalid' => $item->externalid,
+        ];
+        $scopesql = '';
+        if ((string)$item->scope !== 'shared') {
+            $scopesql = ' AND t.tenanttype = :tenanttype';
+            $params['tenanttype'] = $item->scope;
+        }
+        $linked = $DB->get_records_sql(
+            "SELECT m.*
+               FROM {local_tenantmaster_master} m
+               JOIN {local_tenantmaster_tenant} t ON t.id = m.tenantid
+              WHERE m.mastertype = :mastertype
+                AND m.externalid = :externalid
+                    {$scopesql}",
+            $params,
+        );
+        $target = clone $item;
+        $target->active = !empty($item->deleted)
+            ? (int)$item->activebeforedelete
+            : 0;
+        $targethash = self::catalogue_hash($target);
+        $customised = 0;
+        foreach ($linked as $master) {
+            $currenthash = self::master_hash($master);
+            if ($currenthash === $targethash) {
+                continue;
+            }
+            $safe = (int)$master->catalogitemid === (int)$item->id
+                && (string)$master->inheritedhash !== ''
+                && $currenthash === (string)$master->inheritedhash;
+            if (!$safe) {
+                $customised++;
+            }
+        }
+        return (object)[
+            'item' => $item,
+            'linkedtenants' => count($linked),
+            'customisedtenants' => $customised,
+            'dependentchildren' => $children,
+            'canremove' => $children === 0 && empty($item->deleted),
+            'canrestore' => !empty($item->deleted),
+        ];
+    }
+
+    /**
+     * Remove one template while retaining an auditable tombstone.
+     *
+     * Unchanged inherited tenant records are deactivated by normal
+     * propagation. Tenant customisations are reported as conflicts.
+     *
+     * @param int $id Item ID.
+     * @return object
+     */
+    public function remove(int $id): object {
+        global $DB;
+
+        $impact = $this->removal_impact($id);
+        if (!$impact->canremove) {
+            throw new \moodle_exception('catalogueremoveblocked', 'local_tenantmaster');
+        }
+        $transaction = $DB->start_delegated_transaction();
+        $activebeforedelete = !empty($impact->item->active);
+        $updated = $this->set_active($id, false);
+        $removed = $this->repository->set_deleted(
+            (int)$updated->id,
+            true,
+            $activebeforedelete,
+        );
+        $transaction->allow_commit();
+        return $removed;
+    }
+
+    /**
+     * Restore a removed template and queue reactivation.
+     *
+     * @param int $id Item ID.
+     * @return object
+     */
+    public function restore(int $id): object {
+        global $DB;
+
+        $impact = $this->removal_impact($id);
+        if (!$impact->canrestore) {
+            throw new \moodle_exception('cataloguerestorenotremoved', 'local_tenantmaster');
+        }
+        $transaction = $DB->start_delegated_transaction();
+        $active = !empty($impact->item->activebeforedelete);
+        $this->repository->set_deleted($id, false);
+        $restored = $this->set_active($id, $active);
+        $transaction->allow_commit();
+        return $restored;
     }
 
     /**
@@ -386,6 +509,10 @@ final class catalogue_service {
             'mastertype' => $item->mastertype,
             'externalid' => $item->externalid,
         ]);
+        if (!$master && !empty($item->deleted)) {
+            $result['unchanged']++;
+            return;
+        }
         $parentid = $this->tenant_parent_id($tenant, $item, $result);
         if (!$master) {
             $master = (new master_repository())->save((object)[

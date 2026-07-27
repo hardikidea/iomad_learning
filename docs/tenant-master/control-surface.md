@@ -11,14 +11,27 @@ authoritative IOMAD or Moodle records. Each screen identifies its ownership:
 
 ## Navigation
 
+Select the active company in **IOMAD Admin Tools**, then open the dedicated
+**Tenants** top-level tab. The tab inherits IOMAD's selected company and shows
+only operations permitted in that company context. An uninitialised company
+shows onboarding tiles only. An initialised company shows its institution
+profile, organisation, academic domains and operating tools in sequence.
+
+School tenants receive separate **Academic years**, **Board**, **Medium**,
+**Grade**, **Stream**, **Division** and **Subject** tiles. University and
+college tenants receive **Programme**, **Semester**, **Specialisation**,
+**Credit** and **Subject** instead. Each domain opens its own filtered CRUD
+table and preserves the company ID in every link. The **Tenant workspace** tile
+provides the same sequence with live counts and workflow descriptions.
+
 | Screen | Data and actions |
 |---|---|
-| Master catalogue | Pre-company Shared/School/University/College/Training CRUD, versioning, activation and safe tenant propagation |
-| Dashboard | Native and academic tool groups, live counts, Sync All, validation and default adoption |
+| Global master templates | Optional, site-administrator-only Shared/School/University/College/Training defaults, versioning, activation, guarded reversible removal, restoration and safe tenant propagation |
+| Tenant workspace | Numbered native, tenant-master and assurance tiles, live counts and default adoption |
 | Managed institutions | Initialise an existing coded IOMAD company; never create a duplicate tenant company |
 | Institution master data | Read native company identity and edit only regulatory or academic extension metadata |
 | Organisation | Read current native department hierarchy, parent, user count and course count; open IOMAD department management |
-| Academic structure | CRUD and bulk package import for years, boards, media, grades, streams, divisions, subjects, programmes, semesters, credits, templates and policies |
+| Tenant master data | Tenant-owned CRUD and bulk package import for years, boards, media, grades, streams, divisions, subjects, programmes, semesters, credits, templates and policies |
 | Academic course projections | Filter all assigned native courses, open course editing and IOMAD course settings, inspect category/course mappings and native custom fields |
 | Users and roles | Filter live company memberships, manager/educator scope and suspension; open native user, manager and additional-field management |
 | Cohorts and enrolments | Read Tenant Master-managed cohorts and all company-course groups and enrolment instances |
@@ -30,14 +43,18 @@ authoritative IOMAD or Moodle records. Each screen identifies its ownership:
 | Synchronization | Sync All, per-master and per-type retry, job state and drift resolution |
 | Validation and Audit | Tenant isolation, ownership, dependency findings and non-sensitive change evidence |
 
-All screens preserve the selected company. Site administrators receive an
-explicit company selector; tenant roles remain restricted to their resolved
-IOMAD company context.
+All screens preserve the selected company. Every tenant-master-data page names
+the owning institution. Site administrators receive an explicit company
+selector; tenant roles remain restricted to their resolved IOMAD company
+context. Identical codes may exist in separate tenants because ownership and
+uniqueness are enforced inside the tenant boundary.
 
-Populated data tables include a local row filter and sortable non-action
-columns. These controls affect only records already returned by the
-tenant-scoped server query. Course and user searches remain server-side and
-cannot broaden the selected company scope.
+Populated data tables include a local row filter, sortable non-action columns
+and 20-row pagination when required. Filtering resets to page one; sorting
+reorders the full tenant-scoped result before repagination. These controls
+affect only records already returned by the tenant-scoped server query.
+Course and user searches remain server-side and cannot broaden the selected
+company scope.
 
 ## Bulk And CRUD
 
@@ -82,16 +99,26 @@ definitions and creates them only when the first managed course is projected.
 
 ## Admin Tools
 
-The IOMAD menu extension API adds:
+The pinned IOMAD Admin Tools block has a reviewed, SHA-guarded extension for
+plugin-defined top-level tabs. Tenant Master uses that extension to add
+**Tenants** after the native Reports tab. It does not change or duplicate the
+native Companies, Users, Courses, Licenses, Competencies, E-Commerce,
+Microlearning or Reports panes.
 
-- **Tenant Master** under Company;
-- **Master catalogue** under Company for system-level administrators;
-- **Tenant course editor** under Courses;
-- **Event management** under Company.
+The Tenants pane is built after capability checks and from the active company:
+
+- no Tenant Master profile: **Tenant workspace** and **Managed institutions**;
+- school: school academic-domain tiles plus learning and assurance operations;
+- university or college: higher-education domains plus the same applicable
+  operations;
+- training organisation: programme, subject and credit domains plus applicable
+  operations.
+
+**Global master templates** is intentionally available only under **Site
+administration > Tenant Master**. It is an optional source of reusable
+defaults, not a tenant editing surface.
 
 The theme groups Admin Tools into **Native IOMAD tools** and **IOMAD Learning
 tools** using link destinations after IOMAD has performed its normal
 capability filtering. It does not add access to a hidden tool or modify the
-upstream menu template. Tenant Master and Master catalogue remain separate
-tiles because one is company-scoped and the other can propagate reusable
-defaults across all applicable companies.
+upstream menu template.

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/tenantmaster/db" VERSION="2026072606" COMMENT="XMLDB file for Tenant Master"
+<XMLDB PATH="local/tenantmaster/db" VERSION="2026072707" COMMENT="XMLDB file for Tenant Master"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
   <TABLES>
@@ -214,6 +214,10 @@
         <FIELD NAME="propagationstate" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="complete" SEQUENCE="false"/>
         <FIELD NAME="propagationjson" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="lastpropagated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="activebeforedelete" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timedeleted" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="deletedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -226,6 +230,7 @@
         <INDEX NAME="scope_type_external" UNIQUE="true" FIELDS="scope, mastertype, externalid"/>
         <INDEX NAME="scope_type_code" UNIQUE="true" FIELDS="scope, mastertype, code"/>
         <INDEX NAME="scope_type_active" UNIQUE="false" FIELDS="scope, mastertype, active"/>
+        <INDEX NAME="scope_type_deleted" UNIQUE="false" FIELDS="scope, mastertype, deleted"/>
         <INDEX NAME="propagation_state" UNIQUE="false" FIELDS="propagationstate"/>
       </INDEXES>
     </TABLE>

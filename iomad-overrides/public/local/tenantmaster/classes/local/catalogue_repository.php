@@ -46,9 +46,15 @@ final class catalogue_repository {
      * @param string $scope Optional scope.
      * @param string $mastertype Optional master type.
      * @param bool|null $active Optional active state.
+     * @param bool $includeremoved Include removed audit tombstones.
      * @return array<int, object>
      */
-    public function list(string $scope = '', string $mastertype = '', ?bool $active = null): array {
+    public function list(
+        string $scope = '',
+        string $mastertype = '',
+        ?bool $active = null,
+        bool $includeremoved = false,
+    ): array {
         global $DB;
 
         $conditions = [];
@@ -60,6 +66,9 @@ final class catalogue_repository {
         }
         if ($active !== null) {
             $conditions['active'] = (int)$active;
+        }
+        if (!$includeremoved) {
+            $conditions['deleted'] = 0;
         }
         return $DB->get_records(
             'local_tenantmaster_catitem',
@@ -79,10 +88,35 @@ final class catalogue_repository {
 
         return $DB->get_records_select(
             'local_tenantmaster_catitem',
-            'active = :active AND (scope = :sharedscope OR scope = :typescope)',
-            ['active' => 1, 'sharedscope' => 'shared', 'typescope' => $tenanttype],
+            'active = :active AND deleted = :deleted'
+                . ' AND (scope = :sharedscope OR scope = :typescope)',
+            ['active' => 1, 'deleted' => 0, 'sharedscope' => 'shared', 'typescope' => $tenanttype],
             'scope ASC, mastertype ASC, sortorder ASC, name ASC',
         );
+    }
+
+    /**
+     * Mark or restore a catalogue audit tombstone.
+     *
+     * @param int $id Item ID.
+     * @param bool $deleted Removed state.
+     * @param bool|null $activebeforedelete Active state to restore later.
+     * @return object
+     */
+    public function set_deleted(int $id, bool $deleted, ?bool $activebeforedelete = null): object {
+        global $DB, $USER;
+
+        $record = $this->get($id);
+        if ($deleted && $activebeforedelete !== null) {
+            $record->activebeforedelete = $activebeforedelete ? 1 : 0;
+        }
+        $record->deleted = $deleted ? 1 : 0;
+        $record->timedeleted = $deleted ? time() : 0;
+        $record->deletedby = $deleted ? (int)($USER->id ?? 0) : 0;
+        $record->timemodified = time();
+        $record->modifiedby = (int)($USER->id ?? 0);
+        $DB->update_record('local_tenantmaster_catitem', $record);
+        return $this->get($id);
     }
 
     /**

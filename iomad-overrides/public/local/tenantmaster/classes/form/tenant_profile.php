@@ -34,6 +34,16 @@ final class tenant_profile extends \moodleform {
             get_string('institutiontype', 'local_tenantmaster'),
             catalog::localise(catalog::TENANT_TYPES)
         );
+        if (!empty($this->_customdata['editing'])) {
+            $mform->hardFreeze('tenanttype');
+            $mform->setConstant('tenanttype', (string)$this->_customdata['tenanttype']);
+            $mform->addElement(
+                'static',
+                'tenanttypehelp',
+                '',
+                get_string('tenanttypeimmutable', 'local_tenantmaster'),
+            );
+        }
 
         $mform->addElement(
             'header',

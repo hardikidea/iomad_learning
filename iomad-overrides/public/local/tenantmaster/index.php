@@ -44,7 +44,11 @@ $editid = optional_param('editid', 0, PARAM_INT);
 $yeareditid = optional_param('yeareditid', 0, PARAM_INT);
 $placementeditid = optional_param('placementeditid', 0, PARAM_INT);
 $catalogueeditid = optional_param('catalogueeditid', 0, PARAM_INT);
+$catalogueoperationid = optional_param('catalogueoperationid', 0, PARAM_INT);
+$catalogueoperation = optional_param('catalogueoperation', '', PARAM_ALPHA);
+$showremoved = optional_param('showremoved', 0, PARAM_BOOL);
 $cataloguescope = optional_param('scope', 'shared', PARAM_ALPHA);
+$academicview = optional_param('academicview', 'masters', PARAM_ALPHA);
 $typefilter = optional_param('type', '', PARAM_ALPHANUMEXT);
 $search = optional_param('search', '', PARAM_TEXT);
 $visibility = optional_param('visibility', 'all', PARAM_ALPHA);
@@ -76,6 +80,15 @@ if ($typefilter !== '' && !array_key_exists($typefilter, catalog::MASTER_TYPES))
 if (!array_key_exists($cataloguescope, catalogue_service::SCOPES)) {
     throw new invalid_parameter_exception('Unknown catalogue scope.');
 }
+if (!in_array($catalogueoperation, ['', 'remove', 'restore'], true)) {
+    throw new invalid_parameter_exception('Unknown catalogue operation.');
+}
+if (!in_array($academicview, ['masters', 'years'], true)) {
+    throw new invalid_parameter_exception('Unknown academic view.');
+}
+if (($catalogueoperationid > 0) !== ($catalogueoperation !== '')) {
+    throw new invalid_parameter_exception('Catalogue operation and item must be supplied together.');
+}
 if ($section === 'catalogue') {
     require_capability('local/tenantmaster:managecatalogue', context_system::instance());
 }
@@ -97,12 +110,24 @@ $urlparams = ['section' => $section];
 if ($companyid > 0) {
     $urlparams['companyid'] = $companyid;
 }
+if ($section === 'academic' && $academicview === 'years') {
+    $urlparams['academicview'] = 'years';
+}
+if ($section === 'academic' && $typefilter !== '') {
+    $urlparams['type'] = $typefilter;
+}
 $pageurl = new moodle_url('/local/tenantmaster/index.php', $urlparams);
 $PAGE->set_url($pageurl);
 $PAGE->set_context($section === 'catalogue' ? context_system::instance() : $access->context());
 $PAGE->set_pagelayout('admin');
 $sectionstring = tenantmaster_section_string($section);
-$PAGE->set_title(get_string($sectionstring, 'local_tenantmaster'));
+$sectionlabel = get_string($sectionstring, 'local_tenantmaster');
+if ($section === 'academic' && $academicview === 'years') {
+    $sectionlabel = get_string('academicyears', 'local_tenantmaster');
+} else if ($section === 'academic' && isset(catalog::MASTER_TYPES[$typefilter])) {
+    $sectionlabel = get_string(catalog::MASTER_TYPES[$typefilter], 'local_tenantmaster');
+}
+$PAGE->set_title($sectionlabel);
 $PAGE->set_heading($tenant
     ? format_string($DB->get_field('local_iomad_companies', 'name', ['id' => $tenant->companyid]))
     : get_string('pluginname', 'local_tenantmaster'));
@@ -112,9 +137,14 @@ $PAGE->requires->js_call_amd('local_tenantmaster/table_tools', 'init', [[
     'ascending' => get_string('sortascending', 'local_tenantmaster'),
     'descending' => get_string('sortdescending', 'local_tenantmaster'),
     'actions' => get_string('actions'),
+    'previous' => get_string('previous'),
+    'next' => get_string('next'),
+    'page' => get_string('paginationpage', 'local_tenantmaster'),
+    'of' => get_string('paginationof', 'local_tenantmaster'),
+    'records' => get_string('paginationrecords', 'local_tenantmaster'),
 ]]);
 $PAGE->navbar->add(get_string('pluginname', 'local_tenantmaster'), new moodle_url('/local/tenantmaster/index.php'));
-$PAGE->navbar->add(get_string($sectionstring, 'local_tenantmaster'));
+$PAGE->navbar->add($sectionlabel);
 
 if ($action === 'cataloguetoggle') {
     require_sesskey();
@@ -123,8 +153,37 @@ if ($action === 'cataloguetoggle') {
         required_param('catalogueid', PARAM_INT),
         required_param('active', PARAM_BOOL),
     );
-    $notice = get_string('cataloguechangesqueued', 'local_tenantmaster');
-    $action = '';
+    redirect(
+        new moodle_url('/local/tenantmaster/index.php', [
+            'section' => 'catalogue',
+            'scope' => $cataloguescope,
+            'type' => $typefilter,
+            'showremoved' => $showremoved ? 1 : 0,
+        ]),
+        get_string('cataloguechangesqueued', 'local_tenantmaster'),
+    );
+}
+if (in_array($action, ['catalogueremove', 'cataloguerestore'], true)) {
+    require_sesskey();
+    require_capability('local/tenantmaster:managecatalogue', context_system::instance());
+    $catalogueservice = new catalogue_service();
+    $catalogueid = required_param('catalogueid', PARAM_INT);
+    if ($action === 'catalogueremove') {
+        $catalogueservice->remove($catalogueid);
+        $notice = get_string('catalogueremovequeued', 'local_tenantmaster');
+    } else {
+        $catalogueservice->restore($catalogueid);
+        $notice = get_string('cataloguerestorequeued', 'local_tenantmaster');
+    }
+    redirect(
+        new moodle_url('/local/tenantmaster/index.php', [
+            'section' => 'catalogue',
+            'scope' => $cataloguescope,
+            'type' => $typefilter,
+            'showremoved' => $showremoved ? 1 : 0,
+        ]),
+        $notice,
+    );
 }
 
 if ($action !== '') {
@@ -246,6 +305,7 @@ if (is_siteadmin() && $section === 'tenants') {
 
 $catalogueform = null;
 $catalogueitems = [];
+$catalogueimpact = null;
 if (is_siteadmin() && $section === 'catalogue') {
     require_capability('local/tenantmaster:managecatalogue', context_system::instance());
     $catalogueservice = new catalogue_service();
@@ -254,7 +314,16 @@ if (is_siteadmin() && $section === 'catalogue') {
         $cataloguescope = (string)$editingcatalogue->scope;
         $typefilter = (string)$editingcatalogue->mastertype;
     }
-    $catalogueitems = $catalogueservice->list($cataloguescope, $typefilter);
+    if ($catalogueoperationid > 0) {
+        $catalogueimpact = $catalogueservice->removal_impact($catalogueoperationid);
+        $expectedoperation = empty($catalogueimpact->item->deleted) ? 'remove' : 'restore';
+        if ($catalogueoperation !== $expectedoperation) {
+            throw new invalid_parameter_exception('Catalogue operation does not match the item state.');
+        }
+        $cataloguescope = (string)$catalogueimpact->item->scope;
+        $typefilter = (string)$catalogueimpact->item->mastertype;
+    }
+    $catalogueitems = $catalogueservice->list($cataloguescope, $typefilter, !empty($showremoved));
     $catalogueformtype = $typefilter ?: 'board';
     $parentoptions = [0 => get_string('none')];
     foreach ($catalogueservice->list($cataloguescope, $catalogueformtype) as $parent) {
@@ -313,7 +382,10 @@ if (is_siteadmin() && $section === 'catalogue') {
 
 $profileform = null;
 if ($tenant && $section === 'profile') {
-    $profileform = new tenant_profile($pageurl);
+    $profileform = new tenant_profile($pageurl, [
+        'editing' => true,
+        'tenanttype' => (string)$tenant->tenanttype,
+    ]);
     if ($data = $profileform->get_data()) {
         require_sesskey();
         $access->require('local/tenantmaster:manageprofile');
@@ -614,8 +686,11 @@ if ($tenant && $section === 'imports') {
 }
 
 echo $OUTPUT->header();
-echo tenantmaster_context_bar($tenantrepository->list(), $section, $companyid);
-echo tenantmaster_tabs($section, $companyid);
+echo tenantmaster_context_bar($tenantrepository->list(), $section, $companyid, [
+    'academicview' => $section === 'academic' ? $academicview : '',
+    'type' => $section === 'academic' ? $typefilter : '',
+]);
+echo tenantmaster_workspace_navigation($section, $tenant, $academicview, $typefilter);
 if ($notice !== '') {
     echo $OUTPUT->notification($notice, 'success', false);
 }
@@ -653,9 +728,23 @@ switch ($section) {
         }
         break;
     case 'catalogue':
-        echo $OUTPUT->heading(get_string('mastercatalogue', 'local_tenantmaster'));
+        echo $OUTPUT->heading(get_string('globalmastertemplates', 'local_tenantmaster'));
+        if ($catalogueimpact) {
+            echo tenantmaster_catalogue_confirmation(
+                $catalogueimpact,
+                $catalogueoperation,
+                !empty($showremoved),
+            );
+            break;
+        }
         echo tenantmaster_catalogue_navigation($cataloguescope, $typefilter);
-        echo tenantmaster_catalogue_table($catalogueitems, $cataloguescope, $typefilter);
+        echo tenantmaster_catalogue_removed_filter($cataloguescope, $typefilter, !empty($showremoved));
+        echo tenantmaster_catalogue_table(
+            $catalogueitems,
+            $cataloguescope,
+            $typefilter,
+            !empty($showremoved),
+        );
         echo $OUTPUT->heading(
             $catalogueeditid
                 ? get_string('editcatalogueitem', 'local_tenantmaster')
@@ -680,30 +769,44 @@ switch ($section) {
         echo tenantmaster_department_table($tenant);
         break;
     case 'academic':
-        echo $OUTPUT->heading($typefilter !== ''
-            ? get_string(catalog::MASTER_TYPES[$typefilter], 'local_tenantmaster')
-            : get_string('academicmasters', 'local_tenantmaster'));
+        $academicstring = $academicview === 'years'
+            ? get_string('academicyears', 'local_tenantmaster')
+            : ($typefilter !== ''
+                ? get_string(catalog::MASTER_TYPES[$typefilter], 'local_tenantmaster')
+                : get_string('tenantmasterdata', 'local_tenantmaster'));
+        echo $OUTPUT->heading($academicstring);
+        echo tenantmaster_tenant_scope($tenant);
         echo tenantmaster_origin_badge(false);
-        echo tenantmaster_academic_actions($tenant, $typefilter);
-        echo tenantmaster_academic_year_table($tenant);
-        echo $OUTPUT->heading(
-            $yeareditid
-                ? get_string('editacademicyear', 'local_tenantmaster')
-                : get_string('addacademicyear', 'local_tenantmaster'),
-            3,
-        );
-        $academicyearform->display();
-        if ($schoolyearsetupform) {
-            echo $OUTPUT->heading(get_string('schoolyearsetup', 'local_tenantmaster'), 3);
-            $schoolyearsetupform->display();
+        echo tenantmaster_academic_navigation($tenant, $academicview, $typefilter);
+        if ($academicview === 'years') {
+            echo tenantmaster_academic_year_table($tenant);
+            echo $OUTPUT->heading(
+                $yeareditid
+                    ? get_string('editacademicyear', 'local_tenantmaster')
+                    : get_string('addacademicyear', 'local_tenantmaster'),
+                3,
+            );
+            $academicyearform->display();
+            if ($schoolyearsetupform) {
+                echo $OUTPUT->heading(get_string('schoolyearsetup', 'local_tenantmaster'), 3);
+                $schoolyearsetupform->display();
+            }
+            break;
         }
-        echo tenantmaster_master_filters($companyid, $typefilter);
+        echo tenantmaster_academic_actions($tenant, $typefilter);
         echo tenantmaster_master_table(
             $tenant,
             $masterrepository->list((int)$tenant->id, $typefilter),
+            $typefilter === '',
         );
-        echo $OUTPUT->heading($editid ? get_string('editmaster', 'local_tenantmaster')
-            : get_string('addmaster', 'local_tenantmaster'), 3);
+        $masterlabel = $typefilter !== ''
+            ? get_string(catalog::MASTER_TYPES[$typefilter], 'local_tenantmaster')
+            : get_string('academicmaster', 'local_tenantmaster');
+        echo $OUTPUT->heading(get_string(
+            $editid ? 'editmastertype' : 'addmastertype',
+            'local_tenantmaster',
+            $masterlabel,
+        ), 3);
         $masterform->display();
         break;
     case 'courses':
@@ -814,10 +917,10 @@ function tenantmaster_section_string(string $section): string {
     return [
         'dashboard' => 'dashboard',
         'tenants' => 'tenants',
-        'catalogue' => 'mastercatalogue',
+        'catalogue' => 'globalmastertemplates',
         'profile' => 'institutionmasterdata',
         'organisation' => 'organisation',
-        'academic' => 'academicstructure',
+        'academic' => 'tenantmasterdata',
         'courses' => 'academiccourseprojections',
         'people' => 'usersandroles',
         'access' => 'cohortsandenrolments',
@@ -833,52 +936,63 @@ function tenantmaster_section_string(string $section): string {
 }
 
 /**
- * Standard theme tabs.
+ * Compact return path for one selected-tenant workspace page.
  *
  * @param string $active Active section.
- * @param int $companyid Company.
+ * @param object|null $tenant Tenant.
  * @return string
  */
-function tenantmaster_tabs(string $active, int $companyid): string {
-    global $OUTPUT;
+function tenantmaster_workspace_navigation(
+    string $active,
+    ?object $tenant,
+    string $academicview = 'masters',
+    string $mastertype = '',
+): string {
+    if (!$tenant || $active === 'dashboard') {
+        return '';
+    }
+    $dashboard = html_writer::link(
+        new moodle_url('/local/tenantmaster/index.php', [
+            'section' => 'dashboard',
+            'companyid' => $tenant->companyid,
+        ]),
+        html_writer::span('', 'fa fa-arrow-left')
+            . html_writer::span(get_string('tenantworkspace', 'local_tenantmaster')),
+        ['class' => 'btn btn-secondary'],
+    );
+    $label = get_string(tenantmaster_section_string($active), 'local_tenantmaster');
+    if ($active === 'academic' && $academicview === 'years') {
+        $label = get_string('academicyears', 'local_tenantmaster');
+    } else if ($active === 'academic' && isset(catalog::MASTER_TYPES[$mastertype])) {
+        $label = get_string(catalog::MASTER_TYPES[$mastertype], 'local_tenantmaster');
+    }
+    $current = html_writer::span($label, 'tenantmaster-workspace-nav__current');
+    return html_writer::div($dashboard . $current, 'tenantmaster-workspace-nav');
+}
 
-    $sections = ['dashboard'];
-    if (is_siteadmin()) {
-        $sections[] = 'catalogue';
-        $sections[] = 'tenants';
-    }
-    if ($companyid > 0) {
-        $sections = array_merge($sections, [
-            'profile',
-            'organisation',
-            'academic',
-            'courses',
-            'people',
-            'access',
-            'assessments',
-            'certificates',
-        ]);
-        if ($GLOBALS['DB']->get_field('local_tenantmaster_tenant', 'tenanttype', ['companyid' => $companyid]) === 'school') {
-            $sections[] = 'classes';
-        }
-        $sections = array_merge($sections, [
-            'progression',
-            'imports',
-            'sync',
-            'validation',
-            'audit',
-        ]);
-    }
+/**
+ * Identify the institution that owns records on a tenant-scoped page.
+ *
+ * @param object $tenant Tenant.
+ * @return string
+ */
+function tenantmaster_tenant_scope(object $tenant): string {
+    global $DB;
 
-    $tabs = [];
-    foreach ($sections as $section) {
-        $tabs[] = new tabobject(
-            $section,
-            new moodle_url('/local/tenantmaster/index.php', ['section' => $section, 'companyid' => $companyid]),
-            get_string(tenantmaster_section_string($section), 'local_tenantmaster'),
-        );
-    }
-    return $OUTPUT->tabtree($tabs, $active);
+    $companyname = $DB->get_field(
+        'local_iomad_companies',
+        'name',
+        ['id' => $tenant->companyid],
+        MUST_EXIST,
+    );
+    return html_writer::div(
+        html_writer::span('', 'fa fa-building')
+            . html_writer::span(
+                get_string('tenantmasterdatascope', 'local_tenantmaster', format_string($companyname)),
+            )
+            . html_writer::span(get_string('tenantowned', 'local_tenantmaster'), 'tenantmaster-tenant-scope__badge'),
+        'tenantmaster-tenant-scope',
+    );
 }
 
 /**
@@ -889,7 +1003,12 @@ function tenantmaster_tabs(string $active, int $companyid): string {
  * @param int $companyid Active company.
  * @return string
  */
-function tenantmaster_context_bar(array $tenants, string $section, int $companyid): string {
+function tenantmaster_context_bar(
+    array $tenants,
+    string $section,
+    int $companyid,
+    array $preservedparams = [],
+): string {
     if (!is_siteadmin()) {
         return '';
     }
@@ -909,8 +1028,18 @@ function tenantmaster_context_bar(array $tenants, string $section, int $companyi
         'method' => 'get',
         'action' => (new moodle_url('/local/tenantmaster/index.php'))->out(false),
     ])
-        . html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'section', 'value' => $section])
-        . html_writer::tag(
+        . html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'section', 'value' => $section]);
+    foreach ($preservedparams as $name => $value) {
+        if ($value === '') {
+            continue;
+        }
+        $form .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => $name,
+            'value' => $value,
+        ]);
+    }
+    $form .= html_writer::tag(
             'label',
             html_writer::span(get_string('activeinstitution', 'local_tenantmaster')) . $select,
             ['for' => 'tenantmaster-company-context'],
@@ -1025,7 +1154,7 @@ function tenantmaster_global_dashboard(): string {
     $definitions = [
         [
             new moodle_url('/local/tenantmaster/index.php', ['section' => 'catalogue']),
-            'mastercatalogue',
+            'globalmastertemplates',
             'fa-layer-group',
             get_string('catalogueitemcount', 'local_tenantmaster', (object)[
                 'active' => $DB->count_records('local_tenantmaster_catitem', ['active' => 1]),
@@ -1146,9 +1275,15 @@ function tenantmaster_catalogue_icon(string $mastertype): string {
  * @param array<int, object> $items Items.
  * @param string $scope Active scope.
  * @param string $type Active type.
+ * @param bool $showremoved Whether removed rows are visible.
  * @return string
  */
-function tenantmaster_catalogue_table(array $items, string $scope, string $type): string {
+function tenantmaster_catalogue_table(
+    array $items,
+    string $scope,
+    string $type,
+    bool $showremoved,
+): string {
     global $OUTPUT;
 
     if (!$items) {
@@ -1189,30 +1324,129 @@ function tenantmaster_catalogue_table(array $items, string $scope, string $type)
             'active' => empty($item->active) ? 1 : 0,
             'sesskey' => sesskey(),
         ]);
-        $actions = $OUTPUT->action_icon(
-            $editurl,
-            new pix_icon('t/edit', get_string('edit')),
-        ) . $OUTPUT->action_icon(
-            $toggleurl,
-            new pix_icon(
-                empty($item->active) ? 't/show' : 't/hide',
-                get_string(empty($item->active) ? 'activatecatalogueitem' : 'deactivatecatalogueitem',
-                    'local_tenantmaster'),
-            ),
-        );
+        $operationurl = new moodle_url('/local/tenantmaster/index.php', [
+            'section' => 'catalogue',
+            'scope' => $scope,
+            'type' => $type,
+            'showremoved' => $showremoved ? 1 : 0,
+            'catalogueoperationid' => $item->id,
+            'catalogueoperation' => empty($item->deleted) ? 'remove' : 'restore',
+        ]);
+        if (empty($item->deleted)) {
+            $actions = $OUTPUT->action_icon(
+                $editurl,
+                new pix_icon('t/edit', get_string('edit')),
+            ) . $OUTPUT->action_icon(
+                $toggleurl,
+                new pix_icon(
+                    empty($item->active) ? 't/show' : 't/hide',
+                    get_string(empty($item->active) ? 'activatecatalogueitem' : 'deactivatecatalogueitem',
+                        'local_tenantmaster'),
+                ),
+            ) . $OUTPUT->action_icon(
+                $operationurl,
+                new pix_icon('t/delete', get_string('removecatalogueitem', 'local_tenantmaster')),
+            );
+        } else {
+            $actions = $OUTPUT->action_icon(
+                $operationurl,
+                new pix_icon('t/restore', get_string('restorecatalogueitem', 'local_tenantmaster')),
+            );
+        }
         $table->data[] = [
             get_string(catalog::MASTER_TYPES[$item->mastertype], 'local_tenantmaster'),
             s($item->code),
             format_string($item->name),
             s($item->parentexternalid ?: get_string('none')),
             (int)$item->version,
-            get_string(empty($item->active) ? 'inactive' : 'active'),
+            !empty($item->deleted)
+                ? get_string('cataloguestatusremoved', 'local_tenantmaster')
+                : get_string(empty($item->active) ? 'inactive' : 'active'),
             get_string('propagationstate_' . $item->propagationstate, 'local_tenantmaster')
                 . ($summaryparts ? html_writer::tag('small', implode(' | ', $summaryparts)) : ''),
             $actions,
         ];
     }
     return html_writer::table($table);
+}
+
+/**
+ * Toggle visibility of removed catalogue records.
+ *
+ * @param string $scope Scope.
+ * @param string $type Master type.
+ * @param bool $showremoved Current state.
+ * @return string
+ */
+function tenantmaster_catalogue_removed_filter(string $scope, string $type, bool $showremoved): string {
+    $url = new moodle_url('/local/tenantmaster/index.php', [
+        'section' => 'catalogue',
+        'scope' => $scope,
+        'type' => $type,
+        'showremoved' => $showremoved ? 0 : 1,
+    ]);
+    return html_writer::div(
+        html_writer::link(
+            $url,
+            get_string($showremoved ? 'hideremovedcatalogueitems' : 'showremovedcatalogueitems',
+                'local_tenantmaster'),
+            ['class' => 'btn btn-secondary'],
+        ),
+        'tenantmaster-actions my-3',
+    );
+}
+
+/**
+ * Render a server-side removal or restoration confirmation.
+ *
+ * @param object $impact Impact analysis.
+ * @param string $operation Operation.
+ * @param bool $showremoved Preserve removed-row filter.
+ * @return string
+ */
+function tenantmaster_catalogue_confirmation(
+    object $impact,
+    string $operation,
+    bool $showremoved,
+): string {
+    global $OUTPUT;
+
+    $cancelurl = new moodle_url('/local/tenantmaster/index.php', [
+        'section' => 'catalogue',
+        'scope' => $impact->item->scope,
+        'type' => $impact->item->mastertype,
+        'showremoved' => $showremoved ? 1 : 0,
+    ]);
+    if ($operation === 'remove' && !$impact->canremove) {
+        return $OUTPUT->notification(
+            get_string('catalogueremoveblockedchildren', 'local_tenantmaster', (object)[
+                'name' => format_string($impact->item->name),
+                'children' => (int)$impact->dependentchildren,
+            ]),
+            'error',
+            false,
+        ) . $OUTPUT->single_button($cancelurl, get_string('continue'), 'get');
+    }
+    $isrestore = $operation === 'restore';
+    $message = get_string(
+        $isrestore ? 'cataloguerestoreconfirm' : 'catalogueremoveconfirm',
+        'local_tenantmaster',
+        (object)[
+            'name' => format_string($impact->item->name),
+            'linked' => (int)$impact->linkedtenants,
+            'customised' => (int)$impact->customisedtenants,
+        ],
+    );
+    $continueurl = new moodle_url('/local/tenantmaster/index.php', [
+        'section' => 'catalogue',
+        'scope' => $impact->item->scope,
+        'type' => $impact->item->mastertype,
+        'showremoved' => $showremoved ? 1 : 0,
+        'action' => $isrestore ? 'cataloguerestore' : 'catalogueremove',
+        'catalogueid' => $impact->item->id,
+        'sesskey' => sesskey(),
+    ]);
+    return $OUTPUT->confirm($message, $continueurl, $cancelurl);
 }
 
 /**
@@ -1245,33 +1479,31 @@ function tenantmaster_dashboard(object $tenant): string {
                 ['tenantid' => $tenant->id, 'status' => 'open', 'blocking' => 1]
             ),
     ];
-    $table = new html_table();
-    $table->head = [
-        get_string('measure', 'local_tenantmaster'),
-        get_string('count', 'local_tenantmaster'),
-    ];
+    $summary = [];
     foreach ($counts as $label => $count) {
-        $table->data[] = [s($label), (int)$count];
+        $summary[] = html_writer::div(
+            html_writer::tag('strong', (int)$count)
+                . html_writer::tag('small', s($label)),
+            'tenantmaster-summary__item',
+        );
     }
     $actions = html_writer::div(
-        tenantmaster_action_button($tenant, 'syncall', get_string('syncall', 'local_tenantmaster'), 'primary')
-        . tenantmaster_action_button($tenant, 'validate', get_string('validateall', 'local_tenantmaster'), 'secondary')
-        . tenantmaster_action_button(
+        tenantmaster_action_button(
             $tenant,
             'adoptdefaults',
             get_string('adoptdefaults', 'local_tenantmaster'),
             'secondary',
         ),
-        'd-flex flex-wrap gap-2 mb-3',
+        'tenantmaster-actions mb-3',
     );
-    return $OUTPUT->heading(get_string('dashboard', 'local_tenantmaster'), 2)
-        . tenantmaster_dashboard_tools($tenant)
-        . tenantmaster_native_actions($tenant, 'overview')
-        . $actions . html_writer::table($table);
+    return $OUTPUT->heading(get_string('tenantworkspace', 'local_tenantmaster'), 2)
+        . html_writer::div(implode('', $summary), 'tenantmaster-summary')
+        . $actions
+        . tenantmaster_dashboard_tools($tenant);
 }
 
 /**
- * Tenant operations grouped by authoritative ownership.
+ * Tenant operations arranged as one linear workflow.
  *
  * @param object $tenant Tenant.
  * @return string
@@ -1279,56 +1511,120 @@ function tenantmaster_dashboard(object $tenant): string {
 function tenantmaster_dashboard_tools(object $tenant): string {
     global $OUTPUT;
 
-    $native = [
-        ['profile', 'institutionmasterdata', 'i/settings', 'tool_company_help'],
-        ['organisation', 'organisation', 'i/group', 'tool_organisation_help'],
-        ['people', 'usersandroles', 'i/users', 'tool_people_help'],
-        ['courses', 'courses', 'i/course', 'tool_courses_help'],
-        ['access', 'cohortsandenrolments', 't/cohort', 'tool_access_help'],
+    $groups = [
+        'workspacesetup' => [
+            ['profile', 'institutionmasterdata', 'fa-building', 'tool_company_help', 'native', []],
+            ['organisation', 'organisation', 'fa-diagram-project', 'tool_organisation_help', 'native', []],
+        ],
+        'workspacemasterdata' => [
+            [
+                'academic',
+                'academicyears',
+                'fa-calendar',
+                'tool_academic_help',
+                'custom',
+                ['academicview' => 'years'],
+            ],
+        ],
+        'workspaceprojections' => [
+            ['courses', 'academiccourseprojections', 'fa-graduation-cap', 'tool_courses_help', 'native', []],
+            ['people', 'usersandroles', 'fa-users', 'tool_people_help', 'native', []],
+            ['access', 'cohortsandenrolments', 'fa-link', 'tool_access_help', 'native', []],
+        ],
+        'workspacelearning' => [
+            ['assessments', 'assessments', 'fa-list-check', 'tool_assessments_help', 'custom', []],
+            ['certificates', 'certificates', 'fa-certificate', 'tool_certificates_help', 'custom', []],
+            ['classes', 'classmanagement', 'fa-people-group', 'tool_classes_help', 'custom', []],
+            ['progression', 'progression', 'fa-chart-line', 'tool_progression_help', 'custom', []],
+        ],
+        'workspaceoperations' => [
+            ['imports', 'imports', 'fa-file-import', 'tool_imports_help', 'custom', []],
+            ['sync', 'synchronization', 'fa-arrows-rotate', 'tool_sync_help', 'custom', []],
+            ['validation', 'validation', 'fa-shield', 'tool_validation_help', 'custom', []],
+            ['audit', 'audit', 'fa-clipboard', 'tool_audit_help', 'custom', []],
+        ],
     ];
-    $custom = [
-        ['academic', 'academicstructure', 'i/field', 'tool_academic_help'],
-        ['classes', 'classmanagement', 'i/cohort', 'tool_classes_help'],
-        ['assessments', 'assessments', 'i/grades', 'tool_assessments_help'],
-        ['certificates', 'certificates', 'i/permissions', 'tool_certificates_help'],
-        ['progression', 'progression', 't/reload', 'tool_progression_help'],
-        ['imports', 'imports', 't/upload', 'tool_imports_help'],
-        ['sync', 'synchronization', 't/reload', 'tool_sync_help'],
-        ['validation', 'validation', 'i/valid', 'tool_validation_help'],
-        ['audit', 'audit', 'i/report', 'tool_audit_help'],
-    ];
+    foreach (tenantmaster_academic_master_types((string)$tenant->tenanttype) as $mastertype => $icon) {
+        $groups['workspacemasterdata'][] = [
+            'academic',
+            catalog::MASTER_TYPES[$mastertype],
+            $icon,
+            'tool_academic_help',
+            'custom',
+            ['type' => $mastertype],
+        ];
+    }
     if ((string)$tenant->tenanttype !== 'school') {
-        $custom = array_values(array_filter(
-            $custom,
+        $groups['workspacelearning'] = array_values(array_filter(
+            $groups['workspacelearning'],
             static fn(array $definition): bool => $definition[0] !== 'classes',
         ));
     }
-    $render = static function (array $definitions) use ($tenant, $OUTPUT): string {
+    $step = 0;
+    $output = '';
+    foreach ($groups as $groupkey => $definitions) {
         $items = [];
-        foreach ($definitions as [$section, $labelkey, $icon, $helpkey]) {
+        foreach ($definitions as [$section, $labelkey, $icon, $helpkey, $origin, $params]) {
+            $step++;
             $body = html_writer::span(
-                html_writer::tag('strong', get_string($labelkey, 'local_tenantmaster'))
-                    . html_writer::tag('small', get_string($helpkey, 'local_tenantmaster')),
+                html_writer::span(
+                    html_writer::span((string)$step, 'tenantmaster-tool__step')
+                        . html_writer::tag('strong', get_string($labelkey, 'local_tenantmaster')),
+                    'tenantmaster-tool__heading',
+                )
+                    . html_writer::tag('small', get_string($helpkey, 'local_tenantmaster'))
+                    . html_writer::span(
+                        get_string($origin === 'native' ? 'origin_native' : 'tenantowned',
+                            'local_tenantmaster'),
+                        'tenantmaster-tool__origin tenantmaster-tool__origin--' . $origin,
+                    ),
                 'tenantmaster-tool__body',
             );
             $items[] = html_writer::link(
                 new moodle_url('/local/tenantmaster/index.php', [
                     'section' => $section,
                     'companyid' => $tenant->companyid,
-                ]),
-                $OUTPUT->pix_icon($icon, '') . $body,
-                ['class' => 'tenantmaster-tool'],
+                ] + $params),
+                html_writer::span('', 'fa ' . $icon)
+                    . $body,
+                ['class' => 'tenantmaster-tool tenantmaster-tool--workflow'],
             );
         }
-        return html_writer::div(implode('', $items), 'tenantmaster-tools');
-    };
+        $output .= $OUTPUT->heading(get_string($groupkey, 'local_tenantmaster'), 3)
+            . html_writer::div(implode('', $items), 'tenantmaster-tools tenantmaster-tools--workflow');
+    }
+    return $output;
+}
 
-    return $OUTPUT->heading(get_string('nativeoperations', 'local_tenantmaster'), 3)
-        . tenantmaster_origin_badge(true)
-        . $render($native)
-        . $OUTPUT->heading(get_string('academicorchestration', 'local_tenantmaster'), 3)
-        . tenantmaster_origin_badge(false)
-        . $render($custom);
+/**
+ * Academic master domains relevant to one institution type.
+ *
+ * @param string $tenanttype Tenant type.
+ * @return array<string, string>
+ */
+function tenantmaster_academic_master_types(string $tenanttype): array {
+    return match ($tenanttype) {
+        'school' => [
+            'board' => 'fa-building-columns',
+            'medium' => 'fa-language',
+            'grade' => 'fa-graduation-cap',
+            'stream' => 'fa-diagram-project',
+            'division' => 'fa-people-group',
+            'subject' => 'fa-book',
+        ],
+        'university', 'college' => [
+            'programme' => 'fa-graduation-cap',
+            'semester' => 'fa-calendar',
+            'specialisation' => 'fa-diagram-project',
+            'credit' => 'fa-award',
+            'subject' => 'fa-book',
+        ],
+        default => [
+            'programme' => 'fa-graduation-cap',
+            'subject' => 'fa-book',
+            'credit' => 'fa-award',
+        ],
+    };
 }
 
 /**
@@ -2036,6 +2332,61 @@ function tenantmaster_master_filters(int $companyid, string $active): string {
 }
 
 /**
+ * Tile navigation for tenant-specific academic masters.
+ *
+ * @param object $tenant Tenant.
+ * @param string $academicview Active academic view.
+ * @param string $activetype Active master type.
+ * @return string
+ */
+function tenantmaster_academic_navigation(
+    object $tenant,
+    string $academicview,
+    string $activetype,
+): string {
+    global $OUTPUT;
+
+    $definitions = [
+        [
+            'academicyears',
+            'fa-calendar',
+            ['academicview' => 'years'],
+            $academicview === 'years',
+        ],
+    ];
+    foreach (tenantmaster_academic_master_types((string)$tenant->tenanttype) as $mastertype => $icon) {
+        $definitions[] = [
+            catalog::MASTER_TYPES[$mastertype],
+            $icon,
+            ['type' => $mastertype],
+            $academicview === 'masters' && $activetype === $mastertype,
+        ];
+    }
+    $tiles = [];
+    foreach ($definitions as [$labelkey, $icon, $params, $active]) {
+        $tiles[] = html_writer::link(
+            new moodle_url('/local/tenantmaster/index.php', [
+                'section' => 'academic',
+                'companyid' => $tenant->companyid,
+            ] + $params),
+            html_writer::span('', 'fa ' . $icon)
+                . html_writer::span(
+                    html_writer::tag('strong', get_string($labelkey, 'local_tenantmaster')),
+                    'tenantmaster-tool__body',
+                ),
+            [
+                'class' => 'tenantmaster-tool' . ($active ? ' is-active' : ''),
+                'aria-current' => $active ? 'page' : null,
+            ],
+        );
+    }
+    return html_writer::div(
+        implode('', $tiles),
+        'tenantmaster-tools tenantmaster-tools--compact tenantmaster-academic-navigation',
+    );
+}
+
+/**
  * Academic year table.
  *
  * @param object $tenant Tenant.
@@ -2065,6 +2416,7 @@ function tenantmaster_academic_year_table(object $tenant): string {
                 new moodle_url('/local/tenantmaster/index.php', [
                     'section' => 'academic',
                     'companyid' => $tenant->companyid,
+                    'academicview' => 'years',
                     'yeareditid' => $record->id,
                 ]),
                 get_string('edit'),
@@ -2079,18 +2431,19 @@ function tenantmaster_academic_year_table(object $tenant): string {
  *
  * @param object $tenant Tenant.
  * @param array<int, object> $masters Masters.
+ * @param bool $showtype Whether to display the master-type column.
  * @return string
  */
-function tenantmaster_master_table(object $tenant, array $masters): string {
+function tenantmaster_master_table(object $tenant, array $masters, bool $showtype = true): string {
     $table = new html_table();
-    $table->head = [
-        get_string('mastertype', 'local_tenantmaster'),
+    $table->head = array_values(array_filter([
+        $showtype ? get_string('mastertype', 'local_tenantmaster') : null,
         get_string('code', 'local_tenantmaster'),
         get_string('name'),
         get_string('active', 'local_tenantmaster'),
         get_string('nativeprojection', 'local_tenantmaster'),
         get_string('actions'),
-    ];
+    ], static fn(?string $heading): bool => $heading !== null));
     foreach ($masters as $master) {
         $mappings = $GLOBALS['DB']->get_records('local_tenantmaster_mapping', [
             'tenantid' => $tenant->id,
@@ -2135,14 +2488,20 @@ function tenantmaster_master_table(object $tenant, array $masters): string {
             'secondary',
             ['masterid' => $master->id, 'type' => $master->mastertype],
         );
-        $table->data[] = [
-            get_string(catalog::MASTER_TYPES[$master->mastertype], 'local_tenantmaster'),
+        $row = [
             s($master->code),
             format_string($master->name),
             $master->active ? get_string('yes') : get_string('no'),
             html_writer::div(implode('', $projectionitems), 'tenantmaster-table-actions'),
             html_writer::div($actions, 'tenantmaster-table-actions'),
         ];
+        if ($showtype) {
+            array_unshift(
+                $row,
+                get_string(catalog::MASTER_TYPES[$master->mastertype], 'local_tenantmaster'),
+            );
+        }
+        $table->data[] = $row;
     }
     return html_writer::table($table);
 }

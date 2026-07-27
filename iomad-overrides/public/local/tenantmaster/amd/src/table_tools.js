@@ -2,6 +2,7 @@
 
 define([], function() {
     const tableSelector = '#region-main table.generaltable';
+    const defaultPageSize = 20;
 
     const valueFor = (cell) => {
         const value = cell.textContent.trim();
@@ -28,7 +29,7 @@ define([], function() {
         (scrollRegion || table).before(element);
     };
 
-    const addFilter = (table, rows, labels, index) => {
+    const addFilter = (table, state, labels, index) => {
         const toolbar = document.createElement('div');
         toolbar.className = 'tenantmaster-table-tools';
 
@@ -51,11 +52,10 @@ define([], function() {
         clear.textContent = '\u00d7';
 
         const apply = () => {
-            const query = input.value.trim().toLocaleLowerCase();
-            rows.forEach((row) => {
-                row.hidden = query !== '' && !row.textContent.toLocaleLowerCase().includes(query);
-            });
-            clear.disabled = query === '';
+            state.query = input.value.trim().toLocaleLowerCase();
+            state.page = 1;
+            clear.disabled = state.query === '';
+            state.render();
         };
         input.addEventListener('input', apply);
         clear.addEventListener('click', () => {
@@ -69,7 +69,7 @@ define([], function() {
         insertBeforeTable(table, toolbar);
     };
 
-    const addSorting = (table, rows, labels) => {
+    const addSorting = (table, state, labels) => {
         const headers = [...table.querySelectorAll('thead th')];
         headers.forEach((header, column) => {
             const heading = header.textContent.trim();
@@ -105,11 +105,48 @@ define([], function() {
                         }
                     }
                 });
-                [...rows]
+                const sorted = [...state.rows]
                     .sort((left, right) => compare(left.cells[column], right.cells[column], direction))
-                    .forEach((row) => table.tBodies[0].append(row));
+                state.rows.splice(0, state.rows.length, ...sorted);
+                sorted.forEach((row) => table.tBodies[0].append(row));
+                state.page = 1;
+                state.render();
             });
         });
+    };
+
+    const addPagination = (table, state, labels) => {
+        const pagination = document.createElement('nav');
+        pagination.className = 'tenantmaster-pagination';
+        pagination.setAttribute('aria-label', labels.page);
+
+        const previous = document.createElement('button');
+        previous.className = 'btn btn-secondary';
+        previous.type = 'button';
+        previous.textContent = labels.previous;
+
+        const status = document.createElement('span');
+        status.className = 'tenantmaster-pagination__status';
+        status.setAttribute('aria-live', 'polite');
+
+        const next = document.createElement('button');
+        next.className = 'btn btn-secondary';
+        next.type = 'button';
+        next.textContent = labels.next;
+
+        previous.addEventListener('click', () => {
+            state.page = Math.max(1, state.page - 1);
+            state.render();
+        });
+        next.addEventListener('click', () => {
+            state.page += 1;
+            state.render();
+        });
+
+        pagination.append(previous, status, next);
+        const scrollRegion = table.closest('.iomad-learning-table-scroll');
+        (scrollRegion || table).after(pagination);
+        return {pagination, previous, status, next};
     };
 
     const enhance = (table, labels, index) => {
@@ -125,8 +162,50 @@ define([], function() {
         if (rows.length < 2) {
             return;
         }
-        addFilter(table, rows, labels, index);
-        addSorting(table, rows, labels);
+        const requestedPageSize = Number(table.dataset.tenantmasterPageSize);
+        const state = {
+            rows,
+            query: '',
+            page: 1,
+            pageSize: Number.isInteger(requestedPageSize) && requestedPageSize > 0
+                ? requestedPageSize
+                : defaultPageSize,
+            pagination: null,
+            render: null,
+        };
+        if (rows.length > state.pageSize) {
+            state.pagination = addPagination(table, state, labels);
+        }
+        state.render = () => {
+            const matches = state.rows.filter(
+                (row) => state.query === ''
+                    || row.textContent.toLocaleLowerCase().includes(state.query),
+            );
+            const pages = Math.max(1, Math.ceil(matches.length / state.pageSize));
+            state.page = Math.min(Math.max(1, state.page), pages);
+            const first = (state.page - 1) * state.pageSize;
+            const visible = new Set(matches.slice(first, first + state.pageSize));
+            state.rows.forEach((row) => {
+                row.hidden = !visible.has(row);
+            });
+            if (state.pagination) {
+                state.pagination.pagination.hidden = matches.length <= state.pageSize;
+                state.pagination.previous.disabled = state.page <= 1;
+                state.pagination.next.disabled = state.page >= pages;
+                state.pagination.status.textContent = [
+                    labels.page,
+                    state.page,
+                    labels.of,
+                    pages,
+                    '\u00b7',
+                    matches.length,
+                    labels.records,
+                ].join(' ');
+            }
+        };
+        addFilter(table, state, labels, index);
+        addSorting(table, state, labels);
+        state.render();
     };
 
     return {

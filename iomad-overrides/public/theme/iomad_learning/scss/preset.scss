@@ -877,9 +877,11 @@ body.limitedwidth #page.drawers .main-inner {
 
 .iomad_company_admin .iomadlink_container > a {
   display: flex;
+  width: 13rem;
+  height: 10.5rem;
   float: none;
   min-width: 0;
-  min-height: 10rem;
+  min-height: 10.5rem;
   margin: 0;
   padding: var(--iomad-learning-cardpadding);
   align-items: center;
@@ -887,15 +889,25 @@ body.limitedwidth #page.drawers .main-inner {
   background: var(--iomad-learning-surface);
   border: var(--iomad-learning-borderwidth) solid var(--iomad-learning-bordercolor);
   border-radius: var(--iomad-learning-cardradius);
+  box-shadow: var(--iomad-learning-shadowsm);
   color: var(--iomad-learning-linkcolor);
   text-decoration: none;
-  flex: 1 1 13rem;
+  flex: 0 1 13rem;
+  transition:
+    background-color var(--iomad-learning-motionduration) ease,
+    border-color var(--iomad-learning-motionduration) ease,
+    box-shadow var(--iomad-learning-motionduration) ease,
+    color var(--iomad-learning-motionduration) ease,
+    transform var(--iomad-learning-motionduration) ease;
 }
 
 .iomad_company_admin .iomadlink_container > a:hover,
 .iomad_company_admin .iomadlink_container > a:focus-visible {
+  background: var(--iomad-learning-selectionbackground);
   border-color: var(--iomad-learning-navigationiconactive);
+  box-shadow: var(--iomad-learning-shadowmd);
   color: var(--iomad-learning-linkhover);
+  transform: translateY(calc(-1 * var(--iomad-learning-coursehovertranslate)));
 }
 
 .iomad_company_admin .iomadlink_container > a[data-tool-origin="custom"] {
@@ -921,6 +933,15 @@ body.limitedwidth #page.drawers .main-inner {
   height: var(--iomad-learning-adminiconsize);
   margin: 0;
   color: var(--iomad-learning-navigationiconcolor);
+  transition:
+    color var(--iomad-learning-motionduration) ease,
+    transform var(--iomad-learning-motionduration) ease;
+}
+
+.iomad_company_admin .iomadlink_container > a:hover .fa-topic,
+.iomad_company_admin .iomadlink_container > a:focus-visible .fa-topic {
+  color: var(--iomad-learning-navigationiconactive);
+  transform: scale(1.05);
 }
 
 .iomad_company_admin .iomadlink .iomadicon .fa-action {
@@ -1177,7 +1198,8 @@ body.iomad-learning-focus-mode #page.drawers .main-inner {
 
   .iomad_company_admin .iomadlink_container > a {
     width: 100%;
-    min-height: 8.5rem;
+    height: 8.75rem;
+    min-height: 8.75rem;
     flex: 0 0 auto;
   }
 

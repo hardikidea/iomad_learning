@@ -6,7 +6,7 @@
 |---|---|
 | Repository gate | Shell syntax, Compose, compatibility, docs, XMLDB, override mirror, PHP syntax and sanitized packs pass |
 | Project PHPUnit | Project test files run with warnings and notices treated as failures on PHP 8.3/PostgreSQL 16 |
-| Tenant Master PHPUnit | 10 test files, 31 tests and 139 assertions pass |
+| Tenant Master PHPUnit | 13 test files and 47 declared test methods pass inside the complete project matrix |
 | JSON and redaction helpers | Strict parsing and deterministic hashing |
 | Default adoption | School/university catalogues, hierarchy, idempotency, active year |
 | Native projection | Academic-year parent, categories, courses, company assignment |
@@ -59,6 +59,23 @@ overflow or JavaScript errors; wide native tables remained inside Moodle's
 responsive horizontal scroller. A production release still needs a real
 translated RTL language pack and human language review.
 
+## Tenant Admin Release Evidence
+
+Release 1.8.0 was rebuilt and validated locally on 2026-07-27:
+
+- The dedicated **Tenants** Admin Tools tab inherited the selected IOMAD
+  company and rendered 22 School tenant tiles.
+- Every tile returned HTTP 200 with the company context preserved. Grade opened
+  the focused Grade list and form rather than the combined academic catalogue.
+- The 51-row combined catalogue filtered, sorted and paginated at 20 rows per
+  page.
+- Desktop at 1440 px and mobile at 390 px had zero tile overlaps, zero
+  document overflow, 22 non-zero semantic SVGs and no browser console errors.
+- The complete project-owned matrix passed all 59 configured test files. The
+  final navigation and CRUD rerun passed 4 tests/34 assertions and 9 tests/38
+  assertions respectively.
+- Database schema and live Tenant Master validation passed with zero findings.
+
 ## Lifecycle And Recovery Evidence
 
 | Gate | Result |
@@ -69,13 +86,13 @@ translated RTL language pack and human language review.
 | Tenant smoke test | Default URL and every configured tenant hostname passed after upgrade and restore |
 | Recovery restore | Matching PostgreSQL, dataroot and immutable source state restored from the verified pre-drill set |
 | Ecosystem validation | 94/94 live checks passed with Floci connected, zero warnings and zero failures |
-| Final recovery set | `backups/20260725-185646`, manifest SHA-256 `dbf4071874a02926f6cbfe502e79691713bc68fd6629006e880ac9ef63a47a2a` |
+| Final recovery set | `backups/20260727-153826`, manifest SHA-256 `d02f410dffe8c83cc7812e7b05799761c1fe346b7e4f389bba9812d59a1c205a` |
 | Retention | Timestamp recognition regression-tested; superseded drill sets removed only after final-set verification |
 
 The immutable web image ID is
-`sha256:30882f97e36fef2f1baabda8a013fe110c2f4f77b2edb366b8d2babae5a172d9`;
+`sha256:507f74ae4551f5d3b6dfc366927f6b241c4d3dee17400d14b3cbb04123e34b6f`;
 the cron image ID is
-`sha256:a816b496ec6969e2b4dc82c1c8ccb517c6bd2e03a21301d0a91a922371f55ae0`.
+`sha256:235b10a5ae5d706f798bd2313c3aa06453fdc57fb688deafc14d04aad023f6fa`.
 Both images label the exact pinned IOMAD commit.
 
 ## Acceptance Checklist

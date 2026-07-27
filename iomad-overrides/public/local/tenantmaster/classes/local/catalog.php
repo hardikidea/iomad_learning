@@ -38,6 +38,15 @@ final class catalog {
         'progression_rule' => 'mastertype_progression_rule',
     ];
 
+    /** @var string[] Master domains shared by every tenant type. */
+    private const SHARED_MASTER_TYPES = [
+        'course_template',
+        'assessment_policy',
+        'attendance_policy',
+        'certificate_rule',
+        'progression_rule',
+    ];
+
     /** @var array<string, string> */
     public const ROLE_KEYS = [
         'principal_registrar' => 'role_principal_registrar',
@@ -79,6 +88,22 @@ final class catalog {
             static fn(string $stringkey): string => get_string($stringkey, 'local_tenantmaster'),
             $items,
         );
+    }
+
+    /**
+     * Master domains permitted for one tenant type.
+     *
+     * @param string $tenanttype Tenant type.
+     * @return string[]
+     */
+    public static function master_types_for_tenant(string $tenanttype): array {
+        $specific = match ($tenanttype) {
+            'school' => ['board', 'medium', 'grade', 'stream', 'division', 'subject'],
+            'university', 'college' => ['programme', 'semester', 'specialisation', 'credit', 'subject'],
+            'training' => ['programme', 'credit', 'subject'],
+            default => [],
+        };
+        return array_merge($specific, self::SHARED_MASTER_TYPES);
     }
 
     /**
