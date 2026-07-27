@@ -930,6 +930,68 @@ function tenantmaster_section_string(string $section): string {
 }
 
 /**
+ * Describe how one section reads and changes platform records.
+ *
+ * @param string $section Section.
+ * @return array{mode: string, label: string, description: string, icon: string}
+ */
+function tenantmaster_section_sync_definition(string $section): array {
+    $modes = [
+        'automatic' => ['syncmode_automatic', 'fa-bolt'],
+        'manual' => ['syncmode_manual', 'fa-pen-to-square'],
+        'mixed' => ['syncmode_mixed', 'fa-arrows-rotate'],
+        'review' => ['syncmode_review', 'fa-clipboard-check'],
+        'live' => ['syncmode_live', 'fa-eye'],
+    ];
+    $sectionmodes = [
+        'dashboard' => 'live',
+        'tenants' => 'manual',
+        'catalogue' => 'automatic',
+        'profile' => 'mixed',
+        'organisation' => 'manual',
+        'academic' => 'automatic',
+        'courses' => 'mixed',
+        'people' => 'manual',
+        'access' => 'mixed',
+        'assessments' => 'mixed',
+        'certificates' => 'mixed',
+        'classes' => 'automatic',
+        'progression' => 'review',
+        'imports' => 'review',
+        'sync' => 'mixed',
+        'validation' => 'mixed',
+        'audit' => 'live',
+    ];
+    $mode = $sectionmodes[$section] ?? 'live';
+    [$label, $icon] = $modes[$mode];
+    $descriptionkey = 'syncbehaviour_' . $section;
+    if (!get_string_manager()->string_exists($descriptionkey, 'local_tenantmaster')) {
+        $descriptionkey = 'syncbehaviour_dashboard';
+    }
+    return [
+        'mode' => $mode,
+        'label' => get_string($label, 'local_tenantmaster'),
+        'description' => get_string($descriptionkey, 'local_tenantmaster'),
+        'icon' => $icon,
+    ];
+}
+
+/**
+ * Render a compact processing-mode badge.
+ *
+ * @param array{mode: string, label: string, description: string, icon: string} $definition Definition.
+ * @return string
+ */
+function tenantmaster_sync_mode_badge(array $definition): string {
+    return html_writer::span(
+        html_writer::span('', 'fa ' . $definition['icon'])
+            . html_writer::span($definition['label']),
+        'tenantmaster-sync-mode tenantmaster-sync-mode--' . $definition['mode'],
+        ['title' => $definition['description']],
+    );
+}
+
+/**
  * Render a consistent product header for one Tenant Master work area.
  *
  * @param string $section Section.
@@ -985,13 +1047,29 @@ function tenantmaster_section_header(
         $scope = format_string($company->name) . ' [' . s($company->code) . ']';
     }
     $owner = get_string('origin_' . $origin, 'local_tenantmaster');
+    $syncdefinition = tenantmaster_section_sync_definition($section);
     $meta = html_writer::span(
         html_writer::span('', 'fa fa-building')
             . html_writer::span($scope),
         'tenantmaster-section-header__scope',
-    ) . html_writer::span(
-        $owner,
-        'tenantmaster-section-header__owner tenantmaster-section-header__owner--' . $origin,
+    ) . html_writer::div(
+        html_writer::span(get_string('dataownership', 'local_tenantmaster'),
+            'tenantmaster-section-header__meta-label')
+            . html_writer::span(
+                $owner,
+                'tenantmaster-section-header__owner tenantmaster-section-header__owner--' . $origin,
+            ),
+        'tenantmaster-section-header__meta-item',
+    );
+    $syncsummary = html_writer::div(
+        html_writer::span(get_string('changeprocessing', 'local_tenantmaster'),
+            'tenantmaster-section-header__sync-label')
+            . tenantmaster_sync_mode_badge($syncdefinition)
+            . html_writer::span(
+                $syncdefinition['description'],
+                'tenantmaster-section-header__sync-description',
+            ),
+        'tenantmaster-section-header__sync',
     );
 
     return html_writer::tag(
@@ -1010,13 +1088,56 @@ function tenantmaster_section_header(
                         'p',
                         get_string($descriptionkey, 'local_tenantmaster'),
                         ['class' => 'tenantmaster-section-header__description'],
-                    ),
+                    )
+                    . $syncsummary,
                 'tenantmaster-section-header__body',
             )
             . html_writer::div($meta, 'tenantmaster-section-header__meta'),
         [
             'class' => 'tenantmaster-section-header',
             'aria-labelledby' => 'tenantmaster-section-title',
+        ],
+    );
+}
+
+/**
+ * Render the processing-mode legend shown on workspace dashboards.
+ *
+ * @return string
+ */
+function tenantmaster_sync_legend(): string {
+    $modes = [
+        'automatic' => ['syncmode_automatic', 'syncmodehelp_automatic', 'fa-bolt'],
+        'manual' => ['syncmode_manual', 'syncmodehelp_manual', 'fa-pen-to-square'],
+        'mixed' => ['syncmode_mixed', 'syncmodehelp_mixed', 'fa-arrows-rotate'],
+        'review' => ['syncmode_review', 'syncmodehelp_review', 'fa-clipboard-check'],
+        'live' => ['syncmode_live', 'syncmodehelp_live', 'fa-eye'],
+    ];
+    $items = [];
+    foreach ($modes as $mode => [$labelkey, $helpkey, $icon]) {
+        $definition = [
+            'mode' => $mode,
+            'label' => get_string($labelkey, 'local_tenantmaster'),
+            'description' => get_string($helpkey, 'local_tenantmaster'),
+            'icon' => $icon,
+        ];
+        $items[] = html_writer::div(
+            tenantmaster_sync_mode_badge($definition)
+                . html_writer::span($definition['description'], 'tenantmaster-sync-legend__help'),
+            'tenantmaster-sync-legend__item',
+        );
+    }
+    return html_writer::tag(
+        'section',
+        html_writer::div(
+            html_writer::tag('h3', get_string('synclegendtitle', 'local_tenantmaster'))
+                . html_writer::tag('p', get_string('synclegenddescription', 'local_tenantmaster')),
+            'tenantmaster-sync-legend__intro',
+        )
+            . html_writer::div(implode('', $items), 'tenantmaster-sync-legend__items'),
+        [
+            'class' => 'tenantmaster-sync-legend',
+            'aria-label' => get_string('synclegendtitle', 'local_tenantmaster'),
         ],
     );
 }
@@ -1293,13 +1414,21 @@ function tenantmaster_global_dashboard(): string {
         ],
     ];
     $tiles = [];
-    foreach ($definitions as [$url, $labelkey, $icon, $meta]) {
+    foreach ($definitions as $definition) {
+        [$url, $labelkey, $icon, $meta] = $definition;
+        $section = match ($labelkey) {
+            'globalmastertemplates' => 'catalogue',
+            'managedinstitutions' => 'tenants',
+            default => 'tenants',
+        };
+        $syncdefinition = tenantmaster_section_sync_definition($section);
         $tiles[] = html_writer::link(
             $url,
             html_writer::span('', 'fa ' . $icon)
                 . html_writer::span(
                     html_writer::tag('strong', get_string($labelkey, 'local_tenantmaster'))
-                        . html_writer::tag('small', $meta),
+                        . html_writer::tag('small', $meta)
+                        . tenantmaster_sync_mode_badge($syncdefinition),
                     'tenantmaster-tool__body',
                 ),
             [
@@ -1309,6 +1438,7 @@ function tenantmaster_global_dashboard(): string {
         );
     }
     return tenantmaster_section_header('dashboard', null)
+        . tenantmaster_sync_legend()
         . $OUTPUT->heading(get_string('tenantmastersetup', 'local_tenantmaster'), 3)
         . html_writer::div(implode('', $tiles), 'tenantmaster-tools tenantmaster-tools--administration');
 }
@@ -1608,6 +1738,7 @@ function tenantmaster_dashboard(object $tenant): string {
         'tenantmaster-actions mb-3',
     );
     return tenantmaster_section_header('dashboard', $tenant)
+        . tenantmaster_sync_legend()
         . html_writer::div(implode('', $summary), 'tenantmaster-summary')
         . $actions
         . tenantmaster_dashboard_tools($tenant);
@@ -1677,6 +1808,7 @@ function tenantmaster_dashboard_tools(object $tenant): string {
         $items = [];
         foreach ($definitions as [$section, $labelkey, $icon, $helpkey, $origin, $params]) {
             $step++;
+            $syncdefinition = tenantmaster_section_sync_definition($section);
             $body = html_writer::span(
                 html_writer::span(
                     html_writer::span((string)$step, 'tenantmaster-tool__step')
@@ -1684,10 +1816,14 @@ function tenantmaster_dashboard_tools(object $tenant): string {
                     'tenantmaster-tool__heading',
                 )
                     . html_writer::tag('small', get_string($helpkey, 'local_tenantmaster'))
-                    . html_writer::span(
-                        get_string($origin === 'native' ? 'origin_native' : 'tenantowned',
-                            'local_tenantmaster'),
-                        'tenantmaster-tool__origin tenantmaster-tool__origin--' . $origin,
+                    . html_writer::div(
+                        html_writer::span(
+                            get_string($origin === 'native' ? 'origin_native' : 'tenantowned',
+                                'local_tenantmaster'),
+                            'tenantmaster-tool__origin tenantmaster-tool__origin--' . $origin,
+                        )
+                            . tenantmaster_sync_mode_badge($syncdefinition),
+                        'tenantmaster-tool__metadata',
                     ),
                 'tenantmaster-tool__body',
             );
