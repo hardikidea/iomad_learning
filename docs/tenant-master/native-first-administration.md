@@ -37,17 +37,18 @@ same supported native APIs, but operators edit those records in IOMAD.
 
 ## First-Time Sequence
 
-1. Open **IOMAD Dashboard > Company > Create company**.
-2. Set a unique permanent company code. Tenant Master will use the exact value
+1. Optionally prepare reusable defaults in **Tenant Master > Master catalogue**.
+2. Open **IOMAD Dashboard > Company > Create company**.
+3. Set a unique permanent company code. Tenant Master will use the exact value
    as its stable company link.
-3. Configure the company profile, hostname, theme, logo, colours and email
+4. Configure the company profile, hostname, theme, logo, colours and email
    settings in IOMAD.
-4. Create campuses and departments in **IOMAD > Manage departments**.
-5. Create users, memberships and managers in the IOMAD user screens.
-6. Open **Tenant Master > Managed institutions**.
-7. Select the existing company, choose the institution type and click
+5. Create campuses and departments in **IOMAD > Manage departments**.
+6. Create users, memberships and managers in the IOMAD user screens.
+7. Open **Tenant Master > Managed institutions**.
+8. Select the existing company, choose the institution type and click
    **Initialise academic management**.
-8. Complete institution regulatory metadata and academic masters in Tenant
+9. Complete institution regulatory metadata and academic masters in Tenant
    Master.
 
 Initialisation is idempotent and never creates or edits the native company.
@@ -76,28 +77,20 @@ API and verifies every saved value by read-back.
 
 ## Navigation
 
-Tenant Master intentionally contains only:
+Tenant Master presents one control surface for the live company. Organisation,
+users, courses and access screens are read-only views of current native data
+with capability-filtered links to supported IOMAD and Moodle CRUD routes.
+Academic structure, policy, placement, progression, import, synchronization,
+validation and audit remain plugin-owned workflows.
 
-- **Dashboard**
-- **Managed institutions** for site administrators
-- **Institution master data**
-- **Academic masters**
-- **Academic course projections**
-- **Classes and placements** for school tenants
-- **Progression**
-- **Imports**
-- **Synchronization**
-- **Validation**
-- **Audit**
-
-Each relevant page includes capability-filtered links to the selected
-company's native IOMAD dashboard, company, department, user, course, group and
-licence screens. Old Tenant Master `organisation`, `people`, and `access`
-bookmarks redirect to native IOMAD administration.
+The interface visibly labels native versus Tenant Master ownership. This does
+not duplicate a company, department, user, course, cohort, group or enrolment
+record and does not bypass native capability checks. See
+[Control surface and Admin Tools](control-surface.md).
 
 ## Upgrade Behavior
 
-Plugin release `1.2.0` removes legacy copies of native company name, address,
+Plugin release `1.2.0` removed legacy copies of native company name, address,
 location, hostname, branding colours and custom CSS from Tenant Master
 `profilejson`. Native IOMAD values are not changed. Existing operational
 records and mappings remain intact.

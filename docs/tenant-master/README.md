@@ -4,25 +4,31 @@
 a tenant-scoped IOMAD administration application. Normal operators do not need
 a Tenant Master CLI or an institution-pack CLI.
 
-Create and administer the company first in native IOMAD. Then open **Site
-administration > Tenant Master > Managed institutions** and initialise academic
-management for that existing company.
+Site administrators can configure reusable academic defaults before creating a
+company in **Site administration > Tenant Master > Master catalogue**. Create
+and administer each company in native IOMAD, then open **Managed institutions**
+and initialise academic management for that existing company.
 
-1. **Dashboard** to open native IOMAD administration, review counts, adopt
-   defaults, validate, or enqueue
-   Sync All.
-2. **Institution master data** for institution type and regulatory or academic
+1. **Master catalogue** for system-level Shared, School, University, College
+   and Training templates with safe background propagation.
+2. **Dashboard** to open grouped native and academic operations, review live
+   counts, adopt defaults, validate, or enqueue Sync All.
+3. **Institution master data** for institution type and regulatory or academic
    identifiers that have no native IOMAD company field.
-3. **Academic masters** for academic years, boards, mediums, grades,
+4. **Academic masters** for academic years, boards, mediums, grades,
    programmes, semesters, streams, subjects, templates, and policies.
-4. **Academic course projections** to inspect native category, course and
-   custom-field mappings.
-5. **Classes and placements** to reconcile a school learner's native cohort,
+5. **Organisation**, **Users and roles**, and **Cohorts and enrolments** to
+   review live native records and open capability-filtered IOMAD operations.
+6. **Academic course projections** to filter assigned courses, open native
+   editing, and inspect category, course and custom-field mappings.
+7. **Assessments** and **Certificates** for policy CRUD, package import and
+   supported native application.
+8. **Classes and placements** to reconcile a school learner's native cohort,
    group and subject-course access.
-6. **Progression** for policy status, reviewed decisions and guarded rollover.
-7. **Imports** for ZIP upload, inspection, plan, approval, apply, resume, and
+9. **Progression** for policy status, reviewed decisions and guarded rollover.
+10. **Imports** for ZIP upload, inspection, plan, approval, apply, resume, and
    report.
-8. **Synchronization**, **Validation**, and **Audit** for operations and
+11. **Synchronization**, **Validation**, and **Audit** for operations and
     evidence.
 
 Companies, departments, users, memberships, managers, ordinary courses,
@@ -36,8 +42,10 @@ menu sequence, native mapping, class placement, course-copy and annual
 progression workflow.
 
 All forms use the default IOMAD/Moodle renderer, navigation, tables,
-breadcrumbs, sesskeys, capabilities, and responsive theme behavior. The plugin
-does not install a theme.
+breadcrumbs, sesskeys, capabilities, and responsive theme behavior. Populated
+tables provide local row filtering and sortable data columns; native edit
+actions continue to open supported IOMAD or Moodle administration screens. The
+plugin does not install a theme.
 
 ## Automatic Processing
 
@@ -92,6 +100,9 @@ settings, dirty work remains visible and is not discarded.
 
 - [Architecture and ownership](architecture.md)
 - [Native-first administration](native-first-administration.md)
+- [Master catalogue](master-catalogue.md)
+- [Control surface and Admin Tools](control-surface.md)
+- [DPS school use case](dps-school-use-case.md)
 - [Workbook migration](workbook-migration.md)
 - [Data model](data-model.md)
 - [Academic model](academic-model.md)

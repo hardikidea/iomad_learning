@@ -1,11 +1,12 @@
 .iomad-learning-customizer {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .iomad-learning-customizer-toolbar {
-  display: grid;
-  grid-template-columns: minmax(12rem, 1fr) minmax(12rem, 16rem) auto auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   position: sticky;
@@ -15,14 +16,31 @@
   padding-block: 0.5rem;
 }
 
+.iomad-learning-customizer-toolbar input[type="search"] {
+  min-width: 12rem;
+  flex: 1 1 20rem;
+}
+
+.iomad-learning-customizer-toolbar .form-select {
+  min-width: 12rem;
+  flex: 0 1 16rem;
+}
+
+.iomad-learning-customizer-toolbar .btn {
+  flex: 0 0 auto;
+}
+
 .iomad-learning-customizer-workspace {
-  display: grid;
-  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
   gap: 1rem;
   min-height: 42rem;
 }
 
 .iomad-learning-token-panel {
+  min-width: min(100%, 18rem);
+  flex: 0 1 24rem;
   border: 1px solid var(--bs-border-color);
   overflow: auto;
   max-height: calc(100vh - 11rem);
@@ -30,19 +48,29 @@
 }
 
 .iomad-learning-token-control {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(8rem, 11rem);
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
   min-height: 3.25rem;
   border-bottom: 1px solid var(--bs-border-color);
 }
 
 .iomad-learning-token-control label {
+  min-width: 0;
+  flex: 1 1 10rem;
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.iomad-learning-token-control > input,
+.iomad-learning-token-control > select {
+  flex: 0 1 11rem;
 }
 
 .iomad-learning-preview {
+  min-width: min(100%, 30rem);
+  flex: 1 1 36rem;
   background: var(--iomad-learning-pagebackground);
   color: var(--iomad-learning-bodytext);
   font-family: var(--iomad-learning-fontfamily);
@@ -65,6 +93,8 @@
 
 .iomad-learning-preview-nav nav {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   gap: var(--iomad-learning-navitemgap);
 }
 
@@ -77,13 +107,14 @@
 
 .iomad-learning-preview-body {
   padding: var(--iomad-learning-pagepaddingy) var(--iomad-learning-pagepaddingx);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--iomad-learning-sectiongap);
 }
 
 .iomad-learning-preview-grid {
-  display: grid;
-  grid-template-columns: var(--iomad-learning-coursegridcolumns);
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--iomad-learning-gridgap);
 }
 
@@ -95,7 +126,9 @@
   border-radius: var(--iomad-learning-cardradius);
   box-shadow: var(--iomad-learning-cardshadow);
   padding: var(--iomad-learning-cardpadding);
-  display: grid;
+  display: flex;
+  flex: 1 1 var(--iomad-learning-coursecardminwidth);
+  flex-direction: column;
   gap: var(--iomad-learning-cardgap);
 }
 
@@ -133,22 +166,52 @@
   border-radius: var(--iomad-learning-loginradius);
   box-shadow: var(--iomad-learning-loginshadow);
   padding: var(--iomad-learning-loginpadding);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--iomad-learning-logininputgap);
   text-align: var(--iomad-learning-loginalign);
 }
 
 @media (max-width: 900px) {
   .iomad-learning-customizer-workspace {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .iomad-learning-token-panel {
+    width: 100%;
     max-height: 30rem;
+    flex-basis: auto;
+  }
+
+  .iomad-learning-preview {
+    width: 100%;
+    flex-basis: auto;
   }
 
   .iomad-learning-customizer-toolbar {
-    grid-template-columns: 1fr 1fr;
     top: 0;
+  }
+
+  .iomad-learning-customizer-toolbar input[type="search"],
+  .iomad-learning-customizer-toolbar .form-select {
+    flex: 1 1 12rem;
+  }
+}
+
+@media (max-width: 479.98px) {
+  .iomad-learning-preview-nav {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .iomad-learning-preview-nav nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .iomad-learning-token-control > input,
+  .iomad-learning-token-control > select {
+    width: 100%;
+    flex-basis: 100%;
   }
 }

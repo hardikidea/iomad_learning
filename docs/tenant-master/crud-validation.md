@@ -2,7 +2,7 @@
 
 ## Scope
 
-This validation covers `local_tenantmaster` release 1.2.0 on IOMAD 5.1.5.
+This validation covers `local_tenantmaster` release 1.4.0 on IOMAD 5.1.5.
 Tenant Master metadata remains tenant-scoped while operational records are
 projected through supported Moodle and IOMAD APIs. The plugin does not patch
 IOMAD core or write directly to native IOMAD tables.
@@ -11,6 +11,7 @@ IOMAD core or write directly to native IOMAD tables.
 
 | Domain | Create and read | Update | Removal behavior | Native target |
 |---|---|---|---|---|
+| Global master catalogue | System-level Shared and institution-type templates before company creation | Versioned managed fields with background propagation | Deactivate; no hard delete | Copied to applicable tenant masters, then projected normally |
 | Institution metadata | Existing company link, type and regulatory identifiers | Plugin-owned metadata only | Deactivate or archive | Native company is read-only |
 | Academic year | Tenant-bound stable identity | Dates, name, current state and status | Archive; current year is cleared | Category hierarchy root |
 | Academic master | Type, stable keys, year and parent ownership | Managed descriptive fields and active state | Deactivate or archive | Category, course, certificate or policy metadata |
@@ -48,29 +49,32 @@ change resets exhausted retry attempts, repeated changes are debounced,
 and workers lock by tenant and module. Projection failures remain retryable
 without creating duplicate native records.
 
+Global catalogue changes use a separate background inheritance task. Missing or
+unchanged inherited tenant records are created or updated and then enter this
+same native projection pipeline. Tenant-customised records are reported as
+conflicts and are never silently overwritten.
+
 ## Verified Native State
 
-The sanitized School and University tenants were validated against the live
-PostgreSQL database after scheduled processing:
+On 26 July 2026, the local database and dataroot were erased after creating and
+verifying a recovery set. Clean IOMAD defaults were confirmed with zero
+companies, company memberships, company courses, and departments. The
+sanitized packs were then applied from source:
 
-| Measure | Result |
-|---|---:|
-| Tenants and mapped IOMAD companies | 2 |
-| Academic years | 2 |
-| Tenant-scoped masters | 90 |
-| Active role mappings | 14 |
-| Native projection mappings | 181 |
-| Category mappings | 49 |
-| Course mappings | 30 |
-| Certificate mappings | 100 |
-| Dirty records not synchronized | 0 |
-| Mappings not synchronized | 0 |
-| Open drift | 0 |
-| Blocking validation findings | 0 |
+| Tenant | Company | Users | Learners | Courses | Departments | Categories | Cohorts | Groups | Enrolments |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| School | `GV_SCHOOL` | 219 | 100 | 56 | 12 | 52 | 12 | 37 | 666 |
+| University | `NBU_ENGINEERING` | 174 | 100 | 46 | 11 | 54 | 8 | 33 | 741 |
 
-Seven direct cross-tenant integrity checks returned zero anomalies for master
-parents, academic years, master mappings, company mappings, department
-mappings, course mappings, and stable-key ownership.
+The strict cross-company audit reported zero anomalies across course
+enrolments, grades, groups, licences, company roles, user departments, and
+course departments. The fixture suite also verifies:
+
+- native company, department, user and course records remain tenant-scoped;
+- master records project to supported native targets without duplicate mappings;
+- cross-tenant parent, mapping and stable-key references are rejected;
+- completed queue work leaves no dirty or failed fixture records;
+- validation and drift reports contain no blocking fixture findings.
 
 ## Role And Route Validation
 
@@ -84,6 +88,59 @@ mappings, course mappings, and stable-key ownership.
   are covered by authenticated browser smoke checks.
 - Routes returned no PHP exception page, browser page error, console error, or
   document-level horizontal overflow.
+- All 31 applicable School and University routes passed at 1440 px desktop and
+  390 px mobile widths.
+- Populated tables provide client-side row filtering and sortable non-action
+  columns. Course and user screens retain their server-side tenant filters.
+
+## CRUD Read-Back Drill
+
+The live School tenant was used for a non-destructive update and restoration:
+
+1. Edited the `SUBJECT_ENGLISH` master through the Tenant Master form.
+2. Confirmed the background queue completed without failed work.
+3. Read the changed name from native course `SCH_DEMO_ENGLISH`.
+4. Confirmed mapping `TM:SCH_DEMO:SUBJECT:SUBJECT_ENGLISH` remained `synced`.
+5. Restored the original source value and confirmed native read-back returned
+   to `English`.
+6. Edited and restored academic year `AY_2026_2027`.
+
+This drill exposed and fixed the edit-form handling for immutable identifiers.
+Master, academic-year, and class-placement edit forms now preserve trusted
+server-side identity while allowing managed fields to be updated.
+
+## Pre-Company Catalogue Validation
+
+The global Master catalogue is available before an IOMAD company or managed
+Tenant Master profile exists. The validated control surface provides five scope
+tiles (Shared, School, University, College and Training) and 15 master-type
+tiles, including boards, mediums, grades, streams, subjects, programmes and
+semesters.
+
+The live browser drill validated the following:
+
+- a fresh session can open the Tenant Master setup dashboard and Master
+  catalogue without selecting a company;
+- Site administration lists **Master catalogue** as a distinct secured page
+  inside **Tenant Master**;
+- IOMAD Admin Tools presents separate **Tenant Master**, **Master catalogue**
+  and **Tenant course editor** tiles after normal capability filtering;
+- create, read, update, activate and deactivate controls are protected by the
+  system-level `local/tenantmaster:managecatalogue` capability;
+- stable identifiers and scope cannot be changed after creation;
+- catalogue tables support filtering and sortable columns;
+- desktop at 1440 px and mobile at 390 px have no document overflow, PHP error
+  page or browser console error;
+- administrator tiles use the reviewed institution, workflow and course SVG
+  symbols rather than generic icon fallbacks;
+- editing and restoring `BOARD_CBSE` completed its background propagation job;
+- the existing school tenant's independently changed board value was classified
+  as a conflict and was not overwritten.
+
+New tenants copy only the active Shared and matching tenant-type catalogue
+records. Later catalogue changes automatically create missing inherited records
+and update records that still match their inherited hash. Customized tenant
+records remain unchanged and appear as conflicts for administrator review.
 
 ## Repeatable Commands
 
@@ -95,15 +152,19 @@ make test
 docker compose exec -T iomad php admin/cli/check_database_schema.php
 docker compose exec -T iomad php \
   public/local/tenantmaster/cli/verify_mdm_ecosystem.php \
+  --company=GV_SCHOOL,NBU_ENGINEERING \
   --format=json \
-  --floci-url=http://host.docker.internal:4566 \
   --fail-on-warning
 ```
 
-The ecosystem verifier must report 94 passing checks with no warnings or
-failures. Release validation also runs the complete Tenant Master PHPUnit
-suite, Moodle upgrade, cache purge, scheduled tasks, health checks, immutable
-image build, and recovery-set verification.
+The original two-tenant fixture run returned 94 pass, 0 warning, and 0 failure.
+The current clean-site verification returned 60 pass, 7 fixture-data warnings
+and 0 failure; the warnings identify persona records that have not yet been
+seeded, rather than application or isolation failures. The complete Tenant
+Master PHPUnit selection returned 34 tests and 155 assertions. Release
+validation also runs Moodle upgrade, cache purge, scheduled tasks, health
+checks, immutable image build, and recovery-set verification. The verifier's
+exact check count remains data-dependent and is not a release invariant.
 
 ## Boundaries
 

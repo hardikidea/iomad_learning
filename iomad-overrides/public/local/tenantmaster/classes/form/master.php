@@ -47,7 +47,7 @@ final class master extends \moodleform {
         $mform->setType('code', PARAM_TEXT);
         $mform->addRule('code', null, 'required');
         if ($editing) {
-            $mform->freeze(['mastertype', 'externalid', 'code', 'acadyearid']);
+            $mform->hardFreeze(['mastertype', 'externalid', 'code', 'acadyearid']);
         }
         $mform->addElement('text', 'name', get_string('name'), ['size' => 50]);
         $mform->setType('name', PARAM_TEXT);
@@ -83,9 +83,11 @@ final class master extends \moodleform {
      */
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
-        foreach (['externalid', 'code'] as $field) {
-            if (!catalog::valid_external_key((string)$data[$field])) {
-                $errors[$field] = get_string('invalidexternalkey', 'local_tenantmaster');
+        if (empty($this->_customdata['editing'])) {
+            foreach (['externalid', 'code'] as $field) {
+                if (!catalog::valid_external_key((string)($data[$field] ?? ''))) {
+                    $errors[$field] = get_string('invalidexternalkey', 'local_tenantmaster');
+                }
             }
         }
         try {

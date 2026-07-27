@@ -115,4 +115,12 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    'local/tenantmaster:managecatalogue' => [
+        'riskbitmask' => RISK_DATALOSS | RISK_CONFIG | RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];

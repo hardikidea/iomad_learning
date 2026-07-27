@@ -74,6 +74,36 @@ final class event_repository_test extends \advanced_testcase {
     }
 
     /**
+     * Management reads cannot return records owned by another company.
+     */
+    public function test_managed_event_crud_reads_are_owner_scoped(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        $companya = $this->company('event_manage_a');
+        $companyb = $this->company('event_manage_b');
+        $repository = new event_repository();
+        $event = $repository->upsert(tenant_scope::system($companya->id), [
+            'idnumber' => 'event:test:managed',
+            'name' => 'Managed event',
+            'visibility' => 'companies',
+            'status' => 'draft',
+        ], [$companya->id], get_admin()->id);
+
+        $this->assertSame([$event->id], array_column(
+            $repository->managed(tenant_scope::system($companya->id)),
+            'id',
+        ));
+        $this->assertSame([], $repository->managed(tenant_scope::system($companyb->id)));
+        $this->assertSame(
+            [$companya->id],
+            $repository->company_ids(tenant_scope::system($companya->id), (int)$event->id),
+        );
+
+        $this->expectException(\dml_missing_record_exception::class);
+        $repository->get_owned(tenant_scope::system($companyb->id), (int)$event->id);
+    }
+
+    /**
      * Create a company.
      *
      * @param string $shortname Shortname.

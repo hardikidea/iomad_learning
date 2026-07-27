@@ -35,7 +35,7 @@ final class student_placement extends \moodleform {
         );
         $mform->addRule('acadyearid', null, 'required');
         if ($editing) {
-            $mform->freeze(['userid', 'acadyearid']);
+            $mform->hardFreeze(['userid', 'acadyearid']);
         }
         foreach (
             [

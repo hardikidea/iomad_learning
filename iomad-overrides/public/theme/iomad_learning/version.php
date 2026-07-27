@@ -4,8 +4,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'theme_iomad_learning';
-$plugin->version = 2026072601;
+$plugin->version = 2026072606;
 $plugin->requires = 2025100605;
 $plugin->supported = [501, 501];
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.2.0';
+$plugin->release = '1.4.0';

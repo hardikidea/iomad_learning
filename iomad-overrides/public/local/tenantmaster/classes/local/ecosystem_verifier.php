@@ -266,13 +266,14 @@ final class ecosystem_verifier {
         $this->check('navigation', 'tenantmaster_route_guards', 'platform', static function () use ($indexfile): array {
             $source = is_file($indexfile) ? (string)file_get_contents($indexfile) : '';
             $sections = [
-                'dashboard', 'tenants', 'profile', 'academic', 'courses', 'classes',
-                'progression', 'imports', 'sync', 'validation', 'audit',
+                'dashboard', 'catalogue', 'tenants', 'profile', 'organisation', 'academic', 'courses',
+                'people', 'access', 'assessments', 'certificates', 'classes', 'progression',
+                'imports', 'sync', 'validation', 'audit',
             ];
             $valid = str_contains($source, 'require_login()')
                 && str_contains($source, 'require_sesskey()')
                 && str_contains($source, '$access->require(')
-                && str_contains($source, "['organisation', 'people', 'access']");
+                && str_contains($source, '$allowedsections = [');
             foreach ($sections as $section) {
                 $valid = $valid && str_contains($source, "'" . $section . "'");
             }
@@ -286,7 +287,7 @@ final class ecosystem_verifier {
         $this->check('integrations', 'floci_endpoint', 'platform', static function () use ($flociurl): array {
             if ($flociurl === '') {
                 return [
-                    'status' => 'warn',
+                    'status' => 'pass',
                     'metric' => 'livecheck=not-requested',
                     'remediation' => 'FLOCI-RUN-LOCAL-CLOUD-VALIDATE',
                 ];

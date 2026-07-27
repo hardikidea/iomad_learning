@@ -16,4 +16,5 @@ defined('MOODLE_INTERNAL') || die();
  */
 function xmldb_local_tenantmaster_install(): void {
     (new \local_tenantmaster\local\course_metadata_service())->ensure_definitions();
+    (new \local_tenantmaster\local\catalogue_service())->ensure_seeded();
 }

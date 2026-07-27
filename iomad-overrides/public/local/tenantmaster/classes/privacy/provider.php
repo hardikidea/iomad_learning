@@ -61,6 +61,10 @@ final class provider implements
         $collection->add_database_table('local_tenantmaster_crscopy', [
             'createdby' => 'privacy:metadata:coursecopy:createdby',
         ], 'privacy:metadata:coursecopy');
+        $collection->add_database_table('local_tenantmaster_catitem', [
+            'createdby' => 'privacy:metadata:catalogue:createdby',
+            'modifiedby' => 'privacy:metadata:catalogue:modifiedby',
+        ], 'privacy:metadata:catalogue');
         return $collection;
     }
 
@@ -89,7 +93,9 @@ final class provider implements
             || $DB->record_exists('local_tenantmaster_placement', ['modifiedby' => $userid])
             || $DB->record_exists('local_tenantmaster_progress', ['createdby' => $userid])
             || $DB->record_exists('local_tenantmaster_progress', ['approvedby' => $userid])
-            || $DB->record_exists('local_tenantmaster_crscopy', ['createdby' => $userid]);
+            || $DB->record_exists('local_tenantmaster_crscopy', ['createdby' => $userid])
+            || $DB->record_exists('local_tenantmaster_catitem', ['createdby' => $userid])
+            || $DB->record_exists('local_tenantmaster_catitem', ['modifiedby' => $userid]);
         if ($exists) {
             $contextlist->add_system_context();
         }
@@ -168,6 +174,7 @@ final class provider implements
             'local_tenantmaster_placement' => ['createdby', 'modifiedby'],
             'local_tenantmaster_progress' => ['createdby', 'approvedby'],
             'local_tenantmaster_crscopy' => ['createdby'],
+            'local_tenantmaster_catitem' => ['createdby', 'modifiedby'],
             ] as $table => $fields
         ) {
             foreach ($fields as $field) {

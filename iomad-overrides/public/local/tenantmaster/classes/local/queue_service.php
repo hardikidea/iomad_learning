@@ -118,6 +118,63 @@ final class queue_service {
     }
 
     /**
+     * Queue every native projection owned by one tenant master.
+     *
+     * @param int $tenantid Tenant.
+     * @param int $masterid Master.
+     * @param string $reason Reason.
+     */
+    public function sync_master(int $tenantid, int $masterid, string $reason = 'manual_master_sync'): void {
+        global $DB;
+
+        $master = $DB->get_record('local_tenantmaster_master', [
+            'id' => $masterid,
+            'tenantid' => $tenantid,
+        ], '*', MUST_EXIST);
+        foreach ($this->modules_for_master((string)$master->mastertype) as $module) {
+            $this->mark_dirty(
+                $tenantid,
+                $module,
+                'local_tenantmaster_master',
+                $masterid,
+                $reason,
+                true,
+            );
+            if (in_array($module, ['assessments', 'attendance', 'certificates'], true)) {
+                $this->queue_company_courses($tenantid, $module, $reason, true);
+            }
+        }
+    }
+
+    /**
+     * Queue every record of one tenant master type.
+     *
+     * @param int $tenantid Tenant.
+     * @param string $mastertype Master type.
+     * @param string $reason Reason.
+     * @return int Number of source records queued.
+     */
+    public function sync_master_type(
+        int $tenantid,
+        string $mastertype,
+        string $reason = 'manual_master_type_sync',
+    ): int {
+        global $DB;
+
+        if (!array_key_exists($mastertype, catalog::MASTER_TYPES)) {
+            throw new \invalid_parameter_exception('Invalid academic master type.');
+        }
+        $records = $DB->get_records('local_tenantmaster_master', [
+            'tenantid' => $tenantid,
+            'mastertype' => $mastertype,
+        ]);
+        foreach ($records as $record) {
+            $this->sync_master($tenantid, (int)$record->id, $reason);
+        }
+        return count($records);
+    }
+
+    /**
      * Queue one background configuration item per native company course.
      *
      * @param int $tenantid Tenant.

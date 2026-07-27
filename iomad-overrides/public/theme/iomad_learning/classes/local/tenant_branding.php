@@ -22,16 +22,52 @@ final class tenant_branding {
             return '';
         }
 
-        $css = '';
+        $variables = [];
+
+        $headercolour = self::normalise_colour((string)($company->bgcolor_header ?? ''));
+        if ($headercolour !== '') {
+            $contrast = self::contrast($headercolour);
+            $variables['navbarbackground'] = $headercolour;
+            $variables['navbartext'] = $contrast;
+            $variables['headericoncolor'] = $contrast;
+            $variables['headericonactive'] = $contrast;
+        }
+
+        $contentcolour = self::normalise_colour((string)($company->bgcolor_content ?? ''));
+        if ($contentcolour !== '') {
+            $variables['pagebackground'] = $contentcolour;
+            $variables['dashboardbackground'] = $contentcolour;
+        }
+
+        $maincolour = self::normalise_colour((string)($company->maincolor ?? ''));
+        if ($maincolour !== '') {
+            $variables['primarycolor'] = $maincolour;
+            $variables['primaryhover'] = self::darken($maincolour);
+            $variables['primarycontrast'] = self::contrast($maincolour);
+            $variables['iconactive'] = $maincolour;
+            $variables['navigationiconactive'] = $maincolour;
+        }
+
+        $headingcolour = self::normalise_colour((string)($company->headingcolor ?? ''));
+        if ($headingcolour !== '') {
+            $variables['headingcolor'] = self::readable_on_light_surface($headingcolour);
+        }
+
         $linkcolour = self::normalise_colour((string)($company->linkcolor ?? ''));
         if ($linkcolour !== '') {
-            $hovercolour = self::darken($linkcolour);
-            $css .= ":root {\n"
-                . "  --iomad-learning-linkcolor: {$linkcolour};\n"
-                . "  --iomad-learning-linkhover: {$hovercolour};\n"
-                . "  --iomad-learning-navigationiconcolor: {$linkcolour};\n"
-                . "  --iomad-learning-navigationiconactive: {$hovercolour};\n"
-                . "}\n";
+            $linkcolour = self::readable_on_light_surface($linkcolour);
+            $variables['linkcolor'] = $linkcolour;
+            $variables['linkhover'] = self::darken($linkcolour);
+            $variables['navigationiconcolor'] = $linkcolour;
+        }
+
+        $css = '';
+        if ($variables !== []) {
+            $css = ":root {\n";
+            foreach ($variables as $key => $value) {
+                $css .= "  --iomad-learning-{$key}: {$value};\n";
+            }
+            $css .= "}\n";
         }
 
         $customcss = self::sanitise_custom_css((string)($company->customcss ?? ''));
@@ -84,5 +120,65 @@ final class tenant_branding {
             (int)round($channels[1] * 0.82),
             (int)round($channels[2] * 0.82),
         );
+    }
+
+    /**
+     * Choose a readable foreground for a company header colour.
+     *
+     * @param string $colour Valid six-digit colour.
+     * @return string
+     */
+    private static function contrast(string $colour): string {
+        $light = self::contrast_ratio('#ffffff', $colour);
+        $dark = self::contrast_ratio('#172033', $colour);
+        if (max($light, $dark) >= 4.5) {
+            return $light > $dark ? '#ffffff' : '#172033';
+        }
+        return '#000000';
+    }
+
+    /**
+     * Darken a tenant text colour until it meets WCAG AA on standard surfaces.
+     *
+     * @param string $colour Valid six-digit colour.
+     * @return string
+     */
+    private static function readable_on_light_surface(string $colour): string {
+        for ($attempt = 0; $attempt < 8 && self::contrast_ratio($colour, '#ffffff') < 4.5; $attempt++) {
+            $colour = self::darken($colour);
+        }
+        return self::contrast_ratio($colour, '#ffffff') >= 4.5 ? $colour : '#172033';
+    }
+
+    /**
+     * Calculate the WCAG contrast ratio for two six-digit colours.
+     *
+     * @param string $foreground Foreground.
+     * @param string $background Background.
+     * @return float
+     */
+    private static function contrast_ratio(string $foreground, string $background): float {
+        $lighter = max(self::luminance($foreground), self::luminance($background));
+        $darker = min(self::luminance($foreground), self::luminance($background));
+        return ($lighter + 0.05) / ($darker + 0.05);
+    }
+
+    /**
+     * Convert a six-digit colour to relative luminance.
+     *
+     * @param string $colour Colour.
+     * @return float
+     */
+    private static function luminance(string $colour): float {
+        $channels = [
+            hexdec(substr($colour, 1, 2)),
+            hexdec(substr($colour, 3, 2)),
+            hexdec(substr($colour, 5, 2)),
+        ];
+        $linear = array_map(static function (int $channel): float {
+            $value = $channel / 255;
+            return $value <= 0.03928 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
+        }, $channels);
+        return (0.2126 * $linear[0]) + (0.7152 * $linear[1]) + (0.0722 * $linear[2]);
     }
 }

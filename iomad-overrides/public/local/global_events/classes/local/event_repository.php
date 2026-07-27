@@ -10,6 +10,57 @@ namespace local_global_events\local;
  */
 final class event_repository {
     /**
+     * Events owned by the selected company, including non-published records.
+     *
+     * @param tenant_scope $scope Scope.
+     * @return object[]
+     */
+    public function managed(tenant_scope $scope): array {
+        global $DB;
+
+        return array_values($DB->get_records(
+            'local_ge_event',
+            ['ownercompanyid' => $scope->companyid()],
+            'timestart DESC, name, id',
+        ));
+    }
+
+    /**
+     * Require one event owned by the selected company.
+     *
+     * @param tenant_scope $scope Scope.
+     * @param int $eventid Event.
+     * @return object
+     */
+    public function get_owned(tenant_scope $scope, int $eventid): object {
+        global $DB;
+
+        return $DB->get_record('local_ge_event', [
+            'id' => $eventid,
+            'ownercompanyid' => $scope->companyid(),
+        ], '*', MUST_EXIST);
+    }
+
+    /**
+     * Current company allowlist for one owned event.
+     *
+     * @param tenant_scope $scope Scope.
+     * @param int $eventid Event.
+     * @return int[]
+     */
+    public function company_ids(tenant_scope $scope, int $eventid): array {
+        global $DB;
+
+        $this->get_owned($scope, $eventid);
+        return array_map('intval', $DB->get_fieldset_select(
+            'local_ge_event_company',
+            'companyid',
+            'eventid = :eventid',
+            ['eventid' => $eventid],
+        ));
+    }
+
+    /**
      * Create or update one event and its company allowlist.
      *
      * @param tenant_scope $scope Owning scope.

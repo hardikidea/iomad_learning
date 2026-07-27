@@ -74,6 +74,66 @@ if ($ADMIN->fulltree) {
     $settings->add($page);
 
     $page = new admin_settingpage(
+        'theme_iomad_learning_footer',
+        get_string('footersettings', 'theme_iomad_learning'),
+    );
+    foreach (
+        [
+            'footerbrand' => ['IOMAD Learning', PARAM_TEXT],
+            'footertagline' => ['Learning for every institution.', PARAM_TEXT],
+            'footercontact' => ['', PARAM_EMAIL],
+            'footerphone' => ['', PARAM_TEXT],
+            'footersupporthours' => ['', PARAM_TEXT],
+            'footerhelpurl' => ['', PARAM_URL],
+            'footerprivacyurl' => ['', PARAM_URL],
+            'footertermsurl' => ['', PARAM_URL],
+            'footerfacebookurl' => ['', PARAM_URL],
+            'footerinstagramurl' => ['', PARAM_URL],
+            'footerlinkedinurl' => ['', PARAM_URL],
+            'footerxurl' => ['', PARAM_URL],
+            'footeryoutubeurl' => ['', PARAM_URL],
+            'footerwhatsappurl' => ['', PARAM_URL],
+            'footerlegal' => ['All rights reserved.', PARAM_TEXT],
+        ] as $key => [$default, $paramtype]
+    ) {
+        $setting = new admin_setting_configtext(
+            'theme_iomad_learning/' . $key,
+            get_string($key, 'theme_iomad_learning'),
+            get_string($key . '_desc', 'theme_iomad_learning'),
+            $default,
+            $paramtype,
+        );
+        $setting->set_updatedcallback('theme_reset_all_caches');
+        $page->add($setting);
+    }
+    $setting = new admin_setting_configtextarea(
+        'theme_iomad_learning/footeraddress',
+        get_string('footeraddress', 'theme_iomad_learning'),
+        get_string('footeraddress_desc', 'theme_iomad_learning'),
+        '',
+        PARAM_TEXT,
+    );
+    $setting->set_updatedcallback('theme_reset_all_caches');
+    $page->add($setting);
+    foreach (
+        [
+            'footershowcorelinks' => 1,
+            'footershowlogininfo' => 1,
+            'footershowplatforminfo' => 1,
+        ] as $key => $default
+    ) {
+        $setting = new admin_setting_configcheckbox(
+            'theme_iomad_learning/' . $key,
+            get_string($key, 'theme_iomad_learning'),
+            get_string($key . '_desc', 'theme_iomad_learning'),
+            $default,
+        );
+        $setting->set_updatedcallback('theme_reset_all_caches');
+        $page->add($setting);
+    }
+    $settings->add($page);
+
+    $page = new admin_settingpage(
         'theme_iomad_learning_advanced',
         get_string('advancedsettings', 'theme_iomad_learning'),
     );

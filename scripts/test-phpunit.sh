@@ -91,10 +91,14 @@ test_targets=(
     public/theme/iomad_learning/tests/token_catalog_test.php
     public/theme/iomad_learning/tests/tenant_branding_test.php
     public/theme/iomad_learning/tests/icon_catalog_test.php
+    public/theme/iomad_learning/tests/footer_content_test.php
     public/local/tenantmaster/tests/json_test.php
+    public/local/tenantmaster/tests/navigation_test.php
+    public/local/tenantmaster/tests/catalogue_service_test.php
     public/local/tenantmaster/tests/default_service_test.php
     public/local/tenantmaster/tests/projection_test.php
     public/local/tenantmaster/tests/isolation_test.php
+    public/local/tenantmaster/tests/native_data_service_test.php
     public/local/tenantmaster/tests/native_user_test.php
     public/local/tenantmaster/tests/role_service_test.php
     public/local/tenantmaster/tests/import_service_test.php

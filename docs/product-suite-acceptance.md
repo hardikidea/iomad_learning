@@ -44,7 +44,7 @@ Current repository evidence:
 | `local_iomadcommerce` | Product, order, webhook replay and privacy-lifecycle PHPUnit suites |
 | `local_iomadconnect` | Event, catalogue, synchronization and privacy-lifecycle PHPUnit suites |
 | WordPress companion | Standalone syntax and event-contract test |
-| `theme_iomad_learning` | 235-token catalog and settings validation with 711 assertions |
+| `theme_iomad_learning` | 251-token catalog, SVG icon, tenant-branding, footer, and settings validation |
 | `tool_iomadmonitor` | Normal/degraded health-state PHPUnit suite and CLI checks |
 
 The accepted local release evidence, immutable image digests, exact commands,

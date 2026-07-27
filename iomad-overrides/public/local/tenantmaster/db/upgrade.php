@@ -338,5 +338,107 @@ function xmldb_local_tenantmaster_upgrade(int $oldversion): bool {
         (new \local_tenantmaster\local\course_metadata_service())->ensure_definitions();
         upgrade_plugin_savepoint(true, 2026072602, 'local', 'tenantmaster');
     }
+    if ($oldversion < 2026072606) {
+        $dbman = $DB->get_manager();
+
+        $catalogue = new xmldb_table('local_tenantmaster_catitem');
+        $catalogue->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $catalogue->add_field('scope', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+        $catalogue->add_field('mastertype', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL);
+        $catalogue->add_field('externalid', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL);
+        $catalogue->add_field('code', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL);
+        $catalogue->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+        $catalogue->add_field('description', XMLDB_TYPE_TEXT);
+        $catalogue->add_field('payloadjson', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL);
+        $catalogue->add_field('parentexternalid', XMLDB_TYPE_CHAR, '100');
+        $catalogue->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+        $catalogue->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $catalogue->add_field('version', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '1');
+        $catalogue->add_field('managedhash', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL);
+        $catalogue->add_field(
+            'propagationstate',
+            XMLDB_TYPE_CHAR,
+            '20',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            'complete',
+        );
+        $catalogue->add_field('propagationjson', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL);
+        $catalogue->add_field('lastpropagated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $catalogue->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $catalogue->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $catalogue->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $catalogue->add_field('modifiedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $catalogue->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $catalogue->add_index(
+            'scope_type_external',
+            XMLDB_INDEX_UNIQUE,
+            ['scope', 'mastertype', 'externalid'],
+        );
+        $catalogue->add_index('scope_type_code', XMLDB_INDEX_UNIQUE, ['scope', 'mastertype', 'code']);
+        $catalogue->add_index(
+            'scope_type_active',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['scope', 'mastertype', 'active'],
+        );
+        $catalogue->add_index('propagation_state', XMLDB_INDEX_NOTUNIQUE, ['propagationstate']);
+        if (!$dbman->table_exists($catalogue)) {
+            $dbman->create_table($catalogue);
+        }
+
+        $master = new xmldb_table('local_tenantmaster_master');
+        $catalogitemid = new xmldb_field(
+            'catalogitemid',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'version',
+        );
+        if (!$dbman->field_exists($master, $catalogitemid)) {
+            $dbman->add_field($master, $catalogitemid);
+        }
+        $catalogversion = new xmldb_field(
+            'catalogversion',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'catalogitemid',
+        );
+        if (!$dbman->field_exists($master, $catalogversion)) {
+            $dbman->add_field($master, $catalogversion);
+        }
+        $inheritedhash = new xmldb_field(
+            'inheritedhash',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'catalogversion',
+        );
+        if (!$dbman->field_exists($master, $inheritedhash)) {
+            $dbman->add_field($master, $inheritedhash);
+        }
+        $catalogindex = new xmldb_index('catalog_item', XMLDB_INDEX_NOTUNIQUE, ['catalogitemid']);
+        if (!$dbman->index_exists($master, $catalogindex)) {
+            $dbman->add_index($master, $catalogindex);
+        }
+
+        $catalogueservice = new \local_tenantmaster\local\catalogue_service();
+        $catalogueservice->ensure_seeded();
+        $catalogueservice->link_existing_inherited_records();
+        upgrade_plugin_savepoint(true, 2026072606, 'local', 'tenantmaster');
+    }
+    if ($oldversion < 2026072701) {
+        upgrade_plugin_savepoint(true, 2026072701, 'local', 'tenantmaster');
+    }
     return true;
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/tenantmaster/db" VERSION="2026072601" COMMENT="XMLDB file for Tenant Master"
+<XMLDB PATH="local/tenantmaster/db" VERSION="2026072606" COMMENT="XMLDB file for Tenant Master"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
   <TABLES>
@@ -68,6 +68,9 @@
         <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="version" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="catalogitemid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="catalogversion" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="inheritedhash" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -82,6 +85,7 @@
         <INDEX NAME="tenant_type_code" UNIQUE="true" FIELDS="tenantid, mastertype, code"/>
         <INDEX NAME="tenant_type_active" UNIQUE="false" FIELDS="tenantid, mastertype, active"/>
         <INDEX NAME="tenant_parent" UNIQUE="false" FIELDS="tenantid, parentid"/>
+        <INDEX NAME="catalog_item" UNIQUE="false" FIELDS="catalogitemid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_tenantmaster_relation" COMMENT="Versioned relationships among academic master values">
@@ -190,6 +194,39 @@
       <INDEXES>
         <INDEX NAME="set_type_external" UNIQUE="true" FIELDS="defsetid, entitytype, externalid"/>
         <INDEX NAME="set_type_order" UNIQUE="false" FIELDS="defsetid, entitytype, sortorder"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tenantmaster_catitem" COMMENT="Editable global academic master catalogue with tenant-safe propagation">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="scope" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="mastertype" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="externalid" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="code" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="payloadjson" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="parentexternalid" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="version" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="managedhash" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="propagationstate" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="complete" SEQUENCE="false"/>
+        <FIELD NAME="propagationjson" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="lastpropagated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="scope_type_external" UNIQUE="true" FIELDS="scope, mastertype, externalid"/>
+        <INDEX NAME="scope_type_code" UNIQUE="true" FIELDS="scope, mastertype, code"/>
+        <INDEX NAME="scope_type_active" UNIQUE="false" FIELDS="scope, mastertype, active"/>
+        <INDEX NAME="propagation_state" UNIQUE="false" FIELDS="propagationstate"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_tenantmaster_mapping" COMMENT="Stable mapping from Tenant Master definitions to native records">

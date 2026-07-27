@@ -31,6 +31,12 @@ final class token_catalog_test extends \advanced_testcase {
         $this->assertSame('none', $definitions['contentmaxwidth']['default']);
         $this->assertSame('none', $definitions['coursecontentmaxwidth']['default']);
         $this->assertSame('1', $definitions['shownavigationicons']['default']);
+        $this->assertSame('#172033', $definitions['navbarbackground']['default']);
+        $this->assertSame('#f6f8fb', $definitions['navbartext']['default']);
+        $this->assertSame('#8a3145', $definitions['primarycolor']['default']);
+        $this->assertSame('#4f5b6b', $definitions['secondarycolor']['default']);
+        $this->assertSame('1.75', $definitions['iconstrokewidth']['default']);
+        $this->assertSame('1.125rem', $definitions['iconsize']['default']);
     }
 
     /**
@@ -39,9 +45,24 @@ final class token_catalog_test extends \advanced_testcase {
     public function test_invalid_values_fall_back_to_defaults(): void {
         $this->resetAfterTest(true);
 
-        $this->assertSame('#2454a6', token_catalog::normalize('primarycolor', 'red;display:none'));
+        $this->assertSame('#8a3145', token_catalog::normalize('primarycolor', 'red;display:none'));
         $this->assertSame('1rem', token_catalog::normalize('basefontsize', 'calc(1px);color:red'));
         $this->assertSame('0', token_catalog::normalize('disablemotion', 'yes'));
         $this->assertSame('none', token_catalog::normalize('contentmaxwidth', 'calc(100% - 1px)'));
+    }
+
+    /**
+     * Header colours cannot become indistinguishable from their background.
+     */
+    public function test_header_colours_are_contrast_safe(): void {
+        $this->assertSame('#172033', token_catalog::ensure_contrast('#ffffff', '#ffffff'));
+        $this->assertSame('#cbd5e1', token_catalog::ensure_contrast('#cbd5e1', '#172033', 3.0));
+        $this->assertGreaterThanOrEqual(
+            4.5,
+            token_catalog::contrast_ratio(
+                token_catalog::ensure_contrast('#172033', '#172033'),
+                '#172033'
+            )
+        );
     }
 }

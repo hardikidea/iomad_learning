@@ -4,6 +4,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 use theme_iomad_learning\local\icon_catalog;
+use theme_iomad_learning\local\svg_icon_library;
 use theme_iomad_learning\local\token_catalog;
 
 /**
@@ -39,9 +40,26 @@ function theme_iomad_learning_get_pre_scss($theme): string {
  * @return string
  */
 function theme_iomad_learning_get_extra_scss($theme): string {
-    $variables = [];
+    $values = [];
     foreach (token_catalog::definitions() as $key => $definition) {
-        $variables[] = token_catalog::css_name($key) . ': ' . token_catalog::css_value($key);
+        $values[$key] = token_catalog::css_value($key);
+    }
+    $values['navbartext'] = token_catalog::ensure_contrast(
+        $values['navbartext'],
+        $values['navbarbackground']
+    );
+    $values['headericoncolor'] = token_catalog::ensure_contrast(
+        $values['headericoncolor'],
+        $values['navbarbackground'],
+        3.0
+    );
+    $values['headericonactive'] = token_catalog::ensure_contrast(
+        $values['headericonactive'],
+        $values['navbarbackground']
+    );
+    $variables = [];
+    foreach ($values as $key => $value) {
+        $variables[] = token_catalog::css_name($key) . ': ' . $value;
     }
     $scss = ":root {\n  " . implode(";\n  ", $variables) . ";\n}\n";
 
@@ -107,6 +125,27 @@ function theme_iomad_learning_get_extra_scss($theme): string {
         $scss .= 'a, button, input, select, textarea { outline: var(--iomad-learning-focuswidth) '
             . 'var(--iomad-learning-focusstyle) transparent; }' . "\n";
     }
+    if (token_catalog::value('rtlmirroricons') === '1') {
+        $scss .= '[dir="rtl"] .iomad-learning-svg-icon[data-icon="arrowLeft"], '
+            . '[dir="rtl"] .iomad-learning-svg-icon[data-icon="arrowRight"], '
+            . '[dir="rtl"] .iomad-learning-svg-icon[data-icon="chevronLeft"], '
+            . '[dir="rtl"] .iomad-learning-svg-icon[data-icon="chevronRight"], '
+            . '[dir="rtl"] .iomad-learning-svg-icon[data-icon="externalLink"], '
+            . '[dir="rtl"] .iomad-learning-svg-icon[data-icon="logout"] '
+            . '{ transform: scaleX(-1); }' . "\n";
+    }
+    $footervisibility = [
+        'footershowcorelinks' => '#page-footer .footer-content-popover > .footer-section:first-of-type',
+        'footershowlogininfo' => '#page-footer .footer-content-popover .logininfo',
+        'footershowplatforminfo' => '#page-footer .iomad-learning-footer-platform, '
+            . '#page-footer .footer-content-debugging',
+    ];
+    foreach ($footervisibility as $setting => $selector) {
+        $configured = get_config('theme_iomad_learning', $setting);
+        if ($configured !== false && (string)$configured === '0') {
+            $scss .= "{$selector} { display: none !important; }\n";
+        }
+    }
     return $scss . (get_config('theme_iomad_learning', 'customscss') ?: '');
 }
 
@@ -116,12 +155,21 @@ function theme_iomad_learning_get_extra_scss($theme): string {
  * @param moodle_page $page Page.
  */
 function theme_iomad_learning_page_init(moodle_page $page): void {
-    $page->requires->js_call_amd('theme_iomad_learning/focus', 'init');
-    $page->requires->js_call_amd('theme_iomad_learning/navigation', 'init');
+    $sprite = svg_icon_library::sprite_url()->out(false);
+    $page->requires->js_call_amd('theme_iomad_learning/focus', 'init', [$sprite]);
+    $page->requires->js_call_amd('theme_iomad_learning/navigation', 'init', [$sprite]);
+    $page->requires->js_call_amd('theme_iomad_learning/layout', 'init', [
+        get_string('nativeplatformtools', 'theme_iomad_learning'),
+        get_string('projecttools', 'theme_iomad_learning'),
+    ]);
     $page->requires->js_call_amd(
         'theme_iomad_learning/iconify',
         'init',
-        [icon_catalog::client_component_map()],
+        [
+            icon_catalog::client_component_map(),
+            icon_catalog::legacy_class_map(),
+            $sprite,
+        ],
     );
 }
 

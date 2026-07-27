@@ -1,0 +1,281 @@
+.tenantmaster-contextbar,
+.tenantmaster-actions,
+.tenantmaster-filterbar,
+.tenantmaster-tools,
+.tenantmaster-summary {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--iomad-learning-space2, .5rem);
+}
+
+.tenantmaster-contextbar {
+    border-block: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    margin-block-end: var(--iomad-learning-space4, 1rem);
+    padding-block: var(--iomad-learning-space3, .75rem);
+}
+
+.tenantmaster-contextbar form,
+.tenantmaster-filterbar form {
+    align-items: end;
+    display: flex;
+    flex: 1 1 30rem;
+    flex-wrap: wrap;
+    gap: var(--iomad-learning-space2, .5rem);
+    margin: 0;
+}
+
+.tenantmaster-contextbar label,
+.tenantmaster-filterbar label {
+    display: flex;
+    flex: 1 1 14rem;
+    flex-direction: column;
+    font-weight: 600;
+    gap: var(--iomad-learning-space1, .25rem);
+    margin: 0;
+}
+
+.tenantmaster-contextbar select,
+.tenantmaster-filterbar select,
+.tenantmaster-filterbar input {
+    max-width: 100%;
+    min-height: var(--iomad-learning-buttonheight, 2.5rem);
+}
+
+.tenantmaster-origin {
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: var(--iomad-learning-radiuspill, 999px);
+    display: inline-flex;
+    font-size: var(--iomad-learning-smallfontsize, .875rem);
+    font-weight: 600;
+    gap: var(--iomad-learning-space1, .25rem);
+    line-height: 1;
+    padding: .35rem .55rem;
+    white-space: nowrap;
+}
+
+.tenantmaster-origin--native {
+    color: var(--iomad-learning-secondarycolor, #475467);
+}
+
+.tenantmaster-origin--custom {
+    color: var(--iomad-learning-primarycolor, #155eef);
+}
+
+.tenantmaster-tools {
+    align-items: stretch;
+    margin-block: var(--iomad-learning-space3, .75rem) var(--iomad-learning-space5, 1.5rem);
+}
+
+.tenantmaster-tool {
+    align-items: flex-start;
+    background: var(--iomad-learning-surface, #fff);
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-cardradius, .375rem);
+    color: var(--iomad-learning-bodytext, #101828);
+    display: flex;
+    flex: 1 1 15rem;
+    gap: var(--iomad-learning-space3, .75rem);
+    min-height: 5rem;
+    padding: var(--iomad-learning-space3, .75rem);
+    text-decoration: none;
+}
+
+.tenantmaster-tool:hover,
+.tenantmaster-tool:focus-visible {
+    border-color: var(--iomad-learning-linkhover, #004eeb);
+    color: var(--iomad-learning-linkhover, #004eeb);
+    text-decoration: none;
+}
+
+.tenantmaster-tool.is-active {
+    border-color: var(--iomad-learning-primarycolor, #155eef);
+    box-shadow: inset 0 0 0 1px var(--iomad-learning-primarycolor, #155eef);
+}
+
+.tenantmaster-tools--compact .tenantmaster-tool {
+    flex: 1 1 12rem;
+    min-height: 4.5rem;
+}
+
+.tenantmaster-tools--administration .tenantmaster-tool {
+    flex: 1 1 16rem;
+    min-height: 6rem;
+}
+
+.tenantmaster-tools--administration .tenantmaster-tool__body {
+    justify-content: center;
+}
+
+.tenantmaster-tool .icon,
+.tenantmaster-tool .iomad-learning-svg-icon {
+    flex: 0 0 var(--iomad-learning-navigationiconsize, 1.25rem);
+    height: var(--iomad-learning-navigationiconsize, 1.25rem);
+    margin: .15rem 0 0;
+    width: var(--iomad-learning-navigationiconsize, 1.25rem);
+}
+
+.tenantmaster-tool__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--iomad-learning-space1, .25rem);
+    min-width: 0;
+}
+
+.tenantmaster-tool__body small {
+    color: var(--iomad-learning-mutedtext, #475467);
+    line-height: var(--iomad-learning-compactlineheight, 1.35);
+}
+
+.tenantmaster-master-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--iomad-learning-space2, .5rem);
+    margin-block: var(--iomad-learning-space3, .75rem);
+}
+
+.tenantmaster-master-nav a {
+    border: 1px solid var(--iomad-learning-bordercolor, #d0d5dd);
+    border-radius: var(--iomad-learning-buttonradius, .25rem);
+    display: inline-flex;
+    min-height: var(--iomad-learning-buttonheight, 2.5rem);
+    padding: var(--iomad-learning-space2, .5rem) var(--iomad-learning-space3, .75rem);
+    align-items: center;
+    text-decoration: none;
+}
+
+.tenantmaster-master-nav a[aria-current="page"] {
+    background: var(--iomad-learning-selectionbackground, #eaf2ff);
+    border-color: var(--iomad-learning-primarycolor, #155eef);
+    color: var(--iomad-learning-selectiontext, #101828);
+    font-weight: 700;
+}
+
+.tenantmaster-status {
+    border-radius: var(--iomad-learning-radiuspill, 999px);
+    display: inline-flex;
+    font-size: var(--iomad-learning-smallfontsize, .875rem);
+    line-height: 1;
+    padding: .35rem .55rem;
+}
+
+.tenantmaster-status--synced,
+.tenantmaster-status--active {
+    background: #e7f6ec;
+    color: #166534;
+}
+
+.tenantmaster-status--pending,
+.tenantmaster-status--draft {
+    background: #fff4d6;
+    color: #854d0e;
+}
+
+.tenantmaster-status--blocked,
+.tenantmaster-status--error {
+    background: #feeceb;
+    color: #b42318;
+}
+
+.tenantmaster-table-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--iomad-learning-space2, .5rem);
+}
+
+.tenantmaster-table-actions .singlebutton,
+.tenantmaster-table-actions form {
+    margin: 0;
+}
+
+.tenantmaster-table-tools {
+    align-items: center;
+    display: flex;
+    gap: var(--iomad-learning-space2, .5rem);
+    justify-content: flex-end;
+    margin-block: var(--iomad-learning-space3, .75rem) var(--iomad-learning-space2, .5rem);
+}
+
+.tenantmaster-table-tools .form-control {
+    flex: 0 1 22rem;
+    max-width: 100%;
+}
+
+.tenantmaster-table-tools__clear {
+    align-items: center;
+    display: inline-flex;
+    font-size: 1.25rem;
+    height: var(--iomad-learning-buttonheight, 2.5rem);
+    justify-content: center;
+    line-height: 1;
+    min-width: var(--iomad-learning-buttonheight, 2.5rem);
+    padding: 0;
+}
+
+.tenantmaster-sort {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    display: inline-flex;
+    font: inherit;
+    font-weight: inherit;
+    gap: var(--iomad-learning-space1, .25rem);
+    padding: 0;
+    text-align: start;
+}
+
+.tenantmaster-sort:focus-visible {
+    outline: 2px solid var(--iomad-learning-focuscolor, #155eef);
+    outline-offset: 2px;
+}
+
+.tenantmaster-sort__indicator {
+    color: var(--iomad-learning-mutedtext, #475467);
+    font-size: .8em;
+    min-width: 1em;
+}
+
+.tenantmaster-json-input {
+    font-family: var(--font-monospace, monospace);
+}
+
+.generaltable td small {
+    display: block;
+    margin-top: var(--iomad-learning-space1, .25rem);
+}
+
+@media (max-width: 48rem) {
+    .tenantmaster-contextbar,
+    .tenantmaster-contextbar form,
+    .tenantmaster-filterbar,
+    .tenantmaster-filterbar form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .tenantmaster-contextbar label,
+    .tenantmaster-filterbar label,
+    .tenantmaster-tool {
+        flex-basis: auto;
+        width: 100%;
+    }
+
+    .tenantmaster-contextbar form,
+    .tenantmaster-filterbar form {
+        flex: 0 1 auto;
+        width: 100%;
+    }
+
+    .tenantmaster-table-tools {
+        align-items: stretch;
+    }
+
+    .tenantmaster-table-tools .form-control {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}

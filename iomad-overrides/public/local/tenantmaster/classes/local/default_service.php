@@ -11,8 +11,6 @@ namespace local_tenantmaster\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class default_service {
-    private const VERSION = '2026.1';
-
     /**
      * Register immutable defaults and selectively copy them to a tenant.
      *
@@ -26,8 +24,10 @@ final class default_service {
 
         $academicyear = (new academic_year_service())->ensure_current($tenant);
         $tenant->activeyearid = (int)$academicyear->id;
-        $items = array_merge($this->shared_defaults(), $this->type_defaults((string)$tenant->tenanttype));
-        $setid = $this->register_set((string)$tenant->tenanttype, $items);
+        $catalogue = new catalogue_service();
+        $items = $catalogue->default_items_for_tenant((string)$tenant->tenanttype);
+        $version = $catalogue->version_for_tenant((string)$tenant->tenanttype);
+        $setid = $this->register_set((string)$tenant->tenanttype, $items, $version);
         $result = ['created' => 0, 'existing' => 0];
         $repository = new master_repository();
         $queue = new queue_service();
@@ -55,7 +55,10 @@ final class default_service {
                 'description' => $item['description'] ?? null,
                 'payloadjson' => json::encode($item['payload'] ?? []),
                 'active' => 1,
-                'sortorder' => $sortorder + 1,
+                'sortorder' => $item['sortorder'] ?? ($sortorder + 1),
+                'catalogitemid' => $item['catalogitemid'] ?? 0,
+                'catalogversion' => $item['catalogversion'] ?? 0,
+                'inheritedhash' => $item['inheritedhash'] ?? null,
             ]);
             $createdids[$item['externalid']] = (int)$record->id;
             foreach ($this->modules_for_type($item['type']) as $module) {
@@ -97,7 +100,8 @@ final class default_service {
                 );
             }
         }
-        $tenant->defaultversion = self::VERSION;
+        $catalogue->link_existing_inherited_records();
+        $tenant->defaultversion = $version;
         $tenant->timemodified = time();
         $DB->update_record('local_tenantmaster_tenant', $tenant);
         $transaction->allow_commit();
@@ -113,7 +117,8 @@ final class default_service {
     public function compare(object $tenant): array {
         global $DB;
 
-        $items = array_merge($this->shared_defaults(), $this->type_defaults((string)$tenant->tenanttype));
+        $catalogue = new catalogue_service();
+        $items = $catalogue->default_items_for_tenant((string)$tenant->tenanttype);
         $adopted = 0;
         foreach ($items as $item) {
             if (
@@ -126,7 +131,11 @@ final class default_service {
                 $adopted++;
             }
         }
-        return ['available' => count($items), 'adopted' => $adopted, 'version' => self::VERSION];
+        return [
+            'available' => count($items),
+            'adopted' => $adopted,
+            'version' => $catalogue->version_for_tenant((string)$tenant->tenanttype),
+        ];
     }
 
     /**
@@ -134,22 +143,23 @@ final class default_service {
      *
      * @param string $tenanttype Tenant type.
      * @param array<int, array<string, mixed>> $items Items.
+     * @param string $version Version.
      * @return int
      */
-    private function register_set(string $tenanttype, array $items): int {
+    private function register_set(string $tenanttype, array $items, string $version): int {
         global $DB;
 
         $code = 'tenantmaster_' . $tenanttype;
-        $set = $DB->get_record('local_tenantmaster_defset', ['code' => $code, 'version' => self::VERSION]);
+        $set = $DB->get_record('local_tenantmaster_defset', ['code' => $code, 'version' => $version]);
         if ($set) {
             return (int)$set->id;
         }
         $checksum = json::hash($items);
         $setid = (int)$DB->insert_record('local_tenantmaster_defset', (object)[
             'code' => $code,
-            'version' => self::VERSION,
+            'version' => $version,
             'tenanttype' => $tenanttype,
-            'name' => ucfirst($tenanttype) . ' defaults ' . self::VERSION,
+            'name' => ucfirst($tenanttype) . ' defaults ' . $version,
             'checksum' => $checksum,
             'active' => 1,
             'timecreated' => time(),
@@ -166,6 +176,25 @@ final class default_service {
             ]);
         }
         return $setid;
+    }
+
+    /**
+     * Reviewed initial records for one editable catalogue scope.
+     *
+     * The catalogue service calls this only to seed an empty installation.
+     * Subsequent administration reads database-backed catalogue records.
+     *
+     * @param string $scope Catalogue scope.
+     * @return array<int, array<string, mixed>>
+     */
+    public function builtin_scope_items(string $scope): array {
+        if ($scope === 'shared') {
+            return $this->shared_defaults();
+        }
+        if (!array_key_exists($scope, catalog::TENANT_TYPES)) {
+            throw new \invalid_parameter_exception('Invalid catalogue scope.');
+        }
+        return $this->type_defaults($scope);
     }
 
     /**

@@ -16,5 +16,5 @@ $THEME->enable_dock = false;
 $THEME->yuicssmodules = [];
 $THEME->rendererfactory = 'theme_overridden_renderer_factory';
 $THEME->addblockposition = BLOCK_ADDBLOCK_POSITION_FLATNAV;
-$THEME->iconsystem = \theme_iomad_learning\output\icon_system_fontawesome::class;
+$THEME->iconsystem = \theme_iomad_learning\output\icon_system_svg::class;
 $THEME->usescourseindex = true;

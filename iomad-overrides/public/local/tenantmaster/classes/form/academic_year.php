@@ -30,7 +30,7 @@ final class academic_year extends \moodleform {
         $mform->setType('yearcode', PARAM_TEXT);
         $mform->addRule('yearcode', null, 'required');
         if ($editing) {
-            $mform->freeze(['yearexternalid', 'yearcode']);
+            $mform->hardFreeze(['yearexternalid', 'yearcode']);
         }
         $mform->addElement('text', 'yearname', get_string('name'), ['size' => 30]);
         $mform->setType('yearname', PARAM_TEXT);

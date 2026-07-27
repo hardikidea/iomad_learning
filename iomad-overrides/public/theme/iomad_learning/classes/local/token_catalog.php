@@ -38,11 +38,11 @@ final class token_catalog {
     public static function definitions(): array {
         $definitions = [];
         self::add($definitions, 'colours', 'colour', [
-            'primarycolor' => '#2454a6',
-            'primaryhover' => '#1b4389',
+            'primarycolor' => '#8a3145',
+            'primaryhover' => '#6f2536',
             'primarycontrast' => '#ffffff',
-            'secondarycolor' => '#0f7b6c',
-            'secondaryhover' => '#0a6257',
+            'secondarycolor' => '#4f5b6b',
+            'secondaryhover' => '#3e4856',
             'secondarycontrast' => '#ffffff',
             'accentcolor' => '#b74d2a',
             'successcolor' => '#217a45',
@@ -57,21 +57,29 @@ final class token_catalog {
             'surfacealternate' => '#eef2f7',
             'bordercolor' => '#d6dce6',
             'borderstrong' => '#9ca8b8',
-            'linkcolor' => '#1f55a5',
-            'linkhover' => '#173f7c',
+            'linkcolor' => '#364152',
+            'linkhover' => '#1f2937',
+            'headingcolor' => '#1d2433',
+            'iconcolor' => '#3f4b5f',
+            'iconmuted' => '#6b7688',
+            'iconactive' => '#8a3145',
             'navigationiconcolor' => '#5e6878',
-            'navigationiconactive' => '#1f55a5',
+            'navigationiconactive' => '#8a3145',
+            'headericoncolor' => '#cbd5e1',
+            'headericonactive' => '#ffffff',
             'focuscolor' => '#ffbf47',
-            'selectionbackground' => '#dce8fa',
+            'selectionbackground' => '#f3e5e8',
             'selectiontext' => '#172033',
-            'navbarbackground' => '#ffffff',
-            'navbartext' => '#1d2433',
-            'navbarborder' => '#d6dce6',
+            'navbarbackground' => '#172033',
+            'navbartext' => '#f6f8fb',
+            'navbarborder' => '#2d3748',
             'sidebarbackground' => '#202936',
             'sidebartext' => '#f6f8fb',
-            'sidebaractive' => '#5f9dea',
+            'sidebaractive' => '#dca8b5',
             'footerbackground' => '#202936',
             'footertext' => '#f6f8fb',
+            'footerlink' => '#f1d8de',
+            'footerborder' => '#3c4655',
             'loginbackground' => '#e8edf4',
             'loginsurface' => '#ffffff',
             'coursecardbackground' => '#ffffff',
@@ -166,7 +174,7 @@ final class token_catalog {
             'drawerwidth' => '20rem',
             'inputheight' => '2.75rem',
             'buttonheight' => '2.5rem',
-            'footerheight' => '4rem',
+            'footerheight' => '8rem',
             'headerlogoheight' => '2.5rem',
             'headerlogomobileheight' => '2rem',
             'courseindexwidth' => '20rem',
@@ -184,6 +192,7 @@ final class token_catalog {
             'readingwidth' => '70ch',
             'sidebariconsize' => '1.125rem',
             'navigationiconsize' => '1rem',
+            'iconsize' => '1.125rem',
             'adminiconsize' => '3rem',
             'adminactioniconsize' => '1.25rem',
             'breadcrumbheight' => '2.5rem',
@@ -214,6 +223,9 @@ final class token_catalog {
             'loginborderwidth' => '1px',
             'sidebaractiveborder' => '3px',
             'tabindicatorheight' => '3px',
+        ]);
+        self::add($definitions, 'shape', 'strokewidth', [
+            'iconstrokewidth' => '1.75',
         ]);
         self::add($definitions, 'shape', 'shadow', [
             'shadowsm' => 'sm',
@@ -429,6 +441,66 @@ final class token_catalog {
     }
 
     /**
+     * Ensure that a configured foreground remains readable on its background.
+     *
+     * @param string $foreground Preferred foreground colour.
+     * @param string $background Background colour.
+     * @param float $minimum Minimum WCAG contrast ratio.
+     * @return string
+     */
+    public static function ensure_contrast(
+        string $foreground,
+        string $background,
+        float $minimum = 4.5
+    ): string {
+        if (self::contrast_ratio($foreground, $background) >= $minimum) {
+            return strtolower($foreground);
+        }
+
+        $alternatives = ['#ffffff', '#172033'];
+        usort($alternatives, static function(string $left, string $right) use ($background): int {
+            return self::contrast_ratio($right, $background) <=> self::contrast_ratio($left, $background);
+        });
+        return $alternatives[0];
+    }
+
+    /**
+     * Calculate the WCAG contrast ratio for two six-digit hexadecimal colours.
+     *
+     * @param string $foreground Foreground colour.
+     * @param string $background Background colour.
+     * @return float
+     */
+    public static function contrast_ratio(string $foreground, string $background): float {
+        $lighter = max(self::relative_luminance($foreground), self::relative_luminance($background));
+        $darker = min(self::relative_luminance($foreground), self::relative_luminance($background));
+        return ($lighter + 0.05) / ($darker + 0.05);
+    }
+
+    /**
+     * Convert a six-digit hexadecimal colour to relative luminance.
+     *
+     * @param string $colour Colour.
+     * @return float
+     */
+    private static function relative_luminance(string $colour): float {
+        if (!preg_match('/^#[a-f0-9]{6}$/i', $colour)) {
+            throw new \invalid_parameter_exception('Contrast colours must use six-digit hexadecimal notation.');
+        }
+        $channels = [
+            hexdec(substr($colour, 1, 2)) / 255,
+            hexdec(substr($colour, 3, 2)) / 255,
+            hexdec(substr($colour, 5, 2)) / 255,
+        ];
+        $channels = array_map(static function(float $channel): float {
+            return $channel <= 0.04045
+                ? $channel / 12.92
+                : (($channel + 0.055) / 1.055) ** 2.4;
+        }, $channels);
+        return (0.2126 * $channels[0]) + (0.7152 * $channels[1]) + (0.0722 * $channels[2]);
+    }
+
+    /**
      * Add a typed token list.
      *
      * @param array $definitions Definitions.
@@ -481,6 +553,7 @@ final class token_catalog {
             'maxwidth' => self::same(['none', '60rem', '75rem', '80rem', '90rem']),
             'radius' => self::same(['0', '0.125rem', '0.25rem', '0.375rem', '0.5rem', '0.75rem', '1rem', '999rem']),
             'borderwidth' => self::same(['0', '1px', '2px', '3px', '4px']),
+            'strokewidth' => self::same(['1.5', '1.75', '2', '2.25']),
             'shadow' => [
                 'none' => 'none',
                 'sm' => '0 1px 2px rgba(17, 24, 39, 0.12)',

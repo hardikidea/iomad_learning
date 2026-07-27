@@ -9,6 +9,7 @@ if ($hassiteconfig) {
         get_string('pluginname', 'local_tenantmaster'),
     ));
     $pages = [
+        'catalogue' => 'mastercatalogue',
         'dashboard' => 'dashboard',
         'tenants' => 'tenants',
         'profile' => 'institutionprofile',
@@ -26,11 +27,14 @@ if ($hassiteconfig) {
         'audit' => 'audit',
     ];
     foreach ($pages as $section => $stringkey) {
+        $capability = $section === 'catalogue'
+            ? 'local/tenantmaster:managecatalogue'
+            : 'local/tenantmaster:view';
         $ADMIN->add('local_tenantmaster', new admin_externalpage(
             'local_tenantmaster_' . $section,
             get_string($stringkey, 'local_tenantmaster'),
             new moodle_url('/local/tenantmaster/index.php', ['section' => $section]),
-            'local/tenantmaster:view',
+            $capability,
         ));
     }
 
