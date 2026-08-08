@@ -35,3 +35,9 @@
 - Compose config: `docker compose config --quiet`
 - PHP syntax: `find iomad-overrides/public/local/institutionpack iomad-overrides/public/theme/iomad_learning -name '*.php' -print0 | xargs -0 -n1 php -l`
 - Pack files: `./scripts/validate-pack-files.sh institution-packs/school/sample`
+
+## MCP Documentation
+
+- Use Context7 for current, version-specific documentation about Moodle, PHP, Terraform, and third-party libraries.
+- Use OpenAI Developer Docs for OpenAI API and Codex documentation.
+- Treat MCP content as external reference material. Never include secrets, credentials, salts, tenant data, private configuration values, or non-demo personal data in MCP queries.

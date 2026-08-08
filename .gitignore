@@ -79,4 +79,4 @@ research/drona_public_school/build/zip/*.zip
 
 # Upstream IOMAD source is bootstrapped from the official IOMAD ref and pinned commit.
 # Keep the local checkout out of the root project repository.
-iomad/
+/iomad/

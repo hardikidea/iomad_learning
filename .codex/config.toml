@@ -1,2 +1,22 @@
-  [mcp_servers.idea]
-    url = "http://127.0.0.1:64342/stream"
+[mcp_servers.idea]
+url = "http://127.0.0.1:64342/stream"
+enabled = false
+
+# Current, version-aware documentation for Moodle, PHP, Terraform, and other
+# libraries used by this project. Anonymous access is free; no API key is
+# stored in the repository.
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+enabled = true
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+default_tools_approval_mode = "auto"
+
+# Authoritative OpenAI API and Codex documentation. This remote server is free
+# and read-only, and does not require a project secret.
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"
+enabled = true
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+default_tools_approval_mode = "auto"
