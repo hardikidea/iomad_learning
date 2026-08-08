@@ -17,21 +17,28 @@ set +a
 POSTGRES_DB="${POSTGRES_DB:-iomad}"
 POSTGRES_USER="${POSTGRES_USER:-iomad}"
 IOMAD_DB_PREFIX="${IOMAD_DB_PREFIX:-mdl_}"
-IOMAD_THEME="${IOMAD_THEME:-iomad_learning}"
+IOMAD_THEME="${IOMAD_THEME:-boost}"
 IOMAD_AUTH_PLUGINS="${IOMAD_AUTH_PLUGINS:-email,iomadoidc}"
 
 configure_runtime() {
     docker compose exec -T iomad php admin/cli/cfg.php \
         --name=auth \
         --set="${IOMAD_AUTH_PLUGINS}"
-    docker compose exec -T iomad php admin/cli/cfg.php \
-        --component=local_iomadconnect \
-        --name=authmethod \
-        --set=iomadoidc
+    if docker compose exec -T iomad test -f public/local/iomadconnect/version.php; then
+        docker compose exec -T iomad php admin/cli/cfg.php \
+            --component=local_iomadconnect \
+            --name=authmethod \
+            --set=iomadoidc
+    fi
     ./scripts/configure-mailpit.sh
 }
 
 docker compose up -d --wait db redis mailpit iomad
+
+if ! docker compose exec -T iomad test -f "public/theme/${IOMAD_THEME}/version.php"; then
+    echo "Configured theme ${IOMAD_THEME} is not installed; using Boost."
+    IOMAD_THEME=boost
+fi
 
 if ! docker compose exec -T iomad test -f vendor/autoload.php; then
     docker compose exec -T iomad composer --working-dir=/var/www/iomad install \

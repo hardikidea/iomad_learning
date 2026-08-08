@@ -25,27 +25,7 @@ if command -v docker >/dev/null 2>&1; then
 fi
 
 if command -v php >/dev/null 2>&1; then
-    find \
-        iomad-overrides/public/local/institutionpack \
-        iomad-overrides/public/local/tenantmaster \
-        iomad-overrides/public/local/iomadpagebuilder \
-        iomad-overrides/public/local/aicoursecreator \
-        iomad-overrides/public/local/tenantanalytics \
-        iomad-overrides/public/local/rapidgrader \
-        iomad-overrides/public/local/iomadcommerce \
-        iomad-overrides/public/local/iomadconnect \
-        iomad-overrides/public/local/global_events \
-        iomad-overrides/public/local/iomad_h5p_bridge \
-        iomad-overrides/public/local/iomad_scorm_gen \
-        iomad-overrides/public/admin/tool/iomadmonitor \
-        iomad-overrides/public/mod/tenantform \
-        iomad-overrides/public/blocks/iomadpagebuilder \
-        iomad-overrides/public/blocks/iomaddashboard \
-        iomad-overrides/public/blocks/gamification_telemetry \
-        iomad-overrides/public/blocks/tenantform \
-        iomad-overrides/public/course/format/iomadvideo \
-        iomad-overrides/public/theme/iomad_learning \
-        -name '*.php' -print0 \
+    find iomad-overrides/public -name '*.php' -print0 \
         | xargs -0 -n1 php -l
 fi
 

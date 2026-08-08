@@ -1,7 +1,7 @@
 -include .env
 -include versions.env
 export
-IOMAD_THEME ?= iomad_learning
+IOMAD_THEME ?= boost
 IOMAD_URL ?= http://localhost:18080
 KEEP_BACKUPS ?= 3
 DOCKER ?= $(shell command -v docker 2>/dev/null || printf /usr/local/bin/docker)

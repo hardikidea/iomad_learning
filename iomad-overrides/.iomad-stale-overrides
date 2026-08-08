@@ -1,2 +1,24 @@
 # Retired project-owned paths that may exist in previously synced checkouts.
 scripts/seed_indian_school_demo.php
+public/admin/tool/courserating
+public/admin/tool/iomadmonitor
+public/blocks/dash
+public/blocks/gamification_telemetry
+public/blocks/iomaddashboard
+public/blocks/iomadpagebuilder
+public/blocks/tenantform
+public/course/format/designer
+public/course/format/iomadvideo
+public/local/aicoursecreator
+public/local/global_events
+public/local/institutionpack
+public/local/iomad_h5p_bridge
+public/local/iomad_scorm_gen
+public/local/iomadcommerce
+public/local/iomadconnect
+public/local/iomadpagebuilder
+public/local/rapidgrader
+public/local/tenantanalytics
+public/local/tenantmaster
+public/mod/tenantform
+public/theme/iomad_learning
