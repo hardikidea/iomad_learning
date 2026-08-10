@@ -50,6 +50,7 @@ if [ -n "${PHPUNIT_JUNIT_PATH}" ]; then
 fi
 
 test_targets=(
+    public/local/orgprofile/tests/orgprofile_test.php
     public/local/institutionpack/tests/tenant_isolation_test.php
     public/local/iomadpagebuilder/tests/catalog_test.php
     public/local/iomadpagebuilder/tests/page_repository_test.php

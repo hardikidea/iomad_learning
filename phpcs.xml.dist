@@ -18,6 +18,7 @@
     <file>iomad-overrides/public/local/global_events</file>
     <file>iomad-overrides/public/local/iomad_h5p_bridge</file>
     <file>iomad-overrides/public/local/iomad_scorm_gen</file>
+    <file>iomad-overrides/public/local/orgprofile</file>
     <file>iomad-overrides/public/admin/tool/iomadmonitor</file>
     <file>iomad-overrides/public/mod/tenantform</file>
     <file>iomad-overrides/public/blocks/iomadpagebuilder</file>

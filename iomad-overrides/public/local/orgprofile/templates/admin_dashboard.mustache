@@ -1,0 +1,78 @@
+{{!
+    Administration dashboard for local_orgprofile.
+}}
+<div class="alert alert-info">
+    <h2 class="h5 alert-heading">{{#str}}dashboardpurposeheading, local_orgprofile{{/str}}</h2>
+    <p class="mb-2">{{#str}}managementintro, local_orgprofile{{/str}}</p>
+    <p class="mb-0"><strong>{{#str}}ownershipheading, local_orgprofile{{/str}}:</strong>
+        {{#str}}ownershipnote, local_orgprofile{{/str}}</p>
+</div>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h2 class="h4 mb-0">{{#str}}configurationoverview, local_orgprofile{{/str}}</h2>
+    <div class="d-flex flex-wrap gap-2">
+        {{#quickactions}}
+            <a class="btn {{#primary}}btn-primary{{/primary}}{{^primary}}btn-secondary{{/primary}}" href="{{url}}">
+                {{label}}
+            </a>
+        {{/quickactions}}
+    </div>
+</div>
+
+<div class="row">
+    {{#items}}
+        <div class="col-md-6 col-xl-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                        <h3 class="h5 card-title">{{title}}</h3>
+                        <span class="badge rounded-pill bg-primary" title="{{#str}}recordcount, local_orgprofile{{/str}}">{{count}}</span>
+                    </div>
+                    <p class="card-text">{{description}}</p>
+                    <p class="small text-muted mb-3"><strong>{{#str}}requires, local_orgprofile{{/str}}:</strong> {{dependency}}</p>
+                    <div class="mt-auto d-flex align-items-center justify-content-between">
+                        <span class="badge {{statusclass}}">{{statuslabel}}</span>
+                        <a class="btn btn-outline-primary" href="{{url}}">{{#str}}manage, local_orgprofile{{/str}}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/items}}
+</div>
+
+{{#hasstalemappings}}
+    <div class="alert alert-warning">
+        {{#str}}stalemappingwarning, local_orgprofile, {{stalemappings}}{{/str}}
+    </div>
+{{/hasstalemappings}}
+
+<div class="row mt-2">
+    <div class="col-lg-7 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4 card-title">{{#str}}recommendedworkflow, local_orgprofile{{/str}}</h2>
+                <ol class="mb-0">
+                    {{#workflow}}
+                        <li class="mb-2">{{text}}</li>
+                    {{/workflow}}
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4 card-title">{{#str}}runtimeoverview, local_orgprofile{{/str}}</h2>
+                <dl class="row mb-0">
+                    <dt class="col-8">{{#str}}categories, local_orgprofile{{/str}}</dt><dd class="col-4 text-end">{{categorycount}}</dd>
+                    <dt class="col-8">{{#str}}fieldplacements, local_orgprofile{{/str}}</dt><dd class="col-4 text-end">{{placementcount}}</dd>
+                    <dt class="col-8">{{#str}}mappedcompanies, local_orgprofile{{/str}}</dt><dd class="col-4 text-end">{{mappingcount}}</dd>
+                    <dt class="col-8">{{#str}}assignedusers, local_orgprofile{{/str}}</dt><dd class="col-4 text-end">{{assignmentcount}}</dd>
+                    <dt class="col-8">{{#str}}storedvalues, local_orgprofile{{/str}}</dt><dd class="col-4 text-end">{{valuecount}}</dd>
+                </dl>
+                <hr>
+                <p class="small text-muted mb-0">{{#str}}runtimenote, local_orgprofile{{/str}}</p>
+            </div>
+        </div>
+    </div>
+</div>
