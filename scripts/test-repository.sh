@@ -51,6 +51,53 @@ test "$(tail -n +2 institution-packs/university/sample/parent_links.csv | wc -l 
 test -x scripts/reseed-demo-environment.sh
 test -x scripts/verify-demo-environment.sh
 test -x scripts/clear-demo-environment.sh
+test -x scripts/provision-category-structure.sh
+test -s scripts/provision-category-structure.php
+test -s institution-packs/categories/moodle_iomad_category_grab_format.csv
+python3 - <<'PY'
+import csv
+
+path = "institution-packs/categories/moodle_iomad_category_grab_format.csv"
+expected = [
+    "TOP PARENT",
+    "PARENT-CATEGORY",
+    "CATEGORY-NAME",
+    "CATEGORY-ID-NUMBER (SHORT-CODE)",
+    "DESCRIPTION",
+]
+with open(path, encoding="utf-8-sig", newline="") as source:
+    reader = csv.DictReader(source)
+    if reader.fieldnames != expected:
+        raise SystemExit("Category CSV header mismatch")
+    rows = list(reader)
+if len(rows) != 598:
+    raise SystemExit(f"Expected 598 category rows; found {len(rows)}")
+shortcodes = [row[expected[3]].strip() for row in rows]
+if len(shortcodes) != len(set(shortcodes)):
+    raise SystemExit("Category CSV contains duplicate short codes")
+if sum(not row[expected[1]].strip() for row in rows) != 1:
+    raise SystemExit("Category CSV must contain exactly one root")
+organizations = {row[expected[0]].strip() for row in rows}
+if len(organizations) != 28:
+    raise SystemExit(f"Expected 28 organization selectors; found {len(organizations)}")
+anchors = [row for row in rows if row[expected[0]].strip() == row[expected[2]].strip()]
+if len(anchors) != 28:
+    raise SystemExit(f"Expected 28 organization anchor rows; found {len(anchors)}")
+anchor_names = [row[expected[0]].strip() for row in anchors]
+if len(anchor_names) != len(set(anchor_names)):
+    raise SystemExit("Category CSV contains duplicate organization anchors")
+department_shortnames = [
+    "ORGDEP_" + row[expected[3]].strip().replace("-", "_")
+    for row in anchors
+    if row[expected[0]].strip() != "Organization"
+]
+if len(department_shortnames) != 27:
+    raise SystemExit(f"Expected 27 managed departments; found {len(department_shortnames)}")
+if len(department_shortnames) != len(set(department_shortnames)):
+    raise SystemExit("Generated IOMAD department shortnames are not unique")
+if any(len(shortname) > 32 for shortname in department_shortnames):
+    raise SystemExit("Generated IOMAD department shortname exceeds 32 characters")
+PY
 
 test -s docs/feature-capability-matrix.md
 grep -q '^## Capability Register$' docs/feature-capability-matrix.md
@@ -73,6 +120,17 @@ grep -q '^## Workstreams$' docs/product-suite-acceptance.md
 test -s docs/demo-reset-and-reseed.md
 grep -q '^## Resulting States$' docs/demo-reset-and-reseed.md
 grep -q '^## Feature Coverage$' docs/demo-reset-and-reseed.md
+test -s docs/operator-command-reference.md
+grep -q '^## Moodle And IOMAD Upgrade$' docs/operator-command-reference.md
+grep -q '^## Complete Fresh Local Database$' docs/operator-command-reference.md
+test -s docs/category-setup.md
+grep -q '^## CSV Contract$' docs/category-setup.md
+grep -q '^## Apply$' docs/category-setup.md
+grep -q '^## Department Contract$' docs/category-setup.md
+grep -q '^### Complete `ALL` Department Map$' docs/category-setup.md
+grep -q '^## Re-run and Missing-Record Recovery$' docs/category-setup.md
+grep -q '^## Permissions and Access Separation$' docs/category-setup.md
+grep -q '^## Company Lookup Troubleshooting$' docs/category-setup.md
 test -s docs/page-builder-catalog.md
 grep -q '^## Component Library$' docs/page-builder-catalog.md
 grep -q '^## Starter Templates$' docs/page-builder-catalog.md

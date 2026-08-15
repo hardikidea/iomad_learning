@@ -28,5 +28,13 @@ make demo-check
 Do not edit generated CSVs directly. Change `scripts/generate-demo-packs.py`,
 regenerate, review the complete diff, and validate with `make test`.
 
+The reviewed category hierarchy under `categories/` is a separate,
+operator-owned source and is not generated with the demo packs. It uses the
+five-column CSV supplied for category setup and creates only Moodle course
+categories plus high-level IOMAD permission-scope departments below an existing
+company. Classes, streams, and subjects remain categories. Use the plan-first
+`make category-setup COMPANY=... ORGANIZATION=...` workflow documented in
+`docs/category-setup.md`.
+
 The local clear/reseed procedure and expected counts are documented in
 `docs/demo-reset-and-reseed.md`.

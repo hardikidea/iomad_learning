@@ -13,11 +13,21 @@ sets under `backups/`.
 
 ### Clean IOMAD defaults
 
+For a complete interactive local reset, verified backup, image rebuild, and
+fresh Moodle/IOMAD database installation:
+
 ```bash
-make demo-clear RESET_ARGS="--yes --build"
+make reset-local RESET_ARGS="--backup --build"
 ```
 
-This performs a clean IOMAD installation and runs
+The command requires the exact confirmation phrase `RESET LOCAL IOMAD`. For an
+explicitly approved unattended local reset, add `--yes`:
+
+```bash
+make demo-clear RESET_ARGS="--yes --backup --build"
+```
+
+`make demo-clear` performs a clean IOMAD installation and runs
 `local_institutionpack/cli/verify_clean.php`. The command fails unless all of
 the following are zero:
 
@@ -28,6 +38,9 @@ the following are zero:
 
 The Moodle site, administrator, standard roles, standard plugins, and project
 plugins remain installed. No School or University data exists in this state.
+The reset removes the complete local PostgreSQL and Redis volumes plus
+`iomaddata/`; it preserves `.env`, source, overrides, institution packs, and
+verified recovery sets under `backups/`. Never run it in stage or production.
 
 ### School and University demonstration state
 

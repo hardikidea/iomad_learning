@@ -6,7 +6,7 @@ IOMAD_URL ?= http://localhost:18080
 KEEP_BACKUPS ?= 3
 DOCKER ?= $(shell command -v docker 2>/dev/null || printf /usr/local/bin/docker)
 
-.PHONY: bootstrap sync-overrides capture-override build up start down stop restart logs shell install configure-mailpit demo-generate demo-check demo-data demo-clear demo-reseed demo-verify ecosystem-verify product-demo-data theme-install scorm-build cron test phpunit clean-install-test upgrade-test backup backup-verify backup-prune backup-restore-test restore reset-local update update-restore-on-fail status health pack-validate pack-plan pack-apply pack-workbooks reporting-validate operational-baseline observability-up observability-down observability-validate local-cloud-provision local-cloud-init local-cloud-install local-cloud-demo-data local-cloud-down local-cloud-status local-cloud-logs local-cloud-cron local-cloud-validate
+.PHONY: bootstrap sync-overrides capture-override build up start down stop restart logs shell install configure-mailpit demo-generate demo-check demo-data demo-clear demo-reseed demo-verify ecosystem-verify product-demo-data category-setup theme-install scorm-build cron test phpunit clean-install-test upgrade-test backup backup-verify backup-prune backup-restore-test restore reset-local reset-all update update-restore-on-fail status health pack-validate pack-plan pack-apply pack-workbooks reporting-validate operational-baseline observability-up observability-down observability-validate local-cloud-provision local-cloud-init local-cloud-install local-cloud-demo-data local-cloud-down local-cloud-status local-cloud-logs local-cloud-cron local-cloud-validate
 
 bootstrap:
 	./scripts/bootstrap-iomad.sh
@@ -70,6 +70,11 @@ ecosystem-verify:
 product-demo-data:
 	./scripts/seed-product-demos.sh
 
+# Required: COMPANY and ORGANIZATION. Use ORGANIZATION=ALL for the full CSV.
+# Plan by default; add APPLY=1 only after reviewing the JSON result.
+category-setup:
+	./scripts/provision-category-structure.sh $(if $(filter 1 true yes,$(APPLY)),--apply,)
+
 theme-install:
 	./scripts/sync-iomad-overrides.sh
 	docker compose build iomad cron
@@ -118,6 +123,10 @@ restore:
 
 reset-local:
 	./scripts/reset-local-iomad.sh $(RESET_ARGS)
+
+# Destructive: reset all local data, sync overrides, rebuild images, and install a fresh site.
+reset-all:
+	./scripts/reset-local-iomad.sh --build $(RESET_ARGS)
 
 update:
 	./scripts/update-iomad.sh $(IOMAD_COMMIT)

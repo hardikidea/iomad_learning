@@ -192,6 +192,8 @@ PREVIOUS_IOMAD_COMMIT=<reviewed-older-sha> make upgrade-test
 - [Role-aware UX](docs/04-development/role-aware-ux.md)
 - [Local test data](docs/02-getting-started/local-test-data.md)
 - [Demo reset and reseed](docs/demo-reset-and-reseed.md)
+- [Operator command reference](docs/operator-command-reference.md)
+- [IOMAD company organization structure setup](docs/category-setup.md)
 - [Administrative CLI operations](docs/cli-operations.md)
 - [Commercial reporting integrations](docs/commercial-reporting-integrations.md)
 - [IOMAD operational gap assessment](docs/iomad-operational-gap-assessment.md)
